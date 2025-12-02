@@ -13,7 +13,7 @@ export default function Show({ offer }) {
                         <img
                             src={offer.image_url}
                             alt={offer.name}
-                            className="h-52 w-full rounded object-cover"
+                            className="h-52 w-full rounded object-contain bg-slate-50"
                         />
                     )}
                     <div className="text-sm text-gray-700">

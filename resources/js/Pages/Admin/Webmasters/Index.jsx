@@ -91,21 +91,6 @@ export default function Index({ webmasters }) {
                                             </div>
                                         </div>
                                     </Link>
-                                    <form
-                                        method="post"
-                                        action={route('admin.webmasters.destroy', wm.id)}
-                                        onSubmit={(e) => {
-                                            if (!confirm('Удалить вебмастера?')) e.preventDefault();
-                                        }}
-                                    >
-                                        <input type="hidden" name="_method" value="delete" />
-                                        <button
-                                            type="submit"
-                                            className="rounded bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-200"
-                                        >
-                                            Удалить
-                                        </button>
-                                    </form>
                                 </div>
                             ))}
                         </div>

@@ -14,6 +14,7 @@ export default function Show({ offer }) {
         image: null,
         _method: 'patch',
     });
+    const deleteForm = useForm({});
 
     const submit = (e) => {
         e.preventDefault();
@@ -40,7 +41,7 @@ export default function Show({ offer }) {
                                 <img
                                     src={offer.image_url}
                                     alt={offer.name}
-                                    className="mt-1 h-28 w-28 rounded object-cover"
+                                    className="mt-1 h-28 w-full rounded object-contain bg-slate-50"
                                 />
                             </div>
                         )}
@@ -143,6 +144,19 @@ export default function Show({ offer }) {
                                 <div>{offer.notes}</div>
                             </div>
                         )}
+                        <div className="pt-3">
+                            <button
+                                onClick={() => {
+                                    if (confirm('Удалить оффер? Действие нельзя отменить.')) {
+                                        deleteForm.delete(route('admin.offers.destroy', offer.id));
+                                    }
+                                }}
+                                className="w-full rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                                disabled={deleteForm.processing}
+                            >
+                                Удалить оффер
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

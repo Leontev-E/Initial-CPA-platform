@@ -168,25 +168,8 @@ export default function Index({ offers, categories }) {
                                             </div>
                                         </div>
                                     </Link>
-                                    <div className="flex items-center gap-2">
-                                        <div className="text-sm font-semibold text-gray-900">
-                                            {offer.default_payout} $
-                                        </div>
-                                        <form
-                                            method="post"
-                                            action={route('admin.offers.destroy', offer.id)}
-                                            onSubmit={(e) => {
-                                                if (!confirm('Удалить оффер?')) e.preventDefault();
-                                            }}
-                                        >
-                                            <input type="hidden" name="_method" value="delete" />
-                                            <button
-                                                type="submit"
-                                                className="rounded bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-200"
-                                            >
-                                                Удалить
-                                            </button>
-                                        </form>
+                                    <div className="text-sm font-semibold text-gray-900">
+                                        {offer.default_payout} $
                                     </div>
                                 </div>
                             ))}
