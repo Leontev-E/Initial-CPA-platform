@@ -104,17 +104,6 @@ export default function Login({ status, canResetPassword }) {
                         Войти
                     </PrimaryButton>
                 </div>
-
-                <div className="mt-4 text-xs text-gray-500">
-                    BoostClicks — Евгений Леонтьев —{' '}
-                    <a className="text-indigo-600" href="https://t.me/boostclicks">
-                        https://t.me/boostclicks
-                    </a>{' '}
-                    · BoostClicks —{' '}
-                    <a className="text-indigo-600" href="https://boostclicks.ru/">
-                        https://boostclicks.ru/
-                    </a>
-                </div>
             </form>
         </GuestLayout>
     );

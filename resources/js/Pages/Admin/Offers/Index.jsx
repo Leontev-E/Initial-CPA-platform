@@ -146,7 +146,14 @@ export default function Index({ offers, categories }) {
                                     href={route('admin.offers.show', offer.id)}
                                     className="flex items-center justify-between py-3 transition hover:bg-slate-50"
                                 >
-                                    <div>
+                                    <div className="flex items-center gap-3">
+                                        {offer.image_path && (
+                                            <img
+                                                src={`/storage/${offer.image_path}`}
+                                                alt={offer.name}
+                                                className="h-10 w-10 rounded object-cover"
+                                            />
+                                        )}
                                         <div className="text-sm font-semibold text-gray-900">
                                             {offer.name}
                                         </div>

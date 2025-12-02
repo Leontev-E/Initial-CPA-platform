@@ -80,7 +80,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 </div>
             </aside>
 
-            <div className="flex-1">
+            <div className="flex-1 pb-16">
                 <header className="border-b bg-white/80 p-4 shadow-sm backdrop-blur">
                     <div className="flex items-center justify-between gap-4">
                         <div>
@@ -102,7 +102,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 </header>
 
                 <main className="p-4 lg:p-8">{children}</main>
-                <footer className="border-t bg-white/70 px-4 py-3 text-xs text-gray-600">
+                <footer className="fixed bottom-0 left-0 right-0 border-t bg-white/90 px-4 py-3 text-center text-xs text-gray-600 shadow-inner">
                     BoostClicks — Евгений Леонтьев — <a className="text-indigo-600" href="https://t.me/boostclicks">https://t.me/boostclicks</a> · BoostClicks — <a className="text-indigo-600" href="https://boostclicks.ru/">https://boostclicks.ru/</a>
                 </footer>
             </div>

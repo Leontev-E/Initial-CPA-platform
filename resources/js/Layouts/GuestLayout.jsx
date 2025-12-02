@@ -13,10 +13,9 @@ export default function GuestLayout({ children }) {
             <div className="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-lg sm:max-w-md sm:rounded-xl">
                 {children}
             </div>
-
-            <div className="mt-4 text-xs text-gray-600">
+            <footer className="fixed bottom-0 left-0 right-0 bg-white/90 px-4 py-3 text-center text-xs text-gray-600 shadow-inner">
                 BoostClicks — Евгений Леонтьев — <a className="text-indigo-600" href="https://t.me/boostclicks">https://t.me/boostclicks</a> · BoostClicks — <a className="text-indigo-600" href="https://boostclicks.ru/">https://boostclicks.ru/</a>
-            </div>
+            </footer>
         </div>
     );
 }

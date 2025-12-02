@@ -34,6 +34,16 @@ export default function Show({ offer }) {
                         Редактирование
                     </h3>
                     <form onSubmit={submit} className="mt-3 grid gap-3" encType="multipart/form-data">
+                        {offer.image_path && (
+                            <div>
+                                <div className="text-xs text-gray-500">Текущее фото</div>
+                                <img
+                                    src={`/storage/${offer.image_path}`}
+                                    alt={offer.name}
+                                    className="mt-1 h-28 w-28 rounded object-cover"
+                                />
+                            </div>
+                        )}
                         <input
                             className="w-full rounded-lg border px-3 py-2"
                             value={data.name}
@@ -126,6 +136,12 @@ export default function Show({ offer }) {
                         ))}
                         {offer.rates?.length === 0 && (
                             <div className="text-gray-500">Нет ставок</div>
+                        )}
+                        {offer.notes && (
+                            <div className="rounded border px-3 py-2 text-sm text-gray-700">
+                                <div className="text-xs uppercase text-gray-500">Примечание</div>
+                                <div>{offer.notes}</div>
+                            </div>
                         )}
                     </div>
                 </div>

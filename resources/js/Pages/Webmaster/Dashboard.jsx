@@ -20,7 +20,7 @@ export default function Dashboard({
                 <Stat title="Баланс" value={`${balance} $`} />
                 <Stat title="Лиды" value={leadsCount} />
                 <Stat title="Продажи" value={sales} />
-                <Stat title="Payout" value={`${payoutSum} $`} />
+                <Stat title="Доход" value={`${payoutSum} $`} />
             </div>
 
             <div className="mt-4 rounded-xl bg-white p-4 shadow-sm">

@@ -23,7 +23,8 @@ class PayoutController extends Controller
             ->get()
             ->map(function (User $user) {
                 $paid = PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
-                $user->balance = $user->sale_sum - $paid;
+                $locked = PayoutRequest::where('webmaster_id', $user->id)->whereIn('status', ['pending', 'in_process'])->sum('amount');
+                $user->balance = $user->sale_sum - $paid - $locked;
                 return $user;
             });
 

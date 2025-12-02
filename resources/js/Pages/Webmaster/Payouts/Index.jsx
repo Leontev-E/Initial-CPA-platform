@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm } from '@inertiajs/react';
 
 export default function Index({ payouts, balance }) {
-    const { data, setData, post, processing, reset } = useForm({
+    const { data, setData, post, processing, reset, errors } = useForm({
         amount: '',
         method: 'USDT TRC20',
         details: '',
@@ -36,6 +36,9 @@ export default function Index({ payouts, balance }) {
                             value={data.amount}
                             onChange={(e) => setData('amount', e.target.value)}
                         />
+                        {errors.amount && (
+                            <div className="text-xs text-red-600">{errors.amount}</div>
+                        )}
                         <input
                             className="w-full rounded border px-3 py-2"
                             placeholder="Метод"

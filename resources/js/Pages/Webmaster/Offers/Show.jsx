@@ -8,10 +8,23 @@ export default function Show({ offer }) {
         >
             <Head title={offer.name} />
             <div className="grid gap-4 lg:grid-cols-3">
-                <div className="rounded-xl bg-white p-4 shadow-sm lg:col-span-2">
+                <div className="rounded-xl bg-white p-4 shadow-sm lg:col-span-2 space-y-3">
+                    {offer.image_path && (
+                        <img
+                            src={`/storage/${offer.image_path}`}
+                            alt={offer.name}
+                            className="h-52 w-full rounded object-cover"
+                        />
+                    )}
                     <div className="text-sm text-gray-700">
                         {offer.description}
                     </div>
+                    {offer.notes && (
+                        <div className="rounded border px-3 py-2 text-sm text-gray-700">
+                            <div className="text-xs uppercase text-gray-500">Примечание</div>
+                            <div>{offer.notes}</div>
+                        </div>
+                    )}
                 </div>
                 <div className="rounded-xl bg-white p-4 shadow-sm space-y-2 text-sm text-gray-700">
                     <div>GEO: {(offer.allowed_geos || []).join(', ')}</div>

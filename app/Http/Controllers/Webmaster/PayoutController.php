@@ -17,11 +17,12 @@ class PayoutController extends Controller
 
         $earned = Lead::where('webmaster_id', $user->id)->where('status', 'sale')->sum('payout');
         $paid = PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
-        $balance = $earned - $paid;
+        $locked = PayoutRequest::where('webmaster_id', $user->id)->whereIn('status', ['pending', 'in_process'])->sum('amount');
+        $available = $earned - $paid - $locked;
 
         return Inertia::render('Webmaster/Payouts/Index', [
             'payouts' => $payouts,
-            'balance' => $balance,
+            'balance' => $available,
         ]);
     }
 
@@ -36,7 +37,8 @@ class PayoutController extends Controller
 
         $earned = Lead::where('webmaster_id', $user->id)->where('status', 'sale')->sum('payout');
         $paid = PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
-        $available = $earned - $paid;
+        $locked = PayoutRequest::where('webmaster_id', $user->id)->whereIn('status', ['pending', 'in_process'])->sum('amount');
+        $available = $earned - $paid - $locked;
 
         if ($validated['amount'] > $available) {
             return back()->withErrors(['amount' => 'Недостаточно баланса для заявки']);
