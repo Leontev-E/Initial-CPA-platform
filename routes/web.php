@@ -27,7 +27,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('offer-categories', AdminOfferCategoryController::class)->except(['create', 'edit', 'show']);
-    Route::resource('offers', AdminOfferController::class)->except(['create', 'edit', 'destroy']);
+    Route::resource('offers', AdminOfferController::class)->except(['create', 'edit']);
 
     Route::get('leads', [AdminLeadController::class, 'index'])->name('leads.index');
     Route::patch('leads/{lead}/status', [AdminLeadController::class, 'updateStatus'])->name('leads.updateStatus');
@@ -37,6 +37,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('webmasters/{user}', [AdminWebmasterController::class, 'show'])->name('webmasters.show');
     Route::patch('webmasters/{user}', [AdminWebmasterController::class, 'update'])->name('webmasters.update');
     Route::patch('webmasters/{user}/password', [AdminWebmasterController::class, 'updatePassword'])->name('webmasters.updatePassword');
+    Route::delete('webmasters/{user}', [AdminWebmasterController::class, 'destroy'])->name('webmasters.destroy');
 
     Route::get('payouts', [AdminPayoutController::class, 'index'])->name('payouts.index');
     Route::post('payouts', [AdminPayoutController::class, 'store'])->name('payouts.store');

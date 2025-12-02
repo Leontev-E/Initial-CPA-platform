@@ -77,6 +77,12 @@ class OfferController extends Controller
         return back()->with('success', 'Оффер обновлен');
     }
 
+    public function destroy(Offer $offer)
+    {
+        $offer->delete();
+        return redirect()->route('admin.offers.index')->with('success', 'Оффер удален');
+    }
+
     protected function validateData(Request $request, ?int $offerId = null): array
     {
         return $request->validate([

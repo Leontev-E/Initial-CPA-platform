@@ -121,4 +121,12 @@ class WebmasterController extends Controller
 
         return back()->with('success', 'Пароль обновлен');
     }
+
+    public function destroy(User $user)
+    {
+        abort_unless($user->role === User::ROLE_WEBMASTER, 404);
+        $user->delete();
+
+        return redirect()->route('admin.webmasters.index')->with('success', 'Вебмастер удален');
+    }
 }

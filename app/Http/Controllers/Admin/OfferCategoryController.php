@@ -58,8 +58,13 @@ class OfferCategoryController extends Controller
 
     public function destroy(OfferCategory $offerCategory)
     {
-        $offerCategory->update(['is_active' => false]);
+        // Удаляем офферы категории, каскадно удалятся связанные лиды и ставки
+        $offerCategory->offers()->each(function ($offer) {
+            $offer->delete();
+        });
 
-        return back()->with('success', 'Категория отключена');
+        $offerCategory->delete();
+
+        return back()->with('success', 'Категория удалена');
     }
 }

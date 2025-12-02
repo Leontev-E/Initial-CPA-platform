@@ -141,33 +141,54 @@ export default function Index({ offers, categories }) {
                         </h3>
                         <div className="mt-3 divide-y">
                             {offers.data.map((offer) => (
-                                <Link
+                                <div
                                     key={offer.id}
-                                    href={route('admin.offers.show', offer.id)}
                                     className="flex items-center justify-between py-3 transition hover:bg-slate-50"
                                 >
-                                    <div className="flex items-center gap-3">
+                                    <Link
+                                        href={route('admin.offers.show', offer.id)}
+                                        className="flex flex-1 items-center gap-3"
+                                    >
                                         {offer.image_url && (
                                             <img
                                                 src={offer.image_url}
                                                 alt={offer.name}
-                                                className="h-10 w-10 rounded object-cover"
+                                                className="h-12 w-12 rounded object-contain bg-slate-50"
                                             />
                                         )}
+                                        <div>
+                                            <div className="text-sm font-semibold text-gray-900">
+                                                {offer.name}
+                                            </div>
+                                            <div className="text-xs text-gray-500">
+                                                {offer.category?.name} • GEO:{' '}
+                                                {(offer.allowed_geos || []).join(
+                                                    ', ',
+                                                )}
+                                            </div>
+                                        </div>
+                                    </Link>
+                                    <div className="flex items-center gap-2">
                                         <div className="text-sm font-semibold text-gray-900">
-                                            {offer.name}
+                                            {offer.default_payout} $
                                         </div>
-                                        <div className="text-xs text-gray-500">
-                                            {offer.category?.name} • GEO:{' '}
-                                            {(offer.allowed_geos || []).join(
-                                                ', ',
-                                            )}
-                                        </div>
+                                        <form
+                                            method="post"
+                                            action={route('admin.offers.destroy', offer.id)}
+                                            onSubmit={(e) => {
+                                                if (!confirm('Удалить оффер?')) e.preventDefault();
+                                            }}
+                                        >
+                                            <input type="hidden" name="_method" value="delete" />
+                                            <button
+                                                type="submit"
+                                                className="rounded bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-200"
+                                            >
+                                                Удалить
+                                            </button>
+                                        </form>
                                     </div>
-                                    <div className="text-sm font-semibold text-gray-900">
-                                        {offer.default_payout} $
-                                    </div>
-                                </Link>
+                                </div>
                             ))}
                         </div>
                     </div>

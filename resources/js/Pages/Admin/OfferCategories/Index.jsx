@@ -89,12 +89,29 @@ export default function Index({ categories, filters }) {
                                             )}
                                         </div>
                                         <div className="text-xs text-gray-500">
-                                            {cat.slug}
-                                        </div>
+                                        {cat.slug}
                                     </div>
+                                </div>
+                                <div className="flex items-center gap-3">
                                     <div className="text-xs text-gray-500">
                                         {cat.description}
                                     </div>
+                                    <form
+                                        method="post"
+                                        action={route('admin.offer-categories.destroy', cat.id)}
+                                        onSubmit={(e) => {
+                                            if (!confirm('Удалить категорию?')) e.preventDefault();
+                                        }}
+                                    >
+                                        <input type="hidden" name="_method" value="delete" />
+                                        <button
+                                            type="submit"
+                                            className="rounded bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-200"
+                                        >
+                                            Удалить
+                                        </button>
+                                    </form>
+                                </div>
                                 </div>
                             ))}
                         </div>
