@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm } from '@inertiajs/react';
 
 export default function Show({ offer }) {
-    const { data, setData, patch, processing } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
         offer_category_id: offer.offer_category_id,
         name: offer.name,
         slug: offer.slug,
@@ -11,11 +11,15 @@ export default function Show({ offer }) {
         description: offer.description || '',
         notes: offer.notes || '',
         is_active: offer.is_active,
+        image: null,
+        _method: 'patch',
     });
 
     const submit = (e) => {
         e.preventDefault();
-        patch(route('admin.offers.update', offer.id));
+        post(route('admin.offers.update', offer.id), {
+            forceFormData: true,
+        });
     };
 
     return (
@@ -29,7 +33,7 @@ export default function Show({ offer }) {
                     <h3 className="text-sm font-semibold text-gray-700">
                         Редактирование
                     </h3>
-                    <form onSubmit={submit} className="mt-3 grid gap-3">
+                    <form onSubmit={submit} className="mt-3 grid gap-3" encType="multipart/form-data">
                         <input
                             className="w-full rounded-lg border px-3 py-2"
                             value={data.name}
@@ -38,6 +42,7 @@ export default function Show({ offer }) {
                         <input
                             className="w-full rounded-lg border px-3 py-2"
                             value={data.slug}
+                            placeholder="ID (опционально, генерируется автоматически)"
                             onChange={(e) => setData('slug', e.target.value)}
                         />
                         <input
@@ -65,8 +70,24 @@ export default function Show({ offer }) {
                             className="w-full rounded-lg border px-3 py-2"
                             value={data.notes}
                             onChange={(e) => setData('notes', e.target.value)}
-                            placeholder="Заметки для админа"
+                            placeholder="Заметки для партнерской программы"
                         />
+                        <div>
+                            <label className="text-sm text-gray-700">
+                                Новое фото (опционально)
+                            </label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="mt-1 w-full rounded-lg border px-3 py-2"
+                                onChange={(e) =>
+                                    setData('image', e.target.files?.[0] ?? null)
+                                }
+                            />
+                            {errors.image && (
+                                <div className="text-xs text-red-600">{errors.image}</div>
+                            )}
+                        </div>
                         <label className="inline-flex items-center gap-2 text-sm text-gray-700">
                             <input
                                 type="checkbox"

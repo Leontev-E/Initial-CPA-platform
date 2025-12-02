@@ -47,4 +47,49 @@ class LeadController extends Controller
             'summary' => $summary,
         ]);
     }
+
+    public function export(Request $request)
+    {
+        $user = $request->user();
+        $query = Lead::where('webmaster_id', $user->id);
+
+        foreach (['status', 'offer_id', 'geo', 'subid', 'utm_source', 'utm_campaign'] as $filter) {
+            if ($request->filled($filter)) {
+                $query->where($filter, $request->string($filter));
+            }
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date('date_from'));
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date('date_to'));
+        }
+
+        $rows = $query->with('offer')->orderByDesc('created_at')->get();
+
+        $callback = function () use ($rows) {
+            $stream = fopen('php://output', 'w');
+            fputcsv($stream, ['ID', 'Дата', 'Оффер', 'GEO', 'Статус', 'Payout', 'Subid', 'Имя', 'Телефон']);
+            foreach ($rows as $lead) {
+                fputcsv($stream, [
+                    $lead->id,
+                    $lead->created_at,
+                    $lead->offer?->name,
+                    $lead->geo,
+                    $lead->status,
+                    $lead->payout,
+                    $lead->subid,
+                    $lead->customer_name,
+                    $lead->customer_phone,
+                ]);
+            }
+            fclose($stream);
+        };
+
+        return response()->streamDownload($callback, 'leads.csv', [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
 }

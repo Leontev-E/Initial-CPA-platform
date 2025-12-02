@@ -36,6 +36,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::post('webmasters', [AdminWebmasterController::class, 'store'])->name('webmasters.store');
     Route::get('webmasters/{user}', [AdminWebmasterController::class, 'show'])->name('webmasters.show');
     Route::patch('webmasters/{user}', [AdminWebmasterController::class, 'update'])->name('webmasters.update');
+    Route::patch('webmasters/{user}/password', [AdminWebmasterController::class, 'updatePassword'])->name('webmasters.updatePassword');
 
     Route::get('payouts', [AdminPayoutController::class, 'index'])->name('payouts.index');
     Route::post('payouts', [AdminPayoutController::class, 'store'])->name('payouts.store');
@@ -51,6 +52,7 @@ Route::middleware(['auth', 'verified', 'role:webmaster'])->prefix('webmaster')->
     Route::get('/offers', [WebmasterOfferController::class, 'index'])->name('offers.index');
     Route::get('/offers/{offer}', [WebmasterOfferController::class, 'show'])->name('offers.show');
     Route::get('/leads', [WebmasterLeadController::class, 'index'])->name('leads.index');
+    Route::get('/leads/export', [WebmasterLeadController::class, 'export'])->name('leads.export');
     Route::get('/tools', [WebmasterToolController::class, 'index'])->name('tools.index');
     Route::post('/tools/regenerate-key', [WebmasterToolController::class, 'regenerateKey'])->name('tools.regenerate');
     Route::post('/tools/postbacks', [WebmasterToolController::class, 'savePostbacks'])->name('tools.postbacks');

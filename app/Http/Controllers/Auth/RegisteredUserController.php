@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,16 +31,25 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'email' => 'nullable|string|lowercase|email|max:255|unique:'.User::class,
+            'telegram' => 'nullable|string|max:255|unique:users,telegram',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        if (empty($validated['email']) && empty($validated['telegram'])) {
+            throw ValidationException::withMessages([
+                'email' => 'Укажите email или Telegram',
+            ]);
+        }
+
         $user = User::create([
             'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'email' => $validated['email'] ?? null,
+            'telegram' => $validated['telegram'] ?? null,
+            'password' => $request->password,
+            'role' => User::ROLE_WEBMASTER,
         ]);
 
         event(new Registered($user));

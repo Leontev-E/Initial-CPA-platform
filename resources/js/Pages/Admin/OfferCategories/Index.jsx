@@ -36,7 +36,7 @@ export default function Index({ categories, filters }) {
                         />
                         <input
                             className="w-full rounded-lg border px-3 py-2"
-                            placeholder="Slug (опционально)"
+                            placeholder="ID (опционально, генерируется автоматически)"
                             value={data.slug}
                             onChange={(e) => setData('slug', e.target.value)}
                         />

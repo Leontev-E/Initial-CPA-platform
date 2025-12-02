@@ -8,7 +8,7 @@ export default function AuthenticatedLayout({ header, children }) {
     const navItems = useMemo(() => {
         if (user.role === 'admin') {
             return [
-                { label: 'Дашборд', name: 'admin.dashboard' },
+                { label: 'Дашборд партнерской программы', name: 'admin.dashboard' },
                 { label: 'Категории', name: 'admin.offer-categories.index' },
                 { label: 'Офферы', name: 'admin.offers.index' },
                 { label: 'Лиды', name: 'admin.leads.index' },
@@ -19,7 +19,7 @@ export default function AuthenticatedLayout({ header, children }) {
         }
 
         return [
-            { label: 'Дашборд', name: 'webmaster.dashboard' },
+            { label: 'Дашборд вебмастера', name: 'webmaster.dashboard' },
             { label: 'Офферы', name: 'webmaster.offers.index' },
             { label: 'Статистика', name: 'webmaster.leads.index' },
             { label: 'Инструменты', name: 'webmaster.tools.index' },
@@ -37,7 +37,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     <ApplicationLogo className="h-10 w-10 text-indigo-600" />
                     <div>
                         <div className="text-sm font-semibold text-gray-900">
-                            CPA Platform
+                            BoostClicks CPA Platform
                         </div>
                         <div className="text-xs text-gray-500">
                             {user.role === 'admin'
@@ -92,7 +92,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </div>
                             )}
                             <div className="text-xs uppercase tracking-wide text-gray-500">
-                                {user.role === 'admin' ? 'Админ' : 'Вебмастер'}
+                                {user.role === 'admin' ? 'Партнерская программа' : 'Кабинет вебмастера'}
                             </div>
                         </div>
                         <div className="text-right text-xs text-gray-500">
@@ -102,6 +102,9 @@ export default function AuthenticatedLayout({ header, children }) {
                 </header>
 
                 <main className="p-4 lg:p-8">{children}</main>
+                <footer className="border-t bg-white/70 px-4 py-3 text-xs text-gray-600">
+                    BoostClicks — Евгений Леонтьев — <a className="text-indigo-600" href="https://t.me/boostclicks">https://t.me/boostclicks</a> · BoostClicks — <a className="text-indigo-600" href="https://boostclicks.ru/">https://boostclicks.ru/</a>
+                </footer>
             </div>
         </div>
     );

@@ -1,8 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-export default function Index({ offers, categories, filters }) {
-    const { data, setData, post, processing, reset } = useForm({
+export default function Index({ offers, categories }) {
+    const { data, setData, post, processing, reset, errors } = useForm({
         offer_category_id: categories[0]?.id ?? '',
         name: '',
         slug: '',
@@ -11,11 +11,13 @@ export default function Index({ offers, categories, filters }) {
         description: '',
         notes: '',
         is_active: true,
+        image: null,
     });
 
     const submit = (e) => {
         e.preventDefault();
         post(route('admin.offers.store'), {
+            forceFormData: true,
             onSuccess: () =>
                 reset(
                     'name',
@@ -24,6 +26,7 @@ export default function Index({ offers, categories, filters }) {
                     'allowed_geos',
                     'description',
                     'notes',
+                    'image',
                 ),
         });
     };
@@ -39,7 +42,7 @@ export default function Index({ offers, categories, filters }) {
                     <h3 className="text-sm font-semibold text-gray-700">
                         Новый оффер
                     </h3>
-                    <form onSubmit={submit} className="mt-3 space-y-3">
+                    <form onSubmit={submit} className="mt-3 space-y-3" encType="multipart/form-data">
                         <select
                             className="w-full rounded-lg border px-3 py-2"
                             value={data.offer_category_id}
@@ -61,7 +64,7 @@ export default function Index({ offers, categories, filters }) {
                         />
                         <input
                             className="w-full rounded-lg border px-3 py-2"
-                            placeholder="Slug"
+                            placeholder="ID (опционально, генерируется автоматически)"
                             value={data.slug}
                             onChange={(e) => setData('slug', e.target.value)}
                         />
@@ -89,6 +92,28 @@ export default function Index({ offers, categories, filters }) {
                                 setData('description', e.target.value)
                             }
                         />
+                        <textarea
+                            className="w-full rounded-lg border px-3 py-2"
+                            placeholder="Примечание для партнерской программы"
+                            value={data.notes}
+                            onChange={(e) => setData('notes', e.target.value)}
+                        />
+                        <div>
+                            <label className="text-sm text-gray-700">
+                                Фото оффера (jpg/png)
+                            </label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="mt-1 w-full rounded-lg border px-3 py-2"
+                                onChange={(e) =>
+                                    setData('image', e.target.files?.[0] ?? null)
+                                }
+                            />
+                            {errors.image && (
+                                <div className="text-xs text-red-600">{errors.image}</div>
+                            )}
+                        </div>
                         <label className="inline-flex items-center gap-2 text-sm text-gray-700">
                             <input
                                 type="checkbox"

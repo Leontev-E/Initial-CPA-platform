@@ -9,6 +9,7 @@ export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
+        telegram: '',
         password: '',
         password_confirmation: '',
     });
@@ -23,11 +24,11 @@ export default function Register() {
 
     return (
         <GuestLayout>
-            <Head title="Register" />
+            <Head title="Регистрация" />
 
             <form onSubmit={submit}>
                 <div>
-                    <InputLabel htmlFor="name" value="Name" />
+                    <InputLabel htmlFor="name" value="Имя" />
 
                     <TextInput
                         id="name"
@@ -44,7 +45,7 @@ export default function Register() {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email" />
+                    <InputLabel htmlFor="email" value="Email (опционально)" />
 
                     <TextInput
                         id="email"
@@ -54,14 +55,30 @@ export default function Register() {
                         className="mt-1 block w-full"
                         autoComplete="username"
                         onChange={(e) => setData('email', e.target.value)}
-                        required
+                        placeholder="user@example.com"
                     />
 
                     <InputError message={errors.email} className="mt-2" />
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
+                    <InputLabel htmlFor="telegram" value="Telegram (опционально)" />
+
+                    <TextInput
+                        id="telegram"
+                        type="text"
+                        name="telegram"
+                        value={data.telegram}
+                        className="mt-1 block w-full"
+                        onChange={(e) => setData('telegram', e.target.value)}
+                        placeholder="@username"
+                    />
+
+                    <InputError message={errors.telegram} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="password" value="Пароль" />
 
                     <TextInput
                         id="password"
@@ -80,7 +97,7 @@ export default function Register() {
                 <div className="mt-4">
                     <InputLabel
                         htmlFor="password_confirmation"
-                        value="Confirm Password"
+                        value="Подтверждение пароля"
                     />
 
                     <TextInput
@@ -102,17 +119,28 @@ export default function Register() {
                     />
                 </div>
 
-                <div className="mt-4 flex items-center justify-end">
+                <div className="mt-4 flex items-center justify-between">
                     <Link
                         href={route('login')}
                         className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
-                        Already registered?
+                        Уже есть аккаунт?
                     </Link>
 
                     <PrimaryButton className="ms-4" disabled={processing}>
-                        Register
+                        Зарегистрироваться
                     </PrimaryButton>
+                </div>
+
+                <div className="mt-4 text-xs text-gray-500">
+                    BoostClicks — Евгений Леонтьев —{' '}
+                    <a className="text-indigo-600" href="https://t.me/boostclicks">
+                        https://t.me/boostclicks
+                    </a>{' '}
+                    · BoostClicks —{' '}
+                    <a className="text-indigo-600" href="https://boostclicks.ru/">
+                        https://boostclicks.ru/
+                    </a>
                 </div>
             </form>
         </GuestLayout>

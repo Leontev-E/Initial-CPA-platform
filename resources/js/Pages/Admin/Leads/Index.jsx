@@ -2,11 +2,11 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm } from '@inertiajs/react';
 
 const statuses = [
-    { value: 'new', label: 'New' },
-    { value: 'in_work', label: 'In work' },
-    { value: 'sale', label: 'Sale' },
-    { value: 'cancel', label: 'Cancel' },
-    { value: 'trash', label: 'Trash' },
+    { value: 'new', label: 'Новый' },
+    { value: 'in_work', label: 'В работе' },
+    { value: 'sale', label: 'Продажа' },
+    { value: 'cancel', label: 'Отмена' },
+    { value: 'trash', label: 'Треш' },
 ];
 
 export default function Index({ leads, offers, webmasters, filters }) {

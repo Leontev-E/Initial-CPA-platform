@@ -1,7 +1,13 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 
-const statuses = ['new', 'in_work', 'sale', 'cancel', 'trash'];
+const statuses = [
+    { value: 'new', label: 'Новый' },
+    { value: 'in_work', label: 'В работе' },
+    { value: 'sale', label: 'Продажа' },
+    { value: 'cancel', label: 'Отмена' },
+    { value: 'trash', label: 'Треш' },
+];
 
 export default function Index({ leads, offers, filters, summary }) {
     return (
@@ -19,7 +25,7 @@ export default function Index({ leads, offers, filters, summary }) {
 
             <form method="get" className="mt-4 rounded-xl bg-white p-4 shadow-sm">
                 <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 md:grid-cols-7">
-                    <FilterSelect name="status" options={statuses} placeholder="Статус" defaultValue={filters.status} />
+                    <FilterSelect name="status" options={statuses} placeholder="Статус" defaultValue={filters.status} labelKey="label" valueKey="value" />
                     <FilterSelect name="offer_id" options={offers} placeholder="Оффер" defaultValue={filters.offer_id} labelKey="name" valueKey="id" />
                     <FilterField name="geo" placeholder="GEO" defaultValue={filters.geo} />
                     <FilterField name="subid" placeholder="Subid" defaultValue={filters.subid} />
@@ -34,6 +40,14 @@ export default function Index({ leads, offers, filters, summary }) {
             </form>
 
             <div className="mt-4 overflow-x-auto rounded-xl bg-white shadow-sm">
+                <div className="flex justify-end px-3 py-3">
+                    <a
+                        href={route('webmaster.leads.export', filters)}
+                        className="rounded bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                    >
+                        Выгрузить CSV
+                    </a>
+                </div>
                 <table className="min-w-full divide-y">
                     <thead className="bg-gray-50">
                         <tr className="text-left text-xs font-semibold uppercase text-gray-600">

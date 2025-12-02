@@ -26,14 +26,16 @@ class DatabaseSeeder extends Seeder
         $admin = User::factory()->create([
             'name' => 'Admin',
             'email' => 'admin@cpa.test',
-            'password' => bcrypt('password'),
+            'telegram' => 'admin_boostclicks',
+            'password' => 'password',
             'role' => User::ROLE_ADMIN,
         ]);
 
         $webmaster = User::factory()->create([
             'name' => 'Webmaster',
             'email' => 'webmaster@cpa.test',
-            'password' => bcrypt('password'),
+            'telegram' => 'webmaster_boost',
+            'password' => 'password',
             'role' => User::ROLE_WEBMASTER,
         ]);
 

@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 
 export default function Webmasters({ rows }) {
     return (
@@ -7,6 +7,14 @@ export default function Webmasters({ rows }) {
             header={<h2 className="text-xl font-semibold text-gray-800">Отчет по вебмастерам</h2>}
         >
             <Head title="Отчет по вебмастерам" />
+            <div className="mb-3 flex justify-end">
+                <Link
+                    href={route('admin.reports.webmasters', { export: 1 })}
+                    className="rounded bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                >
+                    Выгрузить CSV
+                </Link>
+            </div>
             <div className="overflow-x-auto rounded-xl bg-white shadow-sm">
                 <table className="min-w-full divide-y">
                     <thead className="bg-gray-50">

@@ -1,12 +1,21 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 
 export default function Offers({ rows }) {
+    const { url, props } = usePage();
     return (
         <AuthenticatedLayout
             header={<h2 className="text-xl font-semibold text-gray-800">Отчет по офферам</h2>}
         >
             <Head title="Отчет по офферам" />
+            <div className="mb-3 flex justify-end">
+                <Link
+                    href={route('admin.reports.offers', { export: 1 })}
+                    className="rounded bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                >
+                    Выгрузить CSV
+                </Link>
+            </div>
             <ReportTable rows={rows} />
         </AuthenticatedLayout>
     );

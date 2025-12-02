@@ -8,7 +8,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
-        email: '',
+        login: '',
         password: '',
         remember: false,
     });
@@ -23,7 +23,7 @@ export default function Login({ status, canResetPassword }) {
 
     return (
         <GuestLayout>
-            <Head title="Log in" />
+            <Head title="Вход" />
 
             {status && (
                 <div className="mb-4 text-sm font-medium text-green-600">
@@ -33,24 +33,25 @@ export default function Login({ status, canResetPassword }) {
 
             <form onSubmit={submit}>
                 <div>
-                    <InputLabel htmlFor="email" value="Email" />
+                    <InputLabel htmlFor="login" value="Email или Telegram" />
 
                     <TextInput
-                        id="email"
-                        type="email"
-                        name="email"
-                        value={data.email}
+                        id="login"
+                        type="text"
+                        name="login"
+                        value={data.login}
                         className="mt-1 block w-full"
                         autoComplete="username"
                         isFocused={true}
-                        onChange={(e) => setData('email', e.target.value)}
+                        placeholder="user@example.com или @username"
+                        onChange={(e) => setData('login', e.target.value)}
                     />
 
-                    <InputError message={errors.email} className="mt-2" />
+                    <InputError message={errors.login} className="mt-2" />
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
+                    <InputLabel htmlFor="password" value="Пароль" />
 
                     <TextInput
                         id="password"
@@ -75,24 +76,44 @@ export default function Login({ status, canResetPassword }) {
                             }
                         />
                         <span className="ms-2 text-sm text-gray-600">
-                            Remember me
+                            Запомнить меня
                         </span>
                     </label>
                 </div>
 
-                <div className="mt-4 flex items-center justify-end">
+                <div className="mt-4 flex items-center justify-between gap-3">
+                    <div className="text-sm text-gray-600">
+                        Нет аккаунта?{' '}
+                        <Link
+                            href={route('register')}
+                            className="text-indigo-600 hover:text-indigo-700"
+                        >
+                            Зарегистрироваться
+                        </Link>
+                    </div>
                     {canResetPassword && (
                         <Link
                             href={route('password.request')}
                             className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                         >
-                            Forgot your password?
+                            Забыли пароль?
                         </Link>
                     )}
 
                     <PrimaryButton className="ms-4" disabled={processing}>
-                        Log in
+                        Войти
                     </PrimaryButton>
+                </div>
+
+                <div className="mt-4 text-xs text-gray-500">
+                    BoostClicks — Евгений Леонтьев —{' '}
+                    <a className="text-indigo-600" href="https://t.me/boostclicks">
+                        https://t.me/boostclicks
+                    </a>{' '}
+                    · BoostClicks —{' '}
+                    <a className="text-indigo-600" href="https://boostclicks.ru/">
+                        https://boostclicks.ru/
+                    </a>
                 </div>
             </form>
         </GuestLayout>

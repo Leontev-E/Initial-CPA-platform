@@ -6,9 +6,21 @@ export default function Show({ webmaster, stats, balance }) {
         is_active: webmaster.is_active,
     });
 
+    const passwordForm = useForm({
+        password: '',
+        password_confirmation: '',
+    });
+
     const submit = (e) => {
         e.preventDefault();
         patch(route('admin.webmasters.update', webmaster.id));
+    };
+
+    const submitPassword = (e) => {
+        e.preventDefault();
+        passwordForm.patch(route('admin.webmasters.updatePassword', webmaster.id), {
+            onSuccess: () => passwordForm.reset('password', 'password_confirmation'),
+        });
     };
 
     return (
@@ -18,12 +30,13 @@ export default function Show({ webmaster, stats, balance }) {
             <Head title={webmaster.name} />
 
             <div className="grid gap-4 lg:grid-cols-3">
-                <div className="rounded-xl bg-white p-4 shadow-sm">
-                    <div className="text-sm text-gray-700">Email: {webmaster.email}</div>
+                <div className="rounded-xl bg-white p-4 shadow-sm space-y-3">
+                    <div className="text-sm text-gray-700">Email: {webmaster.email ?? '—'}</div>
+                    <div className="text-sm text-gray-700">Telegram: {webmaster.telegram ?? '—'}</div>
                     <div className="text-sm text-gray-700">
                         Баланс: <span className="font-semibold">{balance} $</span>
                     </div>
-                    <form onSubmit={submit} className="mt-3 space-y-2 text-sm">
+                    <form onSubmit={submit} className="space-y-2 text-sm">
                         <label className="inline-flex items-center gap-2">
                             <input
                                 type="checkbox"
@@ -39,7 +52,38 @@ export default function Show({ webmaster, stats, balance }) {
                             disabled={processing}
                             className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white"
                         >
-                            Сохранить
+                            Сохранить статус
+                        </button>
+                    </form>
+                    <form onSubmit={submitPassword} className="space-y-2 text-sm border-t pt-3">
+                        <div className="font-semibold text-gray-800">Сменить пароль</div>
+                        <input
+                            type="password"
+                            className="w-full rounded border px-3 py-2"
+                            placeholder="Новый пароль"
+                            value={passwordForm.data.password}
+                            onChange={(e) => passwordForm.setData('password', e.target.value)}
+                        />
+                        <input
+                            type="password"
+                            className="w-full rounded border px-3 py-2"
+                            placeholder="Подтверждение пароля"
+                            value={passwordForm.data.password_confirmation}
+                            onChange={(e) =>
+                                passwordForm.setData('password_confirmation', e.target.value)
+                            }
+                        />
+                        {passwordForm.errors.password && (
+                            <div className="text-xs text-red-600">
+                                {passwordForm.errors.password}
+                            </div>
+                        )}
+                        <button
+                            type="submit"
+                            disabled={passwordForm.processing}
+                            className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white"
+                        >
+                            Обновить пароль
                         </button>
                     </form>
                 </div>

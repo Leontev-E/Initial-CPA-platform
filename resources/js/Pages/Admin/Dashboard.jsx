@@ -15,9 +15,9 @@ export default function Dashboard({
 
     return (
         <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold text-gray-800">Дашборд ПП</h2>}
+            header={<h2 className="text-xl font-semibold text-gray-800">Дашборд партнерской программы</h2>}
         >
-            <Head title="Дашборд" />
+            <Head title="Дашборд партнерской программы" />
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard title="Всего лидов" value={totalLeads} />

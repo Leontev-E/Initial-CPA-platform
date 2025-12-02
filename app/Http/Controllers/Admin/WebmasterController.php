@@ -106,4 +106,19 @@ class WebmasterController extends Controller
 
         return back()->with('success', 'Статус вебмастера обновлен');
     }
+
+    public function updatePassword(Request $request, User $user)
+    {
+        abort_unless($user->role === User::ROLE_WEBMASTER, 404);
+
+        $validated = $request->validate([
+            'password' => ['required', 'confirmed', 'min:8'],
+        ]);
+
+        $user->update([
+            'password' => $validated['password'],
+        ]);
+
+        return back()->with('success', 'Пароль обновлен');
+    }
 }

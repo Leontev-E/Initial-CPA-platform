@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-export default function Index({ webmasters, filters }) {
+export default function Index({ webmasters }) {
     const { data, setData, post, processing, reset } = useForm({
         name: '',
         email: '',
@@ -24,7 +24,7 @@ export default function Index({ webmasters, filters }) {
             <div className="grid gap-4 lg:grid-cols-3">
                 <div className="rounded-xl bg-white p-4 shadow-sm">
                     <h3 className="text-sm font-semibold text-gray-700">
-                        Создать
+                        Создать вебмастера
                     </h3>
                     <form onSubmit={submit} className="mt-3 space-y-3">
                         <input
