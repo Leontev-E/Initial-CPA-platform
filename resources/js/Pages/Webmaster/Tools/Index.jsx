@@ -6,13 +6,22 @@ export default function Index({ apiKey, postbacks }) {
     const [tab, setTab] = useState('api');
     const { post } = useForm({});
     const defaultEvents = ['lead', 'in_work', 'sale', 'cancel', 'trash'];
+
+    const initialPostbacks = () => {
+        const map = {};
+        (postbacks || []).forEach((pb) => {
+            map[pb.event] = { event: pb.event, url: pb.url, is_active: pb.is_active };
+        });
+        defaultEvents.forEach((ev) => {
+            if (!map[ev]) {
+                map[ev] = { event: ev, url: '', is_active: true };
+            }
+        });
+        return Object.values(map);
+    };
+
     const pbForm = useForm({
-        postbacks:
-            postbacks?.map((pb) => ({
-                event: pb.event,
-                url: pb.url,
-                is_active: pb.is_active,
-            })) ?? defaultEvents.map((ev) => ({ event: ev, url: '', is_active: true })),
+        postbacks: initialPostbacks(),
     });
 
     const regenerate = () => {
@@ -103,11 +112,20 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                 )}
 
                 {tab === 'postbacks' && (
-                    <div>
-                        <p className="text-sm text-gray-700">
-                            Укажите URL для событий. Мы подставляем макросы: <code>{'{lead_id}'}</code>, <code>{'{status}'}</code>, <code>{'{payout}'}</code>, <code>{'{subid}'}</code>, <code>{'{geo}'}</code>.
-                        </p>
-                        <form onSubmit={savePostbacks} className="mt-3 space-y-3">
+                    <div className="space-y-4">
+                        <div className="rounded bg-slate-50 p-3 text-sm text-gray-700">
+                            <div className="font-semibold">Что это?</div>
+                            <p className="mt-1">
+                                Постбек — мы отправляем запрос при смене статуса лида. Поддерживаем статусы: <strong>lead, in_work, sale, cancel, trash</strong>.
+                            </p>
+                            <p className="mt-1">
+                                Макросы: <code>{'{lead_id}'}</code>, <code>{'{status}'}</code>, <code>{'{payout}'}</code>, <code>{'{subid}'}</code>, <code>{'{geo}'}</code>, <code>{'{offer_id}'}</code>.
+                            </p>
+                            <p className="mt-1">
+                                Пример URL: <code>https://tracker.com/postback?subid={'{subid}'}&status={'{status}'}&payout={'{payout}'}&lead={'{lead_id}'}</code>
+                            </p>
+                        </div>
+                        <form onSubmit={savePostbacks} className="space-y-3">
                             {pbForm.data.postbacks.map((pb, idx) => (
                                 <div
                                     key={pb.event}
@@ -126,7 +144,7 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                                                 ...pbForm.data.postbacks.slice(idx + 1),
                                             ])
                                         }
-                                        placeholder="https://..."
+                                        placeholder="https://tracker.com/postback"
                                     />
                                     <label className="mt-2 inline-flex items-center gap-2 text-xs text-gray-600">
                                         <input
@@ -146,12 +164,12 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                             ))}
                             <button
                                 type="submit"
-                                className="rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white"
+                                className="rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
                             >
                                 Сохранить постбеки
                             </button>
                         </form>
-                        <div className="mt-3 rounded bg-slate-50 p-3 text-xs text-gray-700">
+                        <div className="rounded bg-slate-50 p-3 text-xs text-gray-700">
                             <div className="font-semibold">Пример отправки:</div>
                             <div>POST {`<ваш URL>`} с form-data:</div>
                             <ul className="list-disc pl-4">
