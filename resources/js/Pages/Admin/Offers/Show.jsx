@@ -34,11 +34,11 @@ export default function Show({ offer }) {
                         Редактирование
                     </h3>
                     <form onSubmit={submit} className="mt-3 grid gap-3" encType="multipart/form-data">
-                        {offer.image_path && (
+                        {offer.image_url && (
                             <div>
                                 <div className="text-xs text-gray-500">Текущее фото</div>
                                 <img
-                                    src={`/storage/${offer.image_path}`}
+                                    src={offer.image_url}
                                     alt={offer.name}
                                     className="mt-1 h-28 w-28 rounded object-cover"
                                 />

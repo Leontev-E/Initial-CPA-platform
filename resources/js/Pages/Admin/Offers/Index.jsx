@@ -147,9 +147,9 @@ export default function Index({ offers, categories }) {
                                     className="flex items-center justify-between py-3 transition hover:bg-slate-50"
                                 >
                                     <div className="flex items-center gap-3">
-                                        {offer.image_path && (
+                                        {offer.image_url && (
                                             <img
-                                                src={`/storage/${offer.image_path}`}
+                                                src={offer.image_url}
                                                 alt={offer.name}
                                                 className="h-10 w-10 rounded object-cover"
                                             />

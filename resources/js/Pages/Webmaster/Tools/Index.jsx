@@ -5,17 +5,14 @@ import { useState } from 'react';
 export default function Index({ apiKey, postbacks }) {
     const [tab, setTab] = useState('api');
     const { post } = useForm({});
+    const defaultEvents = ['lead', 'in_work', 'sale', 'cancel', 'trash'];
     const pbForm = useForm({
         postbacks:
             postbacks?.map((pb) => ({
                 event: pb.event,
                 url: pb.url,
                 is_active: pb.is_active,
-            })) ?? [
-                { event: 'lead', url: '', is_active: true },
-                { event: 'sale', url: '', is_active: true },
-                { event: 'trash', url: '', is_active: true },
-            ],
+            })) ?? defaultEvents.map((ev) => ({ event: ev, url: '', is_active: true })),
     });
 
     const regenerate = () => {
@@ -53,7 +50,7 @@ export default function Index({ apiKey, postbacks }) {
                         <div className="flex items-center justify-between rounded border px-3 py-2 text-sm text-gray-700">
                             <div>
                                 <div className="text-xs uppercase text-gray-500">API ключ</div>
-                                <span className="font-mono">{apiKey.key}</span>
+                                <span className="font-mono break-all">{apiKey.key}</span>
                             </div>
                             <button
                                 onClick={regenerate}
@@ -66,7 +63,7 @@ export default function Index({ apiKey, postbacks }) {
                             <div className="text-xs uppercase text-gray-500">Эндпоинт</div>
                             <div className="font-mono break-all">POST https://openai-book.store/api/leads</div>
                             <div className="text-xs uppercase text-gray-500">Заголовок</div>
-                            <div className="font-mono">X-API-KEY: {apiKey.key}</div>
+                            <div className="font-mono break-all">X-API-KEY: {apiKey.key}</div>
                             <div className="text-xs uppercase text-gray-500">Пример тела</div>
                             <pre className="whitespace-pre-wrap rounded bg-slate-50 p-3 text-xs text-gray-800">
 {`{
@@ -84,6 +81,22 @@ export default function Index({ apiKey, postbacks }) {
   "utm_content": "ad1",
   "tags": {"adset_id": "123", "ad_id": "456"}
 }`}
+                            </pre>
+                            <div className="text-xs uppercase text-gray-500">PHP пример (api.php)</div>
+                            <pre className="whitespace-pre-wrap rounded bg-slate-50 p-3 text-xs text-gray-800">
+{`<?php
+// api.php
+$data = json_decode(file_get_contents('php://input'), true);
+$offerId = $data['offer_id'] ?? null;
+$geo = $data['geo'] ?? null;
+$name = $data['customer_name'] ?? null;
+$phone = $data['customer_phone'] ?? null;
+
+// Сохраните лид в своей системе...
+
+http_response_code(200);
+echo json_encode(['status' => 'ok', 'lead_id' => 123]);
+`}
                             </pre>
                         </div>
                     </div>
@@ -140,7 +153,7 @@ export default function Index({ apiKey, postbacks }) {
                         </form>
                         <div className="mt-3 rounded bg-slate-50 p-3 text-xs text-gray-700">
                             <div className="font-semibold">Пример отправки:</div>
-                            <div>POST {`<ваш URL>`} c form-data:</div>
+                            <div>POST {`<ваш URL>`} с form-data:</div>
                             <ul className="list-disc pl-4">
                                 <li>lead_id</li>
                                 <li>status</li>

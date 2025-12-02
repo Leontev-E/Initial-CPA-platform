@@ -50,7 +50,7 @@ export default function Show({ webmaster, stats, balance }) {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white"
+                            className="mt-2 w-full rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white"
                         >
                             Сохранить статус
                         </button>

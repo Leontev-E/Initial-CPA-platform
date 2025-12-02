@@ -101,7 +101,9 @@ class LeadController extends Controller
     {
         $event = match ($lead->status) {
             'sale' => 'sale',
-            'cancel', 'trash' => 'trash',
+            'cancel' => 'cancel',
+            'trash' => 'trash',
+            'in_work' => 'in_work',
             default => 'lead',
         };
 

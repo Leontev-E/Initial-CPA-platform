@@ -9,9 +9,9 @@ export default function Show({ offer }) {
             <Head title={offer.name} />
             <div className="grid gap-4 lg:grid-cols-3">
                 <div className="rounded-xl bg-white p-4 shadow-sm lg:col-span-2 space-y-3">
-                    {offer.image_path && (
+                    {offer.image_url && (
                         <img
-                            src={`/storage/${offer.image_path}`}
+                            src={offer.image_url}
                             alt={offer.name}
                             className="h-52 w-full rounded object-cover"
                         />

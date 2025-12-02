@@ -46,7 +46,7 @@ class ToolController extends Controller
         $user = $request->user();
         $validated = $request->validate([
             'postbacks' => ['array'],
-            'postbacks.*.event' => ['required', 'in:lead,sale,trash'],
+            'postbacks.*.event' => ['required', 'in:lead,in_work,sale,cancel,trash'],
             'postbacks.*.url' => ['required', 'url'],
             'postbacks.*.is_active' => ['boolean'],
         ]);

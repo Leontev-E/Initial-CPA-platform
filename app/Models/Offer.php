@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Offer extends Model
 {
@@ -24,6 +25,8 @@ class Offer extends Model
         'is_active' => 'boolean',
     ];
 
+    protected $appends = ['image_url'];
+
     public function category()
     {
         return $this->belongsTo(OfferCategory::class, 'offer_category_id');
@@ -37,5 +40,10 @@ class Offer extends Model
     public function leads()
     {
         return $this->hasMany(Lead::class);
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image_path ? Storage::url($this->image_path) : null;
     }
 }

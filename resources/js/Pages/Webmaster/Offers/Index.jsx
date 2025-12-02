@@ -15,9 +15,9 @@ export default function Index({ offers }) {
                         className="rounded-xl bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
                     >
                         <div className="flex items-center gap-3">
-                            {offer.image_path && (
+                            {offer.image_url && (
                                 <img
-                                    src={`/storage/${offer.image_path}`}
+                                    src={offer.image_url}
                                     alt={offer.name}
                                     className="h-14 w-14 rounded object-cover"
                                 />
