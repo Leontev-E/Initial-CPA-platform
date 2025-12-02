@@ -1,0 +1,82 @@
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, useForm } from '@inertiajs/react';
+
+export default function Show({ webmaster, stats, balance }) {
+    const { data, setData, patch, processing } = useForm({
+        is_active: webmaster.is_active,
+    });
+
+    const submit = (e) => {
+        e.preventDefault();
+        patch(route('admin.webmasters.update', webmaster.id));
+    };
+
+    return (
+        <AuthenticatedLayout
+            header={<h2 className="text-xl font-semibold text-gray-800">{webmaster.name}</h2>}
+        >
+            <Head title={webmaster.name} />
+
+            <div className="grid gap-4 lg:grid-cols-3">
+                <div className="rounded-xl bg-white p-4 shadow-sm">
+                    <div className="text-sm text-gray-700">Email: {webmaster.email}</div>
+                    <div className="text-sm text-gray-700">
+                        Баланс: <span className="font-semibold">{balance} $</span>
+                    </div>
+                    <form onSubmit={submit} className="mt-3 space-y-2 text-sm">
+                        <label className="inline-flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                checked={data.is_active}
+                                onChange={(e) =>
+                                    setData('is_active', e.target.checked)
+                                }
+                            />
+                            Активен
+                        </label>
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white"
+                        >
+                            Сохранить
+                        </button>
+                    </form>
+                </div>
+
+                <div className="rounded-xl bg-white p-4 shadow-sm">
+                    <h3 className="text-sm font-semibold text-gray-700">
+                        Статистика
+                    </h3>
+                    <div className="mt-3 space-y-2 text-sm text-gray-700">
+                        <div>Лиды: {stats.leads}</div>
+                        <div>Продажи: {stats.sales}</div>
+                        <div>Payout: {stats.payout} $</div>
+                    </div>
+                </div>
+
+                <div className="rounded-xl bg-white p-4 shadow-sm">
+                    <h3 className="text-sm font-semibold text-gray-700">
+                        Индивидуальные ставки
+                    </h3>
+                    <div className="mt-3 space-y-2 text-sm text-gray-700">
+                        {webmaster.rates?.map((rate) => (
+                            <div
+                                key={rate.id}
+                                className="flex items-center justify-between rounded border px-3 py-2"
+                            >
+                                <div>{rate.offer?.name}</div>
+                                <div className="font-semibold">
+                                    {rate.custom_payout} $
+                                </div>
+                            </div>
+                        ))}
+                        {webmaster.rates?.length === 0 && (
+                            <div className="text-gray-500">Нет индивидуальных ставок</div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </AuthenticatedLayout>
+    );
+}
