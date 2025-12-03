@@ -11,7 +11,13 @@ export default function Dashboard({
     topWebmasters,
     chartData,
 }) {
-    const statusList = ['new', 'in_work', 'sale', 'cancel', 'trash'];
+    const statusList = [
+        { key: 'new', label: 'Новый' },
+        { key: 'in_work', label: 'В работе' },
+        { key: 'sale', label: 'Продажа' },
+        { key: 'cancel', label: 'Отмена' },
+        { key: 'trash', label: 'Треш' },
+    ];
 
     return (
         <AuthenticatedLayout
@@ -22,7 +28,7 @@ export default function Dashboard({
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard title="Всего лидов" value={totalLeads} />
                 <StatCard title="Продажи" value={salesCount} />
-                <StatCard title="Payout за период" value={`${totalPayout} $`} />
+                <StatCard title="Доход за период" value={`${totalPayout} $`} />
                 <StatCard title="Конверсия" value={`${kpi.conversion}%`} />
             </div>
 
@@ -34,12 +40,12 @@ export default function Dashboard({
                     <div className="mt-2 grid grid-cols-2 gap-2">
                         {statusList.map((status) => (
                             <div
-                                key={status}
+                                key={status.key}
                                 className="rounded-lg border p-3 text-sm"
                             >
-                                <div className="text-gray-500">{status}</div>
+                                <div className="text-gray-500">{status.label}</div>
                                 <div className="text-lg font-semibold text-gray-900">
-                                    {statusCounts?.[status] ?? 0}
+                                    {statusCounts?.[status.key] ?? 0}
                                 </div>
                             </div>
                         ))}
@@ -52,7 +58,7 @@ export default function Dashboard({
                     </h3>
                     <div className="mt-2 grid grid-cols-2 gap-2">
                         <StatCard
-                            title="Конверсия в sale"
+                            title="Конверсия в продажу"
                             value={`${kpi.conversion}%`}
                         />
                         <StatCard
@@ -82,7 +88,7 @@ export default function Dashboard({
                 <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-gray-600">
                     <div className="font-semibold">Дата</div>
                     <div className="font-semibold text-right">Лиды</div>
-                    <div className="font-semibold text-right">Payout</div>
+                    <div className="font-semibold text-right">Доход</div>
                     {chartData?.map((row) => (
                         <>
                             <div key={`${row.date}-d`}>{row.date}</div>
@@ -103,7 +109,7 @@ export default function Dashboard({
 function StatCard({ title, value }) {
     return (
         <div className="rounded-xl bg-white p-4 shadow-sm">
-            <div className="text-xs uppercase text-gray-500">{title}</div>
+            <div className="text-xs text-gray-600">{title}</div>
             <div className="mt-2 text-2xl font-semibold text-gray-900">
                 {value}
             </div>
