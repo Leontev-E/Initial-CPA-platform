@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -33,27 +34,69 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $existing = User::query()
+            ->where(function ($q) use ($request) {
+                $q->where('email', $request->email)
+                    ->orWhere('telegram', $request->telegram);
+            })
+            ->first();
+
+        if ($existing && $existing->email_verified_at) {
+            // Уже подтвержденный пользователь
+            throw ValidationException::withMessages([
+                'email' => 'Данный email уже подтвержден. Обратитесь к менеджеру.',
+            ]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'telegram' => 'required|string|max:255|unique:users,telegram',
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($existing?->id),
+            ],
+            'telegram' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('users', 'telegram')->ignore($existing?->id),
+            ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'password.confirmed' => 'Пароли не совпадают',
+            'password.min' => 'Минимальная длина пароля 8 символов',
+            'email.unique' => 'Email уже используется, но не подтвержден. Введите код из письма или запросите новый.',
+            'telegram.unique' => 'Telegram уже используется, но не подтвержден.',
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $validated['email'],
-            'telegram' => $validated['telegram'],
-            'password' => $request->password,
-            'role' => User::ROLE_ADMIN,
-            'email_verified_at' => null,
-        ]);
+        if ($existing) {
+            $user = tap($existing)->update([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'telegram' => $validated['telegram'],
+                'password' => $validated['password'],
+                'role' => User::ROLE_ADMIN,
+                'email_verified_at' => null,
+            ]);
+        } else {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'telegram' => $validated['telegram'],
+                'password' => $validated['password'],
+                'role' => User::ROLE_ADMIN,
+                'email_verified_at' => null,
+            ]);
+        }
 
         $code = random_int(100000, 999999);
         Cache::put('verify_code_'.$user->id, $code, now()->addMinutes(15));
 
         try {
-            Mail::raw("Ваш код подтверждения: {$code}", function ($message) use ($user) {
+            Mail::send('emails.verify_code', ['code' => $code, 'user' => $user], function ($message) use ($user) {
                 $message->to($user->email)->subject('Код подтверждения BoostClicks');
             });
         } catch (\Throwable $e) {

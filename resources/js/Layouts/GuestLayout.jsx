@@ -1,9 +1,11 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import LanguageToggle from '@/Components/LanguageToggle';
 import { Link } from '@inertiajs/react';
 
 export default function GuestLayout({ children }) {
     return (
         <div className="flex min-h-screen flex-col items-center bg-slate-50 pt-6 sm:justify-center sm:pt-0">
+            <LanguageToggle />
             <div className="flex items-center gap-3">
                 <Link href="/">
                     <ApplicationLogo className="h-16 w-auto" />

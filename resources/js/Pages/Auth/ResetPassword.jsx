@@ -4,6 +4,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 
 export default function ResetPassword({ token, email }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -12,6 +13,8 @@ export default function ResetPassword({ token, email }) {
         password: '',
         password_confirmation: '',
     });
+    const [showPassword, setShowPassword] = useState(false);
+    const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
     const submit = (e) => {
         e.preventDefault();
@@ -23,7 +26,7 @@ export default function ResetPassword({ token, email }) {
 
     return (
         <GuestLayout>
-            <Head title="Reset Password" />
+            <Head title="Сброс пароля" />
 
             <form onSubmit={submit}>
                 <div>
@@ -43,18 +46,28 @@ export default function ResetPassword({ token, email }) {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
+                    <InputLabel htmlFor="password" value="Пароль" />
 
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        isFocused={true}
-                        onChange={(e) => setData('password', e.target.value)}
-                    />
+                    <div className="relative">
+                        <TextInput
+                            id="password"
+                            type={showPassword ? 'text' : 'password'}
+                            name="password"
+                            value={data.password}
+                            className="mt-1 block w-full"
+                            autoComplete="new-password"
+                            isFocused={true}
+                            placeholder="Минимум 8 символов"
+                            onChange={(e) => setData('password', e.target.value)}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword((v) => !v)}
+                            className="absolute inset-y-0 right-3 mt-1 flex items-center text-xs text-gray-500"
+                        >
+                            {showPassword ? 'Скрыть' : 'Показать'}
+                        </button>
+                    </div>
 
                     <InputError message={errors.password} className="mt-2" />
                 </div>
@@ -62,20 +75,31 @@ export default function ResetPassword({ token, email }) {
                 <div className="mt-4">
                     <InputLabel
                         htmlFor="password_confirmation"
-                        value="Confirm Password"
+                        value="Подтверждение пароля"
                     />
 
-                    <TextInput
-                        type="password"
-                        id="password_confirmation"
-                        name="password_confirmation"
-                        value={data.password_confirmation}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
-                        }
-                    />
+                    <div className="relative">
+                        <TextInput
+                            type={showPasswordConfirm ? 'text' : 'password'}
+                            id="password_confirmation"
+                            name="password_confirmation"
+                            value={data.password_confirmation}
+                            className="mt-1 block w-full"
+                            autoComplete="new-password"
+                            onChange={(e) =>
+                                setData('password_confirmation', e.target.value)
+                            }
+                        />
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setShowPasswordConfirm((v) => !v)
+                            }
+                            className="absolute inset-y-0 right-3 mt-1 flex items-center text-xs text-gray-500"
+                        >
+                            {showPasswordConfirm ? 'Скрыть' : 'Показать'}
+                        </button>
+                    </div>
 
                     <InputError
                         message={errors.password_confirmation}
@@ -85,7 +109,7 @@ export default function ResetPassword({ token, email }) {
 
                 <div className="mt-4 flex items-center justify-end">
                     <PrimaryButton className="ms-4" disabled={processing}>
-                        Reset Password
+                        Сбросить пароль
                     </PrimaryButton>
                 </div>
             </form>
