@@ -5,25 +5,27 @@ import { useMemo } from 'react';
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
 
+    const allowedSections = user.invited_by ? (user.permissions?.sections || []) : null;
+
     const navItems = useMemo(() => {
         if (user.role === 'admin') {
             return [
-                { label: 'Дашборд партнерской программы', name: 'admin.dashboard' },
-                { label: 'Категории', name: 'admin.offer-categories.index' },
-                { label: 'Офферы', name: 'admin.offers.index' },
-                { label: 'Лиды', name: 'admin.leads.index' },
-                { label: 'Вебмастера', name: 'admin.webmasters.index' },
-                { label: 'Аналитика', name: 'admin.reports.offers' },
-                { label: 'Выплаты', name: 'admin.payouts.index' },
+                { label: 'Дашборд партнерской программы', name: 'admin.dashboard', section: null },
+                { label: 'Категории', name: 'admin.offer-categories.index', section: 'categories' },
+                { label: 'Офферы', name: 'admin.offers.index', section: 'offers' },
+                { label: 'Лиды', name: 'admin.leads.index', section: 'leads' },
+                { label: 'Вебмастера', name: 'admin.webmasters.index', section: 'webmasters' },
+                { label: 'Аналитика', name: 'admin.reports.offers', section: 'reports' },
+                { label: 'Выплаты', name: 'admin.payouts.index', section: 'payouts' },
             ];
         }
 
         return [
-            { label: 'Дашборд вебмастера', name: 'webmaster.dashboard' },
-            { label: 'Офферы', name: 'webmaster.offers.index' },
-            { label: 'Статистика', name: 'webmaster.leads.index' },
-            { label: 'Инструменты', name: 'webmaster.tools.index' },
-            { label: 'Выплаты', name: 'webmaster.payouts.index' },
+            { label: 'Дашборд вебмастера', name: 'webmaster.dashboard', section: null },
+            { label: 'Офферы', name: 'webmaster.offers.index', section: null },
+            { label: 'Статистика', name: 'webmaster.leads.index', section: null },
+            { label: 'Инструменты', name: 'webmaster.tools.index', section: null },
+            { label: 'Выплаты', name: 'webmaster.payouts.index', section: null },
         ];
     }, [user.role]);
 
@@ -59,22 +61,27 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
                 </div>
                 <nav className="space-y-1">
-                    {navItems.map((item) => (
-                        <Link
-                            key={item.name}
-                            href={route(item.name)}
-                            className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition hover:bg-indigo-50 hover:text-indigo-700 ${
-                                isActive(item.name)
-                                    ? 'bg-indigo-600 text-white'
-                                    : 'text-gray-700'
-                            }`}
-                        >
-                            {item.label}
-                            {isActive(item.name) && (
-                                <span className="h-2 w-2 rounded-full bg-white" />
-                            )}
-                        </Link>
-                    ))}
+                    {navItems
+                        .filter((item) => {
+                            if (!allowedSections || item.section === null) return true;
+                            return allowedSections.includes(item.section);
+                        })
+                        .map((item) => (
+                            <Link
+                                key={item.name}
+                                href={route(item.name)}
+                                className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition hover:bg-indigo-50 hover:text-indigo-700 ${
+                                    isActive(item.name)
+                                        ? 'bg-indigo-600 text-white'
+                                        : 'text-gray-700'
+                                }`}
+                            >
+                                {item.label}
+                                {isActive(item.name) && (
+                                    <span className="h-2 w-2 rounded-full bg-white" />
+                                )}
+                            </Link>
+                        ))}
                 </nav>
                 <div className="mt-auto space-y-2 border-t pt-4 text-sm text-gray-600">
                     <Link href={route('profile.edit')} className="block rounded-lg border border-indigo-100 px-3 py-2 transition hover:border-indigo-300 hover:bg-indigo-50">

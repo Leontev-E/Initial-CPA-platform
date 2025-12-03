@@ -24,7 +24,7 @@ Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('offer-categories', AdminOfferCategoryController::class)->except(['create', 'edit', 'show']);
@@ -67,6 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/profile/invite', [ProfileController::class, 'invite'])->name('profile.invite');
+    Route::delete('/profile/employees/{user}', [ProfileController::class, 'destroyEmployee'])->name('profile.employees.destroy');
 });
 
 Route::post('/locale', function (Request $request) {

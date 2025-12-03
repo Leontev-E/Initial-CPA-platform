@@ -17,8 +17,16 @@
     <div class="card">
         <div class="title">Приглашение в партнерскую программу BoostClicks</div>
         <p class="text">Вас пригласил: {{ $inviter->name }} ({{ $inviter->email ?? '—' }})</p>
+        @php
+            $roleMap = [
+                'admin' => 'Админ',
+                'tech' => 'Технический специалист',
+                'accounting' => 'Бухгалтерия',
+                'operator' => 'Оператор',
+            ];
+        @endphp
         <div class="block">
-            <div class="text"><strong>Роль:</strong> {{ $employee->employee_role }}</div>
+            <div class="text"><strong>Роль:</strong> {{ $roleMap[$employee->employee_role] ?? $employee->employee_role }}</div>
             <div class="text"><strong>Логин (email):</strong> <span class="mono">{{ $employee->email }}</span></div>
             <div class="text"><strong>Пароль:</strong> <span class="mono">{{ $password }}</span></div>
         </div>

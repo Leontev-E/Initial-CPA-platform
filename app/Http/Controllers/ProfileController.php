@@ -55,7 +55,7 @@ class ProfileController extends Controller
     public function invite(Request $request): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->isAdmin(), 403);
+        abort_unless($user->isAdmin() && $user->invited_by === null, 403);
 
         $telegramInput = $request->input('telegram', '');
         $normalizedTelegram = str_starts_with($telegramInput, '@') ? $telegramInput : '@'.$telegramInput;
@@ -108,6 +108,18 @@ class ProfileController extends Controller
         });
 
         return back()->with('success', 'Данные для входа отправлены сотруднику '.$employee->email.' с ролью '.$employee->employee_role);
+    }
+
+    public function destroyEmployee(Request $request, User $user): RedirectResponse
+    {
+        $owner = $request->user();
+        abort_unless($owner->isAdmin() && $owner->invited_by === null, 403);
+        abort_if($user->id === $owner->id, 403);
+        abort_if($user->invited_by !== $owner->id, 403);
+
+        $user->delete();
+
+        return back()->with('success', 'Сотрудник удален');
     }
 
     /**
