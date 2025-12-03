@@ -3,20 +3,36 @@ import { Head, useForm, usePage } from '@inertiajs/react';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
+import { useEffect } from 'react';
 
 export default function Edit({ mustVerifyEmail, status, employees = [] }) {
     const { flash } = usePage().props;
+    const defaultByRole = {
+        admin: {
+            sections: ['categories', 'offers', 'leads', 'webmasters', 'payouts', 'reports'],
+            actions: { create: true, update: true, delete: true },
+        },
+        tech: {
+            sections: ['offers', 'leads', 'reports'],
+            actions: { create: true, update: true, delete: false },
+        },
+        accounting: {
+            sections: ['payouts', 'reports'],
+            actions: { create: false, update: true, delete: false },
+        },
+        operator: {
+            sections: ['leads'],
+            actions: { create: false, update: true, delete: false },
+        },
+    };
+
     const inviteForm = useForm({
         name: '',
         email: '',
         telegram: '',
         employee_role: 'admin',
-        sections: ['offers', 'categories', 'leads', 'webmasters', 'payouts', 'reports'],
-        actions: {
-            create: true,
-            update: true,
-            delete: false,
-        },
+        sections: defaultByRole.admin.sections,
+        actions: defaultByRole.admin.actions,
     });
 
     const submitInvite = (e) => {
@@ -25,6 +41,31 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
             preserveScroll: true,
             onSuccess: () => inviteForm.reset('name', 'email', 'telegram'),
         });
+    };
+
+    useEffect(() => {
+        const roleDefaults = defaultByRole[inviteForm.data.employee_role] || defaultByRole.admin;
+        inviteForm.setData((prev) => ({
+            ...prev,
+            sections: roleDefaults.sections,
+            actions: roleDefaults.actions,
+        }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [inviteForm.data.employee_role]);
+
+    const sectionLabels = {
+        categories: 'Категории',
+        offers: 'Офферы',
+        leads: 'Лиды',
+        webmasters: 'Вебмастера',
+        payouts: 'Выплаты',
+        reports: 'Аналитика и отчеты',
+    };
+
+    const actionLabels = {
+        create: 'Создание',
+        update: 'Редактирование',
+        delete: 'Удаление',
     };
 
     return (
@@ -64,7 +105,7 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
                             <div className="grid gap-3 md:grid-cols-2">
                                 <input
                                     className="w-full rounded border px-3 py-2"
-                                    placeholder="Имя/название"
+                                    placeholder="Имя сотрудника"
                                     value={inviteForm.data.name}
                                     onChange={(e) => inviteForm.setData('name', e.target.value)}
                                 />
@@ -111,7 +152,7 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
                                                         : inviteForm.data.sections.filter((s) => s !== section));
                                                 }}
                                             />
-                                            {section}
+                                            {sectionLabels[section] ?? section}
                                         </label>
                                     ))}
                                 </div>
@@ -131,7 +172,7 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
                                                     })
                                                 }
                                             />
-                                            {action}
+                                            {actionLabels[action] ?? action}
                                         </label>
                                     ))}
                                 </div>
@@ -162,10 +203,10 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
                                         <div className="text-gray-600">{emp.email} • {emp.telegram}</div>
                                         <div className="text-gray-500">Роль: {emp.employee_role}</div>
                                         <div className="text-gray-500">
-                                            Разделы: {(emp.permissions?.sections || []).join(', ') || '—'}
+                                            Разделы: {(emp.permissions?.sections || []).map((s) => sectionLabels[s] ?? s).join(', ') || '—'}
                                         </div>
                                         <div className="text-gray-500">
-                                            Действия: {Object.entries(emp.permissions?.actions || {}).filter(([,v])=>v).map(([k])=>k).join(', ') || '—'}
+                                            Действия: {Object.entries(emp.permissions?.actions || {}).filter(([,v])=>v).map(([k])=>actionLabels[k] ?? k).join(', ') || '—'}
                                         </div>
                                     </div>
                                     <div className="text-xs text-gray-400">{emp.created_at}</div>

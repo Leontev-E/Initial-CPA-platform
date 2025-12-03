@@ -6,8 +6,6 @@ export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
 
     const navItems = useMemo(() => {
-        const common = [{ label: 'Личный кабинет', name: 'profile.edit' }];
-
         if (user.role === 'admin') {
             return [
                 { label: 'Дашборд партнерской программы', name: 'admin.dashboard' },
@@ -17,7 +15,6 @@ export default function AuthenticatedLayout({ header, children }) {
                 { label: 'Вебмастера', name: 'admin.webmasters.index' },
                 { label: 'Аналитика', name: 'admin.reports.offers' },
                 { label: 'Выплаты', name: 'admin.payouts.index' },
-                ...common,
             ];
         }
 
@@ -27,12 +24,23 @@ export default function AuthenticatedLayout({ header, children }) {
             { label: 'Статистика', name: 'webmaster.leads.index' },
             { label: 'Инструменты', name: 'webmaster.tools.index' },
             { label: 'Выплаты', name: 'webmaster.payouts.index' },
-            ...common,
         ];
     }, [user.role]);
 
     const isActive = (name) =>
         route().current(name) || route().current(`${name}.*`);
+
+    const formatLastLogin = (value) => {
+        if (!value) return '—';
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return '—';
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        const hh = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        return `Дата: ${dd}.${mm}.${yyyy} · Время: ${hh}:${min}`;
+    };
 
     return (
         <div className="flex min-h-screen bg-slate-50">
@@ -102,16 +110,16 @@ export default function AuthenticatedLayout({ header, children }) {
                                 {user.role === 'admin' ? 'Партнерская программа' : 'Кабинет вебмастера'}
                             </div>
                         </div>
-                        <div className="flex items-center gap-4 text-right text-xs text-gray-500">
-                            <Link
-                                href={route('profile.edit')}
-                                className="rounded-full border border-indigo-200 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50"
-                            >
-                                Личный кабинет
-                            </Link>
-                            <div>Последний логин: {user.last_login_at ?? '—'}</div>
+                            <div className="flex items-center gap-4 text-right text-xs text-gray-500">
+                                <Link
+                                    href={route('profile.edit')}
+                                    className="rounded-full border border-indigo-200 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50"
+                                >
+                                    Личный кабинет
+                                </Link>
+                            <div>{formatLastLogin(user.last_login_at)}</div>
+                            </div>
                         </div>
-                    </div>
                 </header>
 
                 <main className="p-4 lg:p-8">{children}</main>
