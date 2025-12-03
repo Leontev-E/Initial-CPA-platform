@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,9 +21,18 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $user = $request->user();
+        $employees = [];
+        if ($user->isAdmin()) {
+            $employees = User::where('invited_by', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->get(['id', 'name', 'email', 'telegram', 'employee_role', 'permissions', 'created_at']);
+        }
+
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
+            'employees' => $employees,
         ]);
     }
 
@@ -38,6 +50,64 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return Redirect::route('profile.edit');
+    }
+
+    public function invite(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user->isAdmin(), 403);
+
+        $telegramInput = $request->input('telegram', '');
+        $normalizedTelegram = str_starts_with($telegramInput, '@') ? $telegramInput : '@'.$telegramInput;
+        $request->merge(['telegram' => $normalizedTelegram]);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'min:2', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'telegram' => ['required', 'string', 'max:255', 'unique:users,telegram'],
+            'employee_role' => ['required', 'in:admin,tech,accounting,operator'],
+            'sections' => ['array'],
+            'sections.*' => ['string'],
+            'actions' => ['array'],
+            'actions.create' => ['boolean'],
+            'actions.update' => ['boolean'],
+            'actions.delete' => ['boolean'],
+        ], [
+            'email.unique' => 'Email уже используется',
+            'telegram.unique' => 'Telegram уже используется',
+        ]);
+
+        $telegram = str_starts_with($data['telegram'], '@') ? $data['telegram'] : '@'.$data['telegram'];
+        $passwordPlain = Str::random(10);
+
+        $employee = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'telegram' => $telegram,
+            'password' => $passwordPlain,
+            'role' => User::ROLE_ADMIN,
+            'employee_role' => $data['employee_role'],
+            'permissions' => [
+                'sections' => $data['sections'] ?? [],
+                'actions' => [
+                    'create' => $data['actions']['create'] ?? false,
+                    'update' => $data['actions']['update'] ?? false,
+                    'delete' => $data['actions']['delete'] ?? false,
+                ],
+            ],
+            'invited_by' => $user->id,
+            'email_verified_at' => now(),
+        ]);
+
+        Mail::send('emails.employee_invite', [
+            'employee' => $employee,
+            'inviter' => $user,
+            'password' => $passwordPlain,
+        ], function ($message) use ($employee) {
+            $message->to($employee->email)->subject('Приглашение в BoostClicks');
+        });
+
+        return back()->with('success', 'Данные для входа отправлены сотруднику '.$employee->email.' с ролью '.$employee->employee_role);
     }
 
     /**

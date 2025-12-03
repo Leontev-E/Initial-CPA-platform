@@ -48,6 +48,10 @@ class RegisteredUserController extends Controller
             ]);
         }
 
+        $telegramInput = $request->input('telegram', '');
+        $normalizedTelegram = str_starts_with($telegramInput, '@') ? $telegramInput : '@'.$telegramInput;
+        $request->merge(['telegram' => $normalizedTelegram]);
+
         $validated = $request->validate([
             'name' => 'required|string|min:2|max:255',
             'email' => [
@@ -72,16 +76,11 @@ class RegisteredUserController extends Controller
             'telegram.unique' => 'Telegram уже используется, но не подтвержден.',
         ]);
 
-        $telegram = $validated['telegram'];
-        if (! str_starts_with($telegram, '@')) {
-            $telegram = '@'.$telegram;
-        }
-
         if ($existing) {
             $user = tap($existing)->update([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'telegram' => $telegram,
+                'telegram' => $validated['telegram'],
                 'password' => $validated['password'],
                 'role' => User::ROLE_ADMIN,
                 'email_verified_at' => null,
@@ -90,7 +89,7 @@ class RegisteredUserController extends Controller
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'telegram' => $telegram,
+                'telegram' => $validated['telegram'],
                 'password' => $validated['password'],
                 'role' => User::ROLE_ADMIN,
                 'email_verified_at' => null,
@@ -106,9 +105,12 @@ class RegisteredUserController extends Controller
             });
         } catch (\Throwable $e) {
             // Если почта не настроена, вернуть ошибку
-            $user->delete();
+            if (! $existing) {
+                $user->delete();
+            }
+
             throw ValidationException::withMessages([
-                'email' => 'Не удалось отправить код. Проверьте почту.',
+                'email' => 'Не удалось отправить код. Проверьте почту или повторите позже.',
             ]);
         }
 

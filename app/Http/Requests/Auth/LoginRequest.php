@@ -106,4 +106,21 @@ class LoginRequest extends FormRequest
     {
         return Str::transliterate(Str::lower($this->string('login')).'|'.$this->ip());
     }
+
+    public function messages(): array
+    {
+        return [
+            'login.email' => 'Укажите корректный email или начните с @ для Telegram',
+            'login.required' => 'Введите email или Telegram',
+            'password.required' => 'Введите пароль',
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'login' => 'логин',
+            'password' => 'пароль',
+        ];
+    }
 }

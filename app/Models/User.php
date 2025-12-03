@@ -29,6 +29,9 @@ class User extends Authenticatable
         'is_active',
         'last_login_at',
         'last_activity_at',
+        'employee_role',
+        'permissions',
+        'invited_by',
     ];
 
     /**
@@ -54,6 +57,7 @@ class User extends Authenticatable
             'last_activity_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'permissions' => 'array',
         ];
     }
 
