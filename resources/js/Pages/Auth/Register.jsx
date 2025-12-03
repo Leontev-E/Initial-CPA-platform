@@ -65,10 +65,10 @@ export default function Register() {
                         value={data.email}
                         className="mt-1 block w-full"
                         autoComplete="username"
-                        onChange={(e) => setData('email', e.target.value)}
-                        placeholder="user@example.com"
-                        required
-                    />
+                                onChange={(e) => setData('email', e.target.value)}
+                            placeholder="user@example.com"
+                            required
+                        />
 
                     <InputError message={errors.email} className="mt-2" />
                 </div>
@@ -82,10 +82,15 @@ export default function Register() {
                         name="telegram"
                         value={data.telegram}
                         className="mt-1 block w-full"
-                        onChange={(e) => setData('telegram', e.target.value)}
-                        placeholder="@username"
-                        required
-                    />
+                            onChange={(e) => {
+                                const v = e.target.value.startsWith('@')
+                                    ? e.target.value
+                                    : '@' + e.target.value;
+                                setData('telegram', v);
+                            }}
+                            placeholder="@username"
+                            required
+                        />
 
                     <InputError message={errors.telegram} className="mt-2" />
                 </div>

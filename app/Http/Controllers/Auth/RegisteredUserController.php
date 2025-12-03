@@ -49,7 +49,7 @@ class RegisteredUserController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|min:2|max:255',
             'email' => [
                 'required',
                 'string',
@@ -72,11 +72,16 @@ class RegisteredUserController extends Controller
             'telegram.unique' => 'Telegram уже используется, но не подтвержден.',
         ]);
 
+        $telegram = $validated['telegram'];
+        if (! str_starts_with($telegram, '@')) {
+            $telegram = '@'.$telegram;
+        }
+
         if ($existing) {
             $user = tap($existing)->update([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'telegram' => $validated['telegram'],
+                'telegram' => $telegram,
                 'password' => $validated['password'],
                 'role' => User::ROLE_ADMIN,
                 'email_verified_at' => null,
@@ -85,7 +90,7 @@ class RegisteredUserController extends Controller
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'telegram' => $validated['telegram'],
+                'telegram' => $telegram,
                 'password' => $validated['password'],
                 'role' => User::ROLE_ADMIN,
                 'email_verified_at' => null,

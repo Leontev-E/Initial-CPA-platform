@@ -13,6 +13,7 @@ use App\Http\Controllers\Webmaster\DashboardController as WebmasterDashboardCont
 use App\Http\Controllers\Webmaster\LeadController as WebmasterLeadController;
 use App\Http\Controllers\Webmaster\OfferController as WebmasterOfferController;
 use App\Http\Controllers\Webmaster\PayoutController as WebmasterPayoutController;
+use Illuminate\Http\Request;
 use App\Http\Controllers\Webmaster\ToolController as WebmasterToolController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -66,5 +67,14 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+Route::post('/locale', function (Request $request) {
+    $locale = $request->input('locale');
+    if (in_array($locale, ['ru', 'en'], true)) {
+        session(['locale' => $locale]);
+        app()->setLocale($locale);
+    }
+    return back();
+})->name('locale.switch');
 
 require __DIR__.'/auth.php';
