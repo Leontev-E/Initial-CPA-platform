@@ -26,8 +26,14 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
+        $login = $this->string('login')->toString();
+        $loginRules = ['required', 'string'];
+        if (! str_starts_with($login, '@')) {
+            $loginRules[] = 'email';
+        }
+
         return [
-            'login' => ['required', 'string'],
+            'login' => $loginRules,
             'password' => ['required', 'string'],
         ];
     }
@@ -54,7 +60,7 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'login' => trans('auth.failed'),
+                'login' => __('Неверный логин или пароль'),
             ]);
         }
 
