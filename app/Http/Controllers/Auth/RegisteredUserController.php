@@ -8,7 +8,9 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -33,29 +35,35 @@ class RegisteredUserController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'nullable|string|lowercase|email|max:255|unique:'.User::class,
-            'telegram' => 'nullable|string|max:255|unique:users,telegram',
+            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'telegram' => 'required|string|max:255|unique:users,telegram',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        if (empty($validated['email']) && empty($validated['telegram'])) {
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $validated['email'],
+            'telegram' => $validated['telegram'],
+            'password' => $request->password,
+            'role' => User::ROLE_ADMIN,
+            'email_verified_at' => null,
+        ]);
+
+        $code = random_int(100000, 999999);
+        Cache::put('verify_code_'.$user->id, $code, now()->addMinutes(15));
+
+        try {
+            Mail::raw("Ваш код подтверждения: {$code}", function ($message) use ($user) {
+                $message->to($user->email)->subject('Код подтверждения BoostClicks');
+            });
+        } catch (\Throwable $e) {
+            // Если почта не настроена, вернуть ошибку
+            $user->delete();
             throw ValidationException::withMessages([
-                'email' => 'Укажите email или Telegram',
+                'email' => 'Не удалось отправить код. Проверьте почту.',
             ]);
         }
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $validated['email'] ?? null,
-            'telegram' => $validated['telegram'] ?? null,
-            'password' => $request->password,
-            'role' => User::ROLE_WEBMASTER,
-        ]);
-
-        event(new Registered($user));
-
-        Auth::login($user);
-
-        return redirect(route('dashboard', absolute: false));
+        return redirect()->route('verify.code.show', ['user' => $user->id, 'email' => $user->email]);
     }
 }

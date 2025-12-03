@@ -24,7 +24,7 @@ export default function Register() {
 
     return (
         <GuestLayout>
-            <Head title="Регистрация" />
+            <Head title="Регистрация партнерской программы" />
 
             <form onSubmit={submit}>
                 <div>
@@ -45,7 +45,7 @@ export default function Register() {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email (опционально)" />
+                    <InputLabel htmlFor="email" value="Email" />
 
                     <TextInput
                         id="email"
@@ -55,14 +55,14 @@ export default function Register() {
                         className="mt-1 block w-full"
                         autoComplete="username"
                         onChange={(e) => setData('email', e.target.value)}
-                        placeholder="user@example.com"
-                    />
+                            placeholder="user@example.com"
+                        />
 
                     <InputError message={errors.email} className="mt-2" />
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="telegram" value="Telegram (опционально)" />
+                    <InputLabel htmlFor="telegram" value="Telegram" />
 
                     <TextInput
                         id="telegram"
@@ -71,8 +71,8 @@ export default function Register() {
                         value={data.telegram}
                         className="mt-1 block w-full"
                         onChange={(e) => setData('telegram', e.target.value)}
-                        placeholder="@username"
-                    />
+                            placeholder="@username"
+                        />
 
                     <InputError message={errors.telegram} className="mt-2" />
                 </div>

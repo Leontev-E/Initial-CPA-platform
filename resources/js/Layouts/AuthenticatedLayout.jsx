@@ -103,7 +103,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
                 <main className="p-4 lg:p-8">{children}</main>
                 <footer className="fixed bottom-0 left-0 right-0 border-t bg-white/90 px-4 py-3 text-center text-xs text-gray-600 shadow-inner">
-                    BoostClicks — Евгений Леонтьев — <a className="text-indigo-600" href="https://t.me/boostclicks">https://t.me/boostclicks</a> · BoostClicks — <a className="text-indigo-600" href="https://boostclicks.ru/">https://boostclicks.ru/</a>
+                    <a className="text-indigo-600" href="https://boostclicks.ru">https://boostclicks.ru</a> BoostClicks - Евгений Леонтьев <a className="text-indigo-600" href="https://t.me/boostclicks">https://t.me/boostclicks</a>
                 </footer>
             </div>
         </div>
