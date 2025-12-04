@@ -4,15 +4,20 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lead;
+use App\Models\Offer;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class ReportController extends Controller
 {
     public function offers(Request $request)
     {
         [$from, $to] = $this->dateRange($request);
+        [$perPage, $sort, $direction] = $this->commonPagination($request, 'leads');
 
         $rows = Lead::query()
             ->select(
@@ -54,14 +59,18 @@ class ReportController extends Controller
         }
 
         return inertia('Admin/Reports/Offers', [
-            'rows' => $rows,
-            'filters' => $request->only(['offer_id', 'webmaster_id', 'geo', 'date_from', 'date_to']),
+            'rows' => $this->paginateCollection($this->sortRows($rows, $sort, $direction), $perPage, $request),
+            'filters' => $request->only(['offer_id', 'webmaster_id', 'geo', 'date_from', 'date_to', 'sort', 'direction', 'per_page']),
+            'offers' => Offer::orderBy('name')->get(['id', 'name']),
+            'webmasters' => User::where('role', User::ROLE_WEBMASTER)->orderBy('name')->get(['id', 'name']),
+            'geos' => $this->geoOptions(),
         ]);
     }
 
     public function webmasters(Request $request)
     {
         [$from, $to] = $this->dateRange($request);
+        [$perPage, $sort, $direction] = $this->commonPagination($request, 'leads');
 
         $rows = Lead::query()
             ->select(
@@ -101,15 +110,19 @@ class ReportController extends Controller
             ]);
         }
 
-        return inertia('Admin/Reports/Webmasters', [
-            'rows' => $rows,
-            'filters' => $request->only(['offer_id', 'geo', 'date_from', 'date_to']),
+            return inertia('Admin/Reports/Webmasters', [
+            'rows' => $this->paginateCollection($this->sortRows($rows, $sort, $direction), $perPage, $request),
+            'filters' => $request->only(['offer_id', 'geo', 'date_from', 'date_to', 'sort', 'direction', 'per_page']),
+            'offers' => Offer::orderBy('name')->get(['id', 'name']),
+            'webmasters' => User::where('role', User::ROLE_WEBMASTER)->orderBy('name')->get(['id', 'name']),
+            'geos' => $this->geoOptions(),
         ]);
     }
 
     public function geo(Request $request)
     {
         [$from, $to] = $this->dateRange($request);
+        [$perPage, $sort, $direction] = $this->commonPagination($request, 'geo');
 
         $rows = Lead::query()
             ->select(
@@ -150,8 +163,11 @@ class ReportController extends Controller
         }
 
         return inertia('Admin/Reports/Geo', [
-            'rows' => $rows,
-            'filters' => $request->only(['offer_id', 'webmaster_id', 'date_from', 'date_to']),
+            'rows' => $this->paginateCollection($this->sortRows($rows, $sort, $direction), $perPage, $request),
+            'filters' => $request->only(['offer_id', 'webmaster_id', 'date_from', 'date_to', 'sort', 'direction', 'per_page']),
+            'offers' => Offer::orderBy('name')->get(['id', 'name']),
+            'webmasters' => User::where('role', User::ROLE_WEBMASTER)->orderBy('name')->get(['id', 'name']),
+            'geos' => $this->geoOptions(),
         ]);
     }
 
@@ -165,6 +181,42 @@ class ReportController extends Controller
             : now()->endOfDay();
 
         return [$from, $to];
+    }
+
+    protected function commonPagination(Request $request, string $defaultSort): array
+    {
+        $perPage = in_array((int) $request->input('per_page'), [10, 25, 50]) ? (int) $request->input('per_page') : 10;
+        $sort = $request->input('sort', $defaultSort);
+        $direction = $request->input('direction', 'desc') === 'asc' ? 'asc' : 'desc';
+
+        return [$perPage, $sort, $direction];
+    }
+
+    protected function sortRows(Collection $rows, string $sort, string $direction): Collection
+    {
+        $allowed = ['offer', 'webmaster', 'geo', 'leads', 'sales', 'rejected', 'conversion', 'approve', 'payout_sum', 'avg_payout'];
+        $sortKey = in_array($sort, $allowed) ? $sort : 'leads';
+
+        return $rows->sortBy($sortKey, SORT_REGULAR, $direction === 'desc')->values();
+    }
+
+    protected function paginateCollection(Collection $collection, int $perPage, Request $request): LengthAwarePaginator
+    {
+        $page = $request->integer('page', 1);
+        $items = $collection->forPage($page, $perPage)->values();
+
+        return new LengthAwarePaginator(
+            $items,
+            $collection->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+    }
+
+    protected function geoOptions()
+    {
+        return Lead::select('geo')->whereNotNull('geo')->distinct()->orderBy('geo')->pluck('geo');
     }
 
     protected function csvResponse(string $filename, $rows, array $headers)

@@ -10,11 +10,6 @@ export default function Show({ webmaster, stats, balance, offers }) {
         dashboard_message: webmaster.dashboard_message || '',
     });
 
-    const passwordForm = useForm({
-        password: '',
-        password_confirmation: '',
-    });
-
     const payoutForm = useForm({
         amount: '',
         method: '',
@@ -26,13 +21,6 @@ export default function Show({ webmaster, stats, balance, offers }) {
     const submit = (e) => {
         e.preventDefault();
         patch(route('admin.webmasters.update', webmaster.id));
-    };
-
-    const submitPassword = (e) => {
-        e.preventDefault();
-        passwordForm.patch(route('admin.webmasters.updatePassword', webmaster.id), {
-            onSuccess: () => passwordForm.reset('password', 'password_confirmation'),
-        });
     };
 
     const submitPayout = (e) => {
@@ -97,54 +85,15 @@ export default function Show({ webmaster, stats, balance, offers }) {
                             Сохранить
                         </button>
                     </form>
-                    <form onSubmit={submitPassword} className="space-y-2 text-sm border-t pt-3">
-                        <div className="font-semibold text-gray-800">Сменить пароль</div>
-                        <input
-                            type="password"
-                            className="w-full rounded border px-3 py-2"
-                            placeholder="Новый пароль"
-                            value={passwordForm.data.password}
-                            onChange={(e) => passwordForm.setData('password', e.target.value)}
-                        />
-                        <input
-                            type="password"
-                            className="w-full rounded border px-3 py-2"
-                            placeholder="Подтверждение пароля"
-                            value={passwordForm.data.password_confirmation}
-                            onChange={(e) =>
-                                passwordForm.setData('password_confirmation', e.target.value)
-                            }
-                        />
-                        {passwordForm.errors.password && (
-                            <div className="text-xs text-red-600">
-                                {passwordForm.errors.password}
-                            </div>
-                        )}
-                        <button
-                            type="submit"
-                            disabled={passwordForm.processing}
-                            className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
-                        >
-                            Обновить пароль
-                        </button>
-                    </form>
-                    <form
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            passwordForm.reset();
-                            passwordForm.clearErrors();
-                        }}
-                        className="space-y-2 text-sm"
-                    >
+                    <div className="space-y-2 border-t pt-3 text-sm">
                         <button
                             type="button"
-                            onClick={() => passwordForm.post(route('admin.webmasters.resendPassword', webmaster.id))}
+                            onClick={() => router.post(route('admin.webmasters.resendPassword', webmaster.id))}
                             className="w-full rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100"
-                            disabled={passwordForm.processing}
                         >
                             Отправить новый пароль
                         </button>
-                    </form>
+                    </div>
                     <div className="border-t pt-3">
                         <button
                             onClick={() => {
