@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\OfferCategoryController as AdminOfferCategoryCont
 use App\Http\Controllers\Admin\OfferController as AdminOfferController;
 use App\Http\Controllers\Admin\PayoutController as AdminPayoutController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
+use App\Http\Controllers\Admin\LeadWebhookController as AdminLeadWebhookController;
 use App\Http\Controllers\Admin\WebmasterController as AdminWebmasterController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\DashboardController;
@@ -58,6 +59,11 @@ Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix(
     Route::get('reports/offers', [AdminReportController::class, 'offers'])->name('reports.offers');
     Route::get('reports/webmasters', [AdminReportController::class, 'webmasters'])->name('reports.webmasters');
     Route::get('reports/geo', [AdminReportController::class, 'geo'])->name('reports.geo');
+
+    Route::get('webhooks', [AdminLeadWebhookController::class, 'index'])->name('webhooks.index');
+    Route::post('webhooks', [AdminLeadWebhookController::class, 'store'])->name('webhooks.store');
+    Route::patch('webhooks/{webhook}', [AdminLeadWebhookController::class, 'update'])->name('webhooks.update');
+    Route::delete('webhooks/{webhook}', [AdminLeadWebhookController::class, 'destroy'])->name('webhooks.destroy');
 });
 
 Route::post('webmasters/stop-impersonate', [AdminWebmasterController::class, 'stopImpersonate'])

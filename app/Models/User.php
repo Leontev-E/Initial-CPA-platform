@@ -98,6 +98,11 @@ class User extends Authenticatable
         return $this->role === self::ROLE_WEBMASTER;
     }
 
+    public function leadWebhooks()
+    {
+        return $this->hasMany(LeadWebhook::class);
+    }
+
     public function canImpersonateWebmaster(): bool
     {
         if (! $this->isAdmin()) {
