@@ -37,6 +37,11 @@ class Offer extends Model
         return $this->belongsToMany(OfferCategory::class, 'offer_offer_category');
     }
 
+    public function landings()
+    {
+        return $this->hasMany(OfferLanding::class);
+    }
+
     public function rates()
     {
         return $this->hasMany(OfferWebmasterRate::class);

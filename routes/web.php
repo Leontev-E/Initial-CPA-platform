@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\OfferController as AdminOfferController;
 use App\Http\Controllers\Admin\PayoutController as AdminPayoutController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\WebmasterController as AdminWebmasterController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Webmaster\DashboardController as WebmasterDashboardController;
@@ -33,6 +34,8 @@ Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix(
     Route::delete('offer-categories/{offer_category}/detach-offer', [AdminOfferCategoryController::class, 'detachOffer'])->name('offer-categories.detach');
     Route::resource('offers', AdminOfferController::class)->except(['create', 'edit']);
     Route::patch('offers/{offer}/toggle', [AdminOfferController::class, 'toggle'])->name('offers.toggle');
+    Route::post('offers/{offer}/landings', [AdminOfferController::class, 'addLanding'])->name('offers.landings.add');
+    Route::delete('offers/{offer}/landings/{landing}', [AdminOfferController::class, 'removeLanding'])->name('offers.landings.remove');
 
     Route::get('leads', [AdminLeadController::class, 'index'])->name('leads.index');
     Route::patch('leads/{lead}/status', [AdminLeadController::class, 'updateStatus'])->name('leads.updateStatus');
@@ -82,6 +85,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile/employees/{user}', [ProfileController::class, 'updateEmployee'])->name('profile.employees.update');
     Route::delete('/profile/employees/{user}', [ProfileController::class, 'destroyEmployee'])->name('profile.employees.destroy');
     Route::post('/profile/employees/{user}/impersonate', [ProfileController::class, 'impersonateEmployee'])->name('profile.employees.impersonate');
+
+    Route::get('landings/{landing}/download', [LandingController::class, 'download'])->name('landings.download');
+    Route::get('landings/{landing}/preview', [LandingController::class, 'preview'])->name('landings.preview');
 });
 
 Route::post('/locale', function (Request $request) {

@@ -40,7 +40,7 @@ class OfferController extends Controller
             ->where('webmaster_id', $user->id)
             ->value('custom_payout');
 
-        $offer->load(['category', 'categories']);
+        $offer->load(['category', 'categories', 'landings']);
         $offer->effective_payout = $custom ?? $offer->default_payout;
 
         return Inertia::render('Webmaster/Offers/Show', [

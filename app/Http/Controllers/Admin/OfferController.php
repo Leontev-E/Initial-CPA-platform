@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Offer;
+use App\Models\OfferLanding;
 use App\Models\OfferCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use ZipArchive;
 
 class OfferController extends Controller
 {
@@ -80,7 +83,7 @@ class OfferController extends Controller
 
     public function show(Offer $offer)
     {
-        $offer->load(['category', 'categories', 'rates.webmaster']);
+        $offer->load(['category', 'categories', 'rates.webmaster', 'landings']);
 
         return Inertia::render('Admin/Offers/Show', [
             'offer' => $offer,
@@ -169,5 +172,95 @@ class OfferController extends Controller
         }
 
         return [];
+    }
+
+    public function addLanding(Request $request, Offer $offer)
+    {
+        $this->authorizeOffer($offer);
+
+        $validated = $request->validate([
+            'type' => ['required', 'in:local,link'],
+            'name' => ['required', 'string', 'max:255'],
+            'landing_file' => ['required_if:type,local', 'file', 'mimes:zip', 'max:71680'], // ~70MB
+            'url' => ['required_if:type,link', 'url', 'max:2048'],
+        ]);
+
+        if ($validated['type'] === 'local') {
+            $existingLocal = $offer->landings()->where('type', 'local')->count();
+            if ($existingLocal >= 2) {
+                return back()->with('error', 'Можно загрузить не более 2 локальных лендингов');
+            }
+
+            $file = $request->file('landing_file');
+            $path = $file->store('landings/raw', 'public');
+
+            $landing = $offer->landings()->create([
+                'type' => 'local',
+                'name' => $validated['name'],
+                'file_path' => $path,
+                'size' => $file->getSize(),
+            ]);
+
+            $this->extractLanding($landing, $file->getPathname());
+        } else {
+            $existingLinks = $offer->landings()->where('type', 'link')->count();
+            if ($existingLinks >= 10) {
+                return back()->with('error', 'Можно добавить не более 10 лендингов по ссылке');
+            }
+
+            $offer->landings()->create([
+                'type' => 'link',
+                'name' => $validated['name'],
+                'url' => $validated['url'],
+            ]);
+        }
+
+        return back()->with('success', 'Лендинг добавлен');
+    }
+
+    public function removeLanding(Offer $offer, OfferLanding $landing)
+    {
+        $this->authorizeOffer($offer);
+
+        if ($landing->offer_id !== $offer->id) {
+            abort(403);
+        }
+
+        if ($landing->file_path) {
+            Storage::disk('public')->delete($landing->file_path);
+        }
+        if ($landing->preview_path) {
+            Storage::disk('public')->deleteDirectory(dirname($landing->preview_path));
+        }
+
+        $landing->delete();
+
+        return back()->with('success', 'Лендинг удален');
+    }
+
+    protected function extractLanding(OfferLanding $landing, string $zipPath): void
+    {
+        $folder = 'landings/extracted/'.$landing->id;
+        $storagePath = Storage::disk('public')->path($folder);
+        if (!is_dir($storagePath)) {
+            mkdir($storagePath, 0755, true);
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath) === true) {
+            $zip->extractTo($storagePath);
+            $zip->close();
+        }
+
+        $landing->preview_path = $folder.'/index.html';
+        $landing->save();
+    }
+
+    protected function authorizeOffer(Offer $offer): void
+    {
+        // Admin only; adjust if roles change
+        if (!auth()->user()?->isAdmin()) {
+            abort(403);
+        }
     }
 }

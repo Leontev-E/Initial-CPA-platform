@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import geos from '@/data/geos.json';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
 export default function Show({ offer, categories }) {
@@ -20,6 +20,16 @@ export default function Show({ offer, categories }) {
         _method: 'patch',
     });
     const deleteForm = useForm({});
+    const landingFileForm = useForm({
+        type: 'local',
+        name: '',
+        landing_file: null,
+    });
+    const landingLinkForm = useForm({
+        type: 'link',
+        name: '',
+        url: '',
+    });
 
     const addGeo = (value) => {
         const code = value.trim().toUpperCase();
@@ -49,6 +59,24 @@ export default function Show({ offer, categories }) {
             forceFormData: true,
         });
     };
+
+    const submitLandingFile = (e) => {
+        e.preventDefault();
+        landingFileForm.post(route('admin.offers.landings.add', offer.id), {
+            forceFormData: true,
+            onSuccess: () => landingFileForm.reset('name', 'landing_file'),
+        });
+    };
+
+    const submitLandingLink = (e) => {
+        e.preventDefault();
+        landingLinkForm.post(route('admin.offers.landings.add', offer.id), {
+            onSuccess: () => landingLinkForm.reset('name', 'url'),
+        });
+    };
+
+    const localCount = offer.landings?.filter((l) => l.type === 'local').length || 0;
+    const linkCount = offer.landings?.filter((l) => l.type === 'link').length || 0;
 
     return (
         <AuthenticatedLayout
@@ -253,6 +281,115 @@ export default function Show({ offer, categories }) {
                             >
                                 Удалить оффер
                             </button>
+                        </div>
+                    </div>
+                </div>
+                <div className="rounded-xl bg-white p-4 shadow-sm lg:col-span-1">
+                    <h3 className="text-sm font-semibold text-gray-700">Лендинги</h3>
+                    <div className="mt-3 space-y-3 text-sm">
+                        <div className="space-y-2 rounded border px-3 py-2">
+                            <div className="text-xs font-semibold text-gray-600">Локальный лендинг (zip, до 70 МБ)</div>
+                            <form onSubmit={submitLandingFile} className="space-y-2" encType="multipart/form-data">
+                                <input
+                                    className="w-full rounded border px-3 py-2 text-sm"
+                                    placeholder="Название лендинга"
+                                    value={landingFileForm.data.name}
+                                    onChange={(e) => landingFileForm.setData('name', e.target.value)}
+                                    disabled={localCount >= 2}
+                                />
+                                <input
+                                    type="file"
+                                    accept=".zip"
+                                    className="w-full rounded border px-3 py-2 text-sm"
+                                    onChange={(e) => landingFileForm.setData('landing_file', e.target.files?.[0] ?? null)}
+                                    disabled={localCount >= 2}
+                                />
+                                {landingFileForm.errors.landing_file && (
+                                    <div className="text-xs text-red-600">{landingFileForm.errors.landing_file}</div>
+                                )}
+                                <button
+                                    type="submit"
+                                    disabled={landingFileForm.processing || localCount >= 2}
+                                    className="w-full rounded bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                                >
+                                    Загрузить ({localCount}/2)
+                                </button>
+                            </form>
+                        </div>
+                        <div className="space-y-2 rounded border px-3 py-2">
+                            <div className="text-xs font-semibold text-gray-600">Лендинг по ссылке</div>
+                            <form onSubmit={submitLandingLink} className="space-y-2">
+                                <input
+                                    className="w-full rounded border px-3 py-2 text-sm"
+                                    placeholder="Название лендинга"
+                                    value={landingLinkForm.data.name}
+                                    onChange={(e) => landingLinkForm.setData('name', e.target.value)}
+                                    disabled={linkCount >= 10}
+                                />
+                                <input
+                                    className="w-full rounded border px-3 py-2 text-sm"
+                                    placeholder="https://..."
+                                    value={landingLinkForm.data.url}
+                                    onChange={(e) => landingLinkForm.setData('url', e.target.value)}
+                                    disabled={linkCount >= 10}
+                                />
+                                {landingLinkForm.errors.url && (
+                                    <div className="text-xs text-red-600">{landingLinkForm.errors.url}</div>
+                                )}
+                                <button
+                                    type="submit"
+                                    disabled={landingLinkForm.processing || linkCount >= 10}
+                                    className="w-full rounded bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                                >
+                                    Добавить ссылку ({linkCount}/10)
+                                </button>
+                            </form>
+                        </div>
+                        <div className="divide-y rounded border">
+                            {offer.landings?.map((landing) => (
+                                <div key={landing.id} className="flex flex-col gap-1 px-3 py-2 text-sm">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="font-semibold text-gray-900">{landing.name}</div>
+                                        <span className={`rounded px-2 py-1 text-[11px] font-semibold ${landing.type === 'local' ? 'bg-indigo-50 text-indigo-700' : 'bg-emerald-50 text-emerald-700'}`}>
+                                            {landing.type === 'local' ? 'Локальный' : 'Ссылка'}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                                        {landing.type === 'local' && landing.size && <span>{(landing.size / 1024 / 1024).toFixed(1)} МБ</span>}
+                                        {landing.preview_url && (
+                                            <a href={route('landings.preview', landing.id)} target="_blank" className="rounded border border-indigo-200 px-2 py-1 font-semibold text-indigo-700 hover:bg-indigo-50">
+                                                Открыть
+                                            </a>
+                                        )}
+                                        {landing.download_url && (
+                                            <a href={route('landings.download', landing.id)} className="rounded border border-gray-200 px-2 py-1 font-semibold text-gray-700 hover:bg-gray-50">
+                                                Скачать
+                                            </a>
+                                        )}
+                                        {landing.url && landing.type === 'link' && (
+                                            <a href={route('landings.preview', landing.id)} target="_blank" className="rounded border border-indigo-200 px-2 py-1 font-semibold text-indigo-700 hover:bg-indigo-50">
+                                                Открыть ссылку
+                                            </a>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (confirm('Удалить лендинг?')) {
+                                                    router.delete(route('admin.offers.landings.remove', { offer: offer.id, landing: landing.id }));
+                                                }
+                                            }}
+                                            className="rounded border border-red-200 px-2 py-1 font-semibold text-red-700 hover:bg-red-50"
+                                        >
+                                            Удалить
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            {(offer.landings?.length ?? 0) === 0 && (
+                                <div className="px-3 py-4 text-center text-xs text-gray-500">
+                                    Лендинги не добавлены
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
