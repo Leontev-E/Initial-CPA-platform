@@ -28,9 +28,22 @@ class OfferController extends Controller
             });
         }
 
-        if ($request->filled('geo')) {
-            $geo = strtoupper($request->string('geo')->toString());
-            $query->whereJsonContains('allowed_geos', $geo);
+        $geoFilters = [];
+        if ($request->has('geos')) {
+            $geoFilters = array_filter(array_map(
+                fn ($g) => strtoupper(trim($g)),
+                (array) $request->input('geos', [])
+            ));
+        }
+        if (empty($geoFilters) && $request->filled('geo')) {
+            $geoFilters = [strtoupper($request->string('geo')->toString())];
+        }
+        if (!empty($geoFilters)) {
+            $query->where(function ($q) use ($geoFilters) {
+                foreach ($geoFilters as $geo) {
+                    $q->orWhereJsonContains('allowed_geos', $geo);
+                }
+            });
         }
 
         if ($request->filled('status')) {
@@ -61,7 +74,7 @@ class OfferController extends Controller
         return Inertia::render('Admin/Offers/Index', [
             'offers' => $offers,
             'categories' => OfferCategory::orderBy('name')->get(),
-            'filters' => $request->only(['category_id', 'status', 'search', 'sort', 'direction', 'per_page', 'geo']),
+            'filters' => $request->only(['category_id', 'status', 'search', 'sort', 'direction', 'per_page', 'geo', 'geos']),
         ]);
     }
 

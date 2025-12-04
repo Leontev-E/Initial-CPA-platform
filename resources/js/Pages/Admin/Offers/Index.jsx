@@ -1,9 +1,13 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import geos from '@/data/geos.json';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function Index({ offers, categories, filters }) {
+    const [geoInput, setGeoInput] = useState('');
+    const [filterGeoInput, setFilterGeoInput] = useState('');
+    const geoMap = useMemo(() => Object.fromEntries(geos.map((g) => [g.value, g.text])), []);
+
     const { data, setData, post, processing, reset, errors } = useForm({
         offer_category_id: categories[0]?.id ?? '',
         category_ids: categories[0]?.id ? [categories[0].id] : [],
@@ -23,7 +27,7 @@ export default function Index({ offers, categories, filters }) {
         sort: filters?.sort ?? 'name',
         direction: filters?.direction ?? 'asc',
         per_page: filters?.per_page ?? 10,
-        geo: filters?.geo ?? '',
+        geos: filters?.geos ?? [],
     });
 
     const applyFilters = () => {
@@ -60,8 +64,31 @@ export default function Index({ offers, categories, filters }) {
                 setData('offer_category_id', categories[0]?.id ?? '');
                 setData('is_active', true);
                 setData('allowed_geos', []);
+                setGeoInput('');
             },
         });
+    };
+
+    const addGeo = (value) => {
+        const code = value.trim().toUpperCase();
+        if (!code) return;
+        const exists = geos.some((g) => g.value === code);
+        if (!exists) return;
+        if (!data.allowed_geos.includes(code)) {
+            setData('allowed_geos', [...data.allowed_geos, code]);
+        }
+        setGeoInput('');
+    };
+
+    const addFilterGeo = (value) => {
+        const code = value.trim().toUpperCase();
+        if (!code) return;
+        const exists = geos.some((g) => g.value === code);
+        if (!exists) return;
+        if (!filterForm.data.geos.includes(code)) {
+            filterForm.setData('geos', [...filterForm.data.geos, code]);
+        }
+        setFilterGeoInput('');
     };
 
     return (
@@ -115,25 +142,55 @@ export default function Index({ offers, categories, filters }) {
                         />
                         <div>
                             <div className="text-xs font-semibold text-gray-600">Разрешенные GEO</div>
-                            <select
-                                multiple
-                                className="mt-1 w-full rounded-lg border px-3 py-2 text-sm h-32"
-                                value={data.allowed_geos}
-                                onChange={(e) =>
-                                    setData(
-                                        'allowed_geos',
-                                        Array.from(e.target.selectedOptions).map((o) => o.value),
-                                    )
-                                }
-                            >
-                                {geos.map((geo) => (
-                                    <option key={geo.value} value={geo.value}>
-                                        {geo.value} — {geo.text}
-                                    </option>
-                                ))}
-                            </select>
-                            <div className="text-xs text-gray-500 mt-1">
-                                Выбрано: {data.allowed_geos.length || '0'}
+                            <div className="mt-1 flex flex-col gap-2">
+                                <div className="flex gap-2">
+                                    <input
+                                        list="geo-list"
+                                        className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                                        placeholder="Начните вводить GEO"
+                                        value={geoInput}
+                                        onChange={(e) => setGeoInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                addGeo(geoInput);
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => addGeo(geoInput)}
+                                        className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
+                                    >
+                                        Добавить
+                                    </button>
+                                </div>
+                                <datalist id="geo-list">
+                                    {geos.map((geo) => (
+                                        <option key={geo.value} value={geo.value}>
+                                            {geo.text}
+                                        </option>
+                                    ))}
+                                </datalist>
+                                <div className="flex flex-wrap gap-2">
+                                    {data.allowed_geos.map((code) => (
+                                        <span key={code} className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700">
+                                            {code} — {geoMap[code] || ''}
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setData('allowed_geos', data.allowed_geos.filter((g) => g !== code))
+                                                }
+                                                className="text-indigo-500 hover:text-indigo-700"
+                                            >
+                                                ×
+                                            </button>
+                                        </span>
+                                    ))}
+                                    {data.allowed_geos.length === 0 && (
+                                        <span className="text-xs text-gray-500">ГЕО не выбраны</span>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         <textarea
@@ -211,21 +268,43 @@ export default function Index({ offers, categories, filters }) {
                                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                                     ))}
                                 </select>
-                                <select
-                                    className="rounded border px-3 py-2 text-sm"
-                                    value={filterForm.data.geo}
-                                    onChange={(e) => {
-                                        filterForm.setData('geo', e.target.value);
-                                        applyFilters();
-                                    }}
-                                >
-                                    <option value="">Все GEO</option>
-                                    {geos.map((geo) => (
-                                        <option key={geo.value} value={geo.value}>
-                                            {geo.value} — {geo.text}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="flex flex-col gap-1">
+                                    <input
+                                        list="geo-list"
+                                        className="rounded border px-3 py-2 text-sm"
+                                        placeholder="Добавить GEO в фильтр"
+                                        value={filterGeoInput}
+                                        onChange={(e) => setFilterGeoInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                addFilterGeo(filterGeoInput);
+                                            }
+                                        }}
+                                    />
+                                    <div className="flex flex-wrap gap-2">
+                                        {filterForm.data.geos.map((code) => (
+                                            <span key={code} className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-1 text-[11px] text-indigo-700">
+                                                {code}
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        filterForm.setData(
+                                                            'geos',
+                                                            filterForm.data.geos.filter((g) => g !== code),
+                                                        )
+                                                    }
+                                                    className="text-indigo-500 hover:text-indigo-700"
+                                                >
+                                                    ×
+                                                </button>
+                                            </span>
+                                        ))}
+                                        {filterForm.data.geos.length === 0 && (
+                                            <span className="text-xs text-gray-500">Все GEO</span>
+                                        )}
+                                    </div>
+                                </div>
                                 <select
                                     className="rounded border px-3 py-2 text-sm"
                                     value={filterForm.data.status}

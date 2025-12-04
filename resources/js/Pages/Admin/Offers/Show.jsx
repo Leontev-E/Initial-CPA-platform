@@ -1,8 +1,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import geos from '@/data/geos.json';
 import { Head, useForm } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 
 export default function Show({ offer, categories }) {
+    const [geoInput, setGeoInput] = useState('');
+    const geoMap = useMemo(() => Object.fromEntries(geos.map((g) => [g.value, g.text])), []);
     const { data, setData, post, processing, errors } = useForm({
         offer_category_id: offer.offer_category_id,
         category_ids: (offer.categories || []).map((c) => c.id),
@@ -16,6 +19,16 @@ export default function Show({ offer, categories }) {
         _method: 'patch',
     });
     const deleteForm = useForm({});
+
+    const addGeo = (value) => {
+        const code = value.trim().toUpperCase();
+        if (!code) return;
+        if (!geos.some((g) => g.value === code)) return;
+        if (!data.allowed_geos.includes(code)) {
+            setData('allowed_geos', [...data.allowed_geos, code]);
+        }
+        setGeoInput('');
+    };
 
     const submit = (e) => {
         e.preventDefault();
@@ -83,25 +96,55 @@ export default function Show({ offer, categories }) {
                         />
                         <div>
                             <div className="text-xs font-semibold text-gray-600">Разрешенные GEO</div>
-                            <select
-                                multiple
-                                className="mt-1 w-full rounded-lg border px-3 py-2 text-sm h-32"
-                                value={data.allowed_geos}
-                                onChange={(e) =>
-                                    setData(
-                                        'allowed_geos',
-                                        Array.from(e.target.selectedOptions).map((o) => o.value),
-                                    )
-                                }
-                            >
-                                {geos.map((geo) => (
-                                    <option key={geo.value} value={geo.value}>
-                                        {geo.value} — {geo.text}
-                                    </option>
-                                ))}
-                            </select>
-                            <div className="text-xs text-gray-500 mt-1">
-                                Выбрано: {data.allowed_geos.length || '0'}
+                            <div className="mt-1 flex flex-col gap-2">
+                                <div className="flex gap-2">
+                                    <input
+                                        list="geo-list"
+                                        className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                                        placeholder="Начните вводить GEO"
+                                        value={geoInput}
+                                        onChange={(e) => setGeoInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                addGeo(geoInput);
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => addGeo(geoInput)}
+                                        className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
+                                    >
+                                        Добавить
+                                    </button>
+                                </div>
+                                <datalist id="geo-list">
+                                    {geos.map((geo) => (
+                                        <option key={geo.value} value={geo.value}>
+                                            {geo.text}
+                                        </option>
+                                    ))}
+                                </datalist>
+                                <div className="flex flex-wrap gap-2">
+                                    {data.allowed_geos.map((code) => (
+                                        <span key={code} className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700">
+                                            {code} — {geoMap[code] || ''}
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setData('allowed_geos', data.allowed_geos.filter((g) => g !== code))
+                                                }
+                                                className="text-indigo-500 hover:text-indigo-700"
+                                            >
+                                                ×
+                                            </button>
+                                        </span>
+                                    ))}
+                                    {data.allowed_geos.length === 0 && (
+                                        <span className="text-xs text-gray-500">ГЕО не выбраны</span>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         <textarea
