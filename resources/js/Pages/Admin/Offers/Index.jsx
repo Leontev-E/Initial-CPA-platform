@@ -5,7 +5,9 @@ import { useEffect, useMemo, useState } from 'react';
 
 export default function Index({ offers, categories, filters }) {
     const [geoInput, setGeoInput] = useState('');
+    const [geoOpen, setGeoOpen] = useState(false);
     const [filterGeoInput, setFilterGeoInput] = useState('');
+    const [filterGeoOpen, setFilterGeoOpen] = useState(false);
     const geoMap = useMemo(() => Object.fromEntries(geos.map((g) => [g.value, g.text])), []);
 
     const { data, setData, post, processing, reset, errors } = useForm({
@@ -179,15 +181,20 @@ export default function Index({ offers, categories, filters }) {
                                                 addGeo(geoInput);
                                             }
                                         }}
+                                        onFocus={() => setGeoOpen(true)}
+                                        onBlur={() => setTimeout(() => setGeoOpen(false), 120)}
                                     />
-                                    {geoMatches.length > 0 && (
+                                    {geoOpen && geoMatches.length > 0 && (
                                         <div className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-lg border bg-white shadow-lg">
                                             {geoMatches.map((geo) => (
                                                 <button
                                                     type="button"
                                                     key={geo.value}
                                                     className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-indigo-50"
-                                                    onClick={() => addGeo(geo.value)}
+                                                    onClick={() => {
+                                                        addGeo(geo.value);
+                                                        setGeoOpen(true);
+                                                    }}
                                                 >
                                                     <span>{geo.value} — {geo.text}</span>
                                                     {data.allowed_geos.includes(geo.value) && (
@@ -307,15 +314,20 @@ export default function Index({ offers, categories, filters }) {
                                                     addFilterGeo(filterGeoInput);
                                                 }
                                             }}
+                                            onFocus={() => setFilterGeoOpen(true)}
+                                            onBlur={() => setTimeout(() => setFilterGeoOpen(false), 120)}
                                         />
-                                        {filterGeoMatches.length > 0 && (
+                                        {filterGeoOpen && filterGeoMatches.length > 0 && (
                                             <div className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-lg border bg-white shadow-lg">
                                                 {filterGeoMatches.map((geo) => (
                                                     <button
                                                         type="button"
                                                         key={geo.value}
                                                         className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-indigo-50"
-                                                        onClick={() => addFilterGeo(geo.value)}
+                                                        onClick={() => {
+                                                            addFilterGeo(geo.value);
+                                                            setFilterGeoOpen(true);
+                                                        }}
                                                     >
                                                         <span>{geo.value} — {geo.text}</span>
                                                         {filterForm.data.geos.includes(geo.value) && (

@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 
 export default function Show({ offer, categories }) {
     const [geoInput, setGeoInput] = useState('');
+    const [geoOpen, setGeoOpen] = useState(false);
     const geoMap = useMemo(() => Object.fromEntries(geos.map((g) => [g.value, g.text])), []);
     const { data, setData, post, processing, errors } = useForm({
         offer_category_id: offer.offer_category_id,
@@ -115,6 +116,8 @@ export default function Show({ offer, categories }) {
                                         placeholder="Начните вводить GEO"
                                         value={geoInput}
                                         onChange={(e) => setGeoInput(e.target.value)}
+                                        onFocus={() => setGeoOpen(true)}
+                                        onBlur={() => setTimeout(() => setGeoOpen(false), 120)}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') {
                                                 e.preventDefault();
@@ -122,14 +125,17 @@ export default function Show({ offer, categories }) {
                                             }
                                         }}
                                     />
-                                    {geoMatches.length > 0 && (
+                                    {geoOpen && geoMatches.length > 0 && (
                                         <div className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-lg border bg-white shadow-lg">
                                             {geoMatches.map((geo) => (
                                                 <button
                                                     type="button"
                                                     key={geo.value}
                                                     className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-indigo-50"
-                                                    onClick={() => addGeo(geo.value)}
+                                                    onClick={() => {
+                                                        addGeo(geo.value);
+                                                        setGeoOpen(true);
+                                                    }}
                                                 >
                                                     <span>{geo.value} — {geo.text}</span>
                                                     {data.allowed_geos.includes(geo.value) && (
