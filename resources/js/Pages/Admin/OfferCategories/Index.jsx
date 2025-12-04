@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 export default function Index({ categories, filters, attachOffers, attachFilters }) {
     const { data, setData, post, processing, reset } = useForm({
         name: '',
-        slug: '',
         description: '',
         is_active: true,
     });
@@ -52,7 +51,7 @@ export default function Index({ categories, filters, attachOffers, attachFilters
     const submit = (e) => {
         e.preventDefault();
         post(route('admin.offer-categories.store'), {
-            onSuccess: () => reset('name', 'slug', 'description'),
+            onSuccess: () => reset('name', 'description'),
         });
     };
 
@@ -73,12 +72,6 @@ export default function Index({ categories, filters, attachOffers, attachFilters
                             placeholder="Название"
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
-                        />
-                        <input
-                            className="w-full rounded-lg border px-3 py-2"
-                            placeholder="ID (опционально, генерируется автоматически)"
-                            value={data.slug}
-                            onChange={(e) => setData('slug', e.target.value)}
                         />
                         <textarea
                             className="w-full rounded-lg border px-3 py-2"
@@ -334,7 +327,6 @@ function CategoryRow({ cat, onAttach }) {
     const [editing, setEditing] = useState(false);
     const { data, setData, patch, processing } = useForm({
         name: cat.name || '',
-        slug: cat.slug || '',
         description: cat.description || '',
         is_active: !!cat.is_active,
     });
@@ -412,12 +404,6 @@ function CategoryRow({ cat, onAttach }) {
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                         />
-                        <input
-                            className="w-full rounded-lg border px-3 py-2"
-                            placeholder="ID (опционально, генерируется автоматически)"
-                            value={data.slug}
-                            onChange={(e) => setData('slug', e.target.value)}
-                        />
                     </div>
                     <textarea
                         className="mt-3 w-full rounded-lg border px-3 py-2"
@@ -447,7 +433,6 @@ function CategoryRow({ cat, onAttach }) {
                                 setEditing(false);
                                 setData({
                                     name: cat.name || '',
-                                    slug: cat.slug || '',
                                     description: cat.description || '',
                                     is_active: !!cat.is_active,
                                 });

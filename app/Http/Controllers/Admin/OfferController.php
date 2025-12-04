@@ -28,6 +28,11 @@ class OfferController extends Controller
             });
         }
 
+        if ($request->filled('geo')) {
+            $geo = strtoupper($request->string('geo')->toString());
+            $query->whereJsonContains('allowed_geos', $geo);
+        }
+
         if ($request->filled('status')) {
             if ($request->input('status') === 'active') {
                 $query->where('is_active', true);
@@ -56,7 +61,7 @@ class OfferController extends Controller
         return Inertia::render('Admin/Offers/Index', [
             'offers' => $offers,
             'categories' => OfferCategory::orderBy('name')->get(),
-            'filters' => $request->only(['category_id', 'status', 'search', 'sort', 'direction', 'per_page']),
+            'filters' => $request->only(['category_id', 'status', 'search', 'sort', 'direction', 'per_page', 'geo']),
         ]);
     }
 

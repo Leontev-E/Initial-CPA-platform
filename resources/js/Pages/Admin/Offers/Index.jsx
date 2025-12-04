@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import geos from '@/data/geos.json';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
 
@@ -7,9 +8,8 @@ export default function Index({ offers, categories, filters }) {
         offer_category_id: categories[0]?.id ?? '',
         category_ids: categories[0]?.id ? [categories[0].id] : [],
         name: '',
-        slug: '',
         default_payout: '',
-        allowed_geos: '',
+        allowed_geos: [],
         description: '',
         notes: '',
         is_active: true,
@@ -23,6 +23,7 @@ export default function Index({ offers, categories, filters }) {
         sort: filters?.sort ?? 'name',
         direction: filters?.direction ?? 'asc',
         per_page: filters?.per_page ?? 10,
+        geo: filters?.geo ?? '',
     });
 
     const applyFilters = () => {
@@ -47,7 +48,6 @@ export default function Index({ offers, categories, filters }) {
                 reset(
                     'category_ids',
                     'name',
-                    'slug',
                     'default_payout',
                     'allowed_geos',
                     'description',
@@ -59,6 +59,7 @@ export default function Index({ offers, categories, filters }) {
                 setData('category_ids', categories[0]?.id ? [categories[0].id] : []);
                 setData('offer_category_id', categories[0]?.id ?? '');
                 setData('is_active', true);
+                setData('allowed_geos', []);
             },
         });
     };
@@ -106,26 +107,35 @@ export default function Index({ offers, categories, filters }) {
                         />
                         <input
                             className="w-full rounded-lg border px-3 py-2"
-                            placeholder="ID (опционально, генерируется автоматически)"
-                            value={data.slug}
-                            onChange={(e) => setData('slug', e.target.value)}
-                        />
-                        <input
-                            className="w-full rounded-lg border px-3 py-2"
                             placeholder="Ставка (default)"
                             value={data.default_payout}
                             onChange={(e) =>
                                 setData('default_payout', e.target.value)
                             }
                         />
-                        <input
-                            className="w-full rounded-lg border px-3 py-2"
-                            placeholder="Разрешенные GEO (через запятую)"
-                            value={data.allowed_geos}
-                            onChange={(e) =>
-                                setData('allowed_geos', e.target.value)
-                            }
-                        />
+                        <div>
+                            <div className="text-xs font-semibold text-gray-600">Разрешенные GEO</div>
+                            <select
+                                multiple
+                                className="mt-1 w-full rounded-lg border px-3 py-2 text-sm h-32"
+                                value={data.allowed_geos}
+                                onChange={(e) =>
+                                    setData(
+                                        'allowed_geos',
+                                        Array.from(e.target.selectedOptions).map((o) => o.value),
+                                    )
+                                }
+                            >
+                                {geos.map((geo) => (
+                                    <option key={geo.value} value={geo.value}>
+                                        {geo.value} — {geo.text}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="text-xs text-gray-500 mt-1">
+                                Выбрано: {data.allowed_geos.length || '0'}
+                            </div>
+                        </div>
                         <textarea
                             className="w-full rounded-lg border px-3 py-2"
                             placeholder="Описание"
@@ -199,6 +209,21 @@ export default function Index({ offers, categories, filters }) {
                                     <option value="">Все категории</option>
                                     {categories.map((cat) => (
                                         <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    className="rounded border px-3 py-2 text-sm"
+                                    value={filterForm.data.geo}
+                                    onChange={(e) => {
+                                        filterForm.setData('geo', e.target.value);
+                                        applyFilters();
+                                    }}
+                                >
+                                    <option value="">Все GEO</option>
+                                    {geos.map((geo) => (
+                                        <option key={geo.value} value={geo.value}>
+                                            {geo.value} — {geo.text}
+                                        </option>
                                     ))}
                                 </select>
                                 <select

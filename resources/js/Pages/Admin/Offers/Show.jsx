@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import geos from '@/data/geos.json';
 import { Head, useForm } from '@inertiajs/react';
 
 export default function Show({ offer, categories }) {
@@ -6,9 +7,8 @@ export default function Show({ offer, categories }) {
         offer_category_id: offer.offer_category_id,
         category_ids: (offer.categories || []).map((c) => c.id),
         name: offer.name,
-        slug: offer.slug,
         default_payout: offer.default_payout,
-        allowed_geos: (offer.allowed_geos || []).join(','),
+        allowed_geos: offer.allowed_geos || [],
         description: offer.description || '',
         notes: offer.notes || '',
         is_active: offer.is_active,
@@ -51,12 +51,6 @@ export default function Show({ offer, categories }) {
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                         />
-                        <input
-                            className="w-full rounded-lg border px-3 py-2"
-                            value={data.slug}
-                            placeholder="ID (опционально, генерируется автоматически)"
-                            onChange={(e) => setData('slug', e.target.value)}
-                        />
                         <div className="rounded border px-3 py-2">
                             <div className="text-xs font-semibold text-gray-600">Категории</div>
                             <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
@@ -87,13 +81,29 @@ export default function Show({ offer, categories }) {
                                 setData('default_payout', e.target.value)
                             }
                         />
-                        <input
-                            className="w-full rounded-lg border px-3 py-2"
-                            value={data.allowed_geos}
-                            onChange={(e) =>
-                                setData('allowed_geos', e.target.value)
-                            }
-                        />
+                        <div>
+                            <div className="text-xs font-semibold text-gray-600">Разрешенные GEO</div>
+                            <select
+                                multiple
+                                className="mt-1 w-full rounded-lg border px-3 py-2 text-sm h-32"
+                                value={data.allowed_geos}
+                                onChange={(e) =>
+                                    setData(
+                                        'allowed_geos',
+                                        Array.from(e.target.selectedOptions).map((o) => o.value),
+                                    )
+                                }
+                            >
+                                {geos.map((geo) => (
+                                    <option key={geo.value} value={geo.value}>
+                                        {geo.value} — {geo.text}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="text-xs text-gray-500 mt-1">
+                                Выбрано: {data.allowed_geos.length || '0'}
+                            </div>
+                        </div>
                         <textarea
                             className="w-full rounded-lg border px-3 py-2"
                             value={data.description}

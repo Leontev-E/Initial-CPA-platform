@@ -147,10 +147,12 @@ class OfferCategoryController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', "unique:offer_categories,slug,{$offerCategory->id}"],
+            'slug' => ['nullable', 'string', 'max:255', "unique:offer_categories,slug,{$offerCategory->id}"],
             'description' => ['nullable', 'string'],
             'is_active' => ['boolean'],
         ]);
+
+        $validated['slug'] = $validated['slug'] ?? $offerCategory->slug ?? Str::slug($validated['name']);
 
         $offerCategory->update($validated);
 
