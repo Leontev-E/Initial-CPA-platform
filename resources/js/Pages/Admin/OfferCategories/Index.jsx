@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, router } from '@inertiajs/react';
+import { Head, useForm, router, Link } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
 export default function Index({ categories, filters, attachOffers, attachFilters }) {
@@ -258,23 +258,46 @@ export default function Index({ categories, filters, attachOffers, attachFilters
                         {attachOffers.data.map((offer) => (
                             <div key={offer.id} className="flex items-center justify-between py-2 text-sm">
                                 <div>
-                                    <div className="font-semibold text-gray-900">
-                                        {offer.name}{' '}
+                                    <div className="font-semibold text-gray-900 flex items-center gap-2">
+                                        <span>{offer.name}</span>
                                         {!offer.is_active && (
                                             <span className="rounded bg-gray-100 px-2 py-1 text-[11px] text-gray-600">выключен</span>
+                                        )}
+                                        {(offer.categories || []).some((c) => c.id === attachCategory.id) && (
+                                            <span className="rounded bg-green-100 px-2 py-1 text-[11px] text-green-700">уже в категории</span>
                                         )}
                                     </div>
                                     <div className="text-xs text-gray-500">
                                         {(offer.categories || []).map((c) => c.name).join(', ') || 'Без категории'}
                                     </div>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => router.post(route('admin.offer-categories.attach', attachCategory.id), { offer_id: offer.id }, { preserveScroll: true })}
-                                    className="rounded border border-green-200 bg-green-50 px-3 py-1 text-[11px] font-semibold text-green-700 hover:bg-green-100"
-                                >
-                                    Добавить
-                                </button>
+                                <div className="flex gap-2">
+                                    {(offer.categories || []).some((c) => c.id === attachCategory.id) ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (confirm('Удалить оффер из категории?')) {
+                                                    router.delete(route('admin.offer-categories.detach', attachCategory.id), {
+                                                        data: { offer_id: offer.id },
+                                                        preserveScroll: true,
+                                                        preserveState: true,
+                                                    });
+                                                }
+                                            }}
+                                            className="rounded border border-red-200 bg-red-50 px-3 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100"
+                                        >
+                                            Удалить
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => router.post(route('admin.offer-categories.attach', attachCategory.id), { offer_id: offer.id }, { preserveScroll: true })}
+                                            className="rounded border border-green-200 bg-green-50 px-3 py-1 text-[11px] font-semibold text-green-700 hover:bg-green-100"
+                                        >
+                                            Добавить
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         ))}
                         {attachOffers.data.length === 0 && (
@@ -329,14 +352,17 @@ function CategoryRow({ cat, onAttach }) {
             {!editing ? (
                 <div className="flex items-center justify-between">
                     <div>
-                        <div className="text-sm font-semibold text-gray-900">
-                            {cat.name}{' '}
-                            {!cat.is_active && (
-                                <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
-                                    выключена
-                                </span>
-                            )}
-                        </div>
+                        <Link
+                            href={route('admin.offer-categories.show', cat.id)}
+                            className="text-sm font-semibold text-indigo-700 hover:underline"
+                        >
+                            {cat.name}
+                        </Link>{' '}
+                        {!cat.is_active && (
+                            <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
+                                выключена
+                            </span>
+                        )}
                         <div className="text-xs text-gray-500">{cat.slug}</div>
                         <div className="text-xs text-gray-500">
                             {cat.description || '—'}

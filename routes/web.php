@@ -27,9 +27,10 @@ Route::get('/dashboard', DashboardController::class)
 Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-    Route::resource('offer-categories', AdminOfferCategoryController::class)->except(['create', 'edit', 'show']);
+    Route::resource('offer-categories', AdminOfferCategoryController::class)->except(['create', 'edit']);
     Route::patch('offer-categories/{offer_category}/toggle', [AdminOfferCategoryController::class, 'toggle'])->name('offer-categories.toggle');
     Route::post('offer-categories/{offer_category}/attach-offer', [AdminOfferCategoryController::class, 'attachOffer'])->name('offer-categories.attach');
+    Route::delete('offer-categories/{offer_category}/detach-offer', [AdminOfferCategoryController::class, 'detachOffer'])->name('offer-categories.detach');
     Route::resource('offers', AdminOfferController::class)->except(['create', 'edit']);
     Route::patch('offers/{offer}/toggle', [AdminOfferController::class, 'toggle'])->name('offers.toggle');
 
