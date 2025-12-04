@@ -25,7 +25,7 @@ class Offer extends Model
         'is_active' => 'boolean',
     ];
 
-    protected $appends = ['image_url'];
+    protected $appends = ['image_url', 'created_at_human'];
 
     public function category()
     {
@@ -45,5 +45,10 @@ class Offer extends Model
     public function getImageUrlAttribute(): ?string
     {
         return $this->image_path ? Storage::url($this->image_path) : null;
+    }
+
+    public function getCreatedAtHumanAttribute(): ?string
+    {
+        return $this->created_at?->format('d.m.Y');
     }
 }

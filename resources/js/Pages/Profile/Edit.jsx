@@ -73,7 +73,14 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
 
     const submitEdit = (e) => {
         e.preventDefault();
-        router.patch(route('profile.employees.update', editForm.data.id), editForm.data, {
+        const payload = {
+            name: editForm.data.name,
+            telegram: editForm.data.telegram,
+            employee_role: editForm.data.employee_role,
+            sections: editForm.data.sections,
+            actions: editForm.data.actions,
+        };
+        router.patch(route('profile.employees.update', editForm.data.id), payload, {
             preserveScroll: true,
             onSuccess: () => setEditingId(null),
         });
@@ -317,10 +324,11 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
                                                     onChange={(e) => editForm.setData('name', e.target.value)}
                                                 />
                                                 <input
-                                                    className="w-full rounded border px-3 py-2"
+                                                    className="w-full cursor-not-allowed rounded border bg-slate-100 px-3 py-2 text-gray-500"
                                                     placeholder="Email"
                                                     value={editForm.data.email}
-                                                    onChange={(e) => editForm.setData('email', e.target.value)}
+                                                    disabled
+                                                    readOnly
                                                 />
                                                 <input
                                                     className="w-full rounded border px-3 py-2"

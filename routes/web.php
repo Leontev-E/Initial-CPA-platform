@@ -28,7 +28,9 @@ Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix(
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('offer-categories', AdminOfferCategoryController::class)->except(['create', 'edit', 'show']);
+    Route::patch('offer-categories/{offer_category}/toggle', [AdminOfferCategoryController::class, 'toggle'])->name('offer-categories.toggle');
     Route::resource('offers', AdminOfferController::class)->except(['create', 'edit']);
+    Route::patch('offers/{offer}/toggle', [AdminOfferController::class, 'toggle'])->name('offers.toggle');
 
     Route::get('leads', [AdminLeadController::class, 'index'])->name('leads.index');
     Route::patch('leads/{lead}/status', [AdminLeadController::class, 'updateStatus'])->name('leads.updateStatus');

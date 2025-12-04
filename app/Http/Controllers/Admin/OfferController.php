@@ -13,26 +13,45 @@ class OfferController extends Controller
 {
     public function index(Request $request)
     {
+        $perPage = (int) $request->integer('per_page', 10);
+        $perPage = in_array($perPage, [10, 25, 50], true) ? $perPage : 10;
+        $sort = $request->input('sort', 'name');
+        $direction = $request->input('direction', 'asc') === 'desc' ? 'desc' : 'asc';
+
         $query = Offer::query()->with('category');
 
         if ($request->filled('category_id')) {
             $query->where('offer_category_id', $request->integer('category_id'));
         }
 
-        if ($request->filled('is_active')) {
-            $query->where('is_active', $request->boolean('is_active'));
+        if ($request->filled('status')) {
+            if ($request->input('status') === 'active') {
+                $query->where('is_active', true);
+            } elseif ($request->input('status') === 'inactive') {
+                $query->where('is_active', false);
+            }
         }
 
         if ($request->filled('search')) {
             $query->where('name', 'like', '%'.$request->string('search')->toString().'%');
         }
 
-        $offers = $query->orderBy('name')->paginate(15)->withQueryString();
+        if ($sort === 'category') {
+            $query->leftJoin('offer_categories', 'offers.offer_category_id', '=', 'offer_categories.id')
+                ->select('offers.*')
+                ->orderBy('offer_categories.name', $direction);
+        } elseif (in_array($sort, ['name', 'default_payout', 'created_at'], true)) {
+            $query->orderBy($sort, $direction);
+        } else {
+            $query->orderBy('name');
+        }
+
+        $offers = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('Admin/Offers/Index', [
             'offers' => $offers,
             'categories' => OfferCategory::orderBy('name')->get(),
-            'filters' => $request->only(['category_id', 'is_active', 'search']),
+            'filters' => $request->only(['category_id', 'status', 'search', 'sort', 'direction', 'per_page']),
         ]);
     }
 
@@ -81,6 +100,13 @@ class OfferController extends Controller
     {
         $offer->delete();
         return redirect()->route('admin.offers.index')->with('success', 'Оффер удален');
+    }
+
+    public function toggle(Offer $offer)
+    {
+        $offer->update(['is_active' => ! $offer->is_active]);
+
+        return back()->with('success', 'Оффер '.($offer->is_active ? 'включен' : 'выключен'));
     }
 
     protected function validateData(Request $request, ?int $offerId = null): array

@@ -123,7 +123,6 @@ class ProfileController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'telegram' => ['required', 'string', 'max:255', 'unique:users,telegram,'.$user->id],
             'employee_role' => ['required', 'in:admin,tech,accounting,operator'],
             'sections' => ['array'],
@@ -136,7 +135,6 @@ class ProfileController extends Controller
 
         $user->update([
             'name' => $data['name'],
-            'email' => $data['email'],
             'telegram' => $data['telegram'],
             'employee_role' => $data['employee_role'],
             'permissions' => [
