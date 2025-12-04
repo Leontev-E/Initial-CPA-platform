@@ -45,6 +45,32 @@ export default function Index({ webhooks }) {
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800">Вебхуки лидов</h2>}>
             <Head title="Вебхуки лидов" />
+            <div className="mb-4 rounded-xl bg-white p-4 shadow-sm text-sm text-gray-700">
+                <div className="text-sm font-semibold text-gray-800">Документация</div>
+                <ul className="mt-2 list-disc space-y-1 pl-4">
+                    <li>Мы отправляем POST JSON на ваш URL после создания лида и при смене статуса.</li>
+                    <li>Если статусы не выбраны — отправляем по всем статусам.</li>
+                    <li>Базовые поля всегда идут: <code>id</code>, <code>status</code>, <code>offer_id</code>, <code>webmaster_id</code>, <code>created_at</code>.</li>
+                    <li>Выбранные поля из списка добавляются сверху: имя, телефон, email, GEO, payout, SubID, landing_url, UTM, tags, extra_data.</li>
+                    <li>Пример тела запроса:
+                        <pre className="mt-1 whitespace-pre-wrap rounded bg-slate-50 p-2 text-xs text-gray-800">
+{`{
+  "id": 123,
+  "status": "sale",
+  "offer_id": 45,
+  "webmaster_id": 7,
+  "created_at": "2025-12-08T12:00:00Z",
+  "customer_name": "Иван",
+  "customer_phone": "+79990001122",
+  "geo": "RU",
+  "utm_source": "fb",
+  "tags": {"adset":"123"}
+}`}
+                        </pre>
+                    </li>
+                    <li>Таймаут отправки: 10 секунд. Ответ не влияет на статусы в системе.</li>
+                </ul>
+            </div>
             <div className="grid gap-4 lg:grid-cols-3">
                 <div className="rounded-xl bg-white p-4 shadow-sm">
                     <h3 className="text-sm font-semibold text-gray-700">Новый вебхук</h3>
