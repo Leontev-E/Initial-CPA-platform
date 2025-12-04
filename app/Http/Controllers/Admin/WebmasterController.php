@@ -8,6 +8,7 @@ use App\Models\Offer;
 use App\Models\OfferWebmasterRate;
 use App\Models\PayoutRequest;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -109,10 +110,23 @@ class WebmasterController extends Controller
         $paid = PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
         $balance = $stats['payout'] - $paid;
 
+        $offers = Offer::with(['categories'])
+            ->orderBy('name')
+            ->get()
+            ->map(function (Offer $offer) use ($user) {
+                $rate = OfferWebmasterRate::where('offer_id', $offer->id)
+                    ->where('webmaster_id', $user->id)
+                    ->first();
+                $offer->custom_payout = $rate?->custom_payout;
+                $offer->is_allowed = $rate?->is_allowed ?? true;
+                return $offer;
+            });
+
         return Inertia::render('Admin/Webmasters/Show', [
             'webmaster' => $user,
             'stats' => $stats,
             'balance' => $balance,
+            'offers' => $offers,
         ]);
     }
 
@@ -125,6 +139,7 @@ class WebmasterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'telegram' => ['nullable', 'string', 'max:255'],
             'note' => ['nullable', 'string'],
+            'dashboard_message' => ['nullable', 'string'],
         ]);
 
         $user->update($validated);
@@ -198,5 +213,44 @@ class WebmasterController extends Controller
         ], function ($message) use ($user) {
             $message->to($user->email)->subject('Доступ к партнерской программе BoostClicks');
         });
+    }
+
+    public function updateRate(Request $request, User $user)
+    {
+        abort_unless($user->role === User::ROLE_WEBMASTER, 404);
+
+        $data = $request->validate([
+            'offer_id' => ['required', 'exists:offers,id'],
+            'custom_payout' => ['nullable', 'numeric', 'min:0'],
+            'is_allowed' => ['required', 'boolean'],
+        ]);
+
+        OfferWebmasterRate::updateOrCreate(
+            ['offer_id' => $data['offer_id'], 'webmaster_id' => $user->id],
+            ['custom_payout' => $data['custom_payout'], 'is_allowed' => $data['is_allowed']]
+        );
+
+        return back()->with('success', 'Настройки по офферу обновлены');
+    }
+
+    public function createPayout(Request $request, User $user)
+    {
+        abort_unless($user->role === User::ROLE_WEBMASTER, 404);
+
+        $data = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0'],
+            'method' => ['required', 'string', 'max:255'],
+            'details' => ['nullable', 'string'],
+        ]);
+
+        PayoutRequest::create([
+            'webmaster_id' => $user->id,
+            'amount' => $data['amount'],
+            'method' => $data['method'],
+            'details' => $data['details'] ?? '',
+            'status' => 'pending',
+        ]);
+
+        return back()->with('success', 'Заявка на выплату создана');
     }
 }

@@ -43,6 +43,8 @@ Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix(
     Route::patch('webmasters/{user}/password', [AdminWebmasterController::class, 'updatePassword'])->name('webmasters.updatePassword');
     Route::post('webmasters/{user}/resend-password', [AdminWebmasterController::class, 'resendPassword'])->name('webmasters.resendPassword');
     Route::post('webmasters/{user}/impersonate', [AdminWebmasterController::class, 'impersonate'])->name('webmasters.impersonate');
+    Route::post('webmasters/{user}/rate', [AdminWebmasterController::class, 'updateRate'])->name('webmasters.rate');
+    Route::post('webmasters/{user}/payout', [AdminWebmasterController::class, 'createPayout'])->name('webmasters.payout');
     Route::delete('webmasters/{user}', [AdminWebmasterController::class, 'destroy'])->name('webmasters.destroy');
 
     Route::get('payouts', [AdminPayoutController::class, 'index'])->name('payouts.index');

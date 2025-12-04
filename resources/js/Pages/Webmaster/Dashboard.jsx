@@ -9,12 +9,19 @@ export default function Dashboard({
     balance,
     chartData,
     topOffers,
+    dashboardMessage,
 }) {
     return (
         <AuthenticatedLayout
             header={<h2 className="text-xl font-semibold text-gray-800">Дашборд вебмастера</h2>}
         >
             <Head title="Дашборд" />
+
+            {dashboardMessage && (
+                <div className="mb-4 rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-800">
+                    {dashboardMessage}
+                </div>
+            )}
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Stat title="Баланс" value={`${balance} $`} />

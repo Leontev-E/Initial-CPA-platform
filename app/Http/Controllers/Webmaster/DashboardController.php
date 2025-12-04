@@ -63,6 +63,7 @@ class DashboardController extends Controller
             'topOffers' => $topOffers,
             'date_from' => $from->toDateString(),
             'date_to' => $to->toDateString(),
+            'dashboardMessage' => $user->dashboard_message,
         ]);
     }
 }

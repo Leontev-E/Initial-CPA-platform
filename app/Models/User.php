@@ -25,6 +25,7 @@ class User extends Authenticatable
         'email',
         'telegram',
         'note',
+        'dashboard_message',
         'password',
         'role',
         'is_active',
