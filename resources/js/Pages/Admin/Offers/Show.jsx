@@ -366,11 +366,6 @@ export default function Show({ offer, categories }) {
                                                 Скачать
                                             </a>
                                         )}
-                                        {landing.url && landing.type === 'link' && (
-                                            <a href={route('landings.preview', landing.id)} target="_blank" className="rounded border border-indigo-200 px-2 py-1 font-semibold text-indigo-700 hover:bg-indigo-50">
-                                                Открыть ссылку
-                                            </a>
-                                        )}
                                         <button
                                             type="button"
                                             onClick={() => {

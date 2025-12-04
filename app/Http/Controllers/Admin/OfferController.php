@@ -178,12 +178,23 @@ class OfferController extends Controller
     {
         $this->authorizeOffer($offer);
 
+        $messages = [
+            'type.required' => 'Укажите тип лендинга',
+            'type.in' => 'Тип лендинга должен быть local или link',
+            'name.required' => 'Введите название лендинга',
+            'landing_file.required_if' => 'Загрузите ZIP-файл лендинга',
+            'landing_file.mimes' => 'Допустим только ZIP-архив',
+            'landing_file.max' => 'Максимальный размер файла 70 МБ',
+            'url.required_if' => 'Укажите ссылку на лендинг',
+            'url.url' => 'Некорректная ссылка на лендинг',
+        ];
+
         $validated = $request->validate([
             'type' => ['required', 'in:local,link'],
             'name' => ['required', 'string', 'max:255'],
             'landing_file' => ['required_if:type,local', 'file', 'mimes:zip', 'max:71680'], // ~70MB
             'url' => ['required_if:type,link', 'url', 'max:2048'],
-        ]);
+        ], $messages);
 
         if ($validated['type'] === 'local') {
             $existingLocal = $offer->landings()->where('type', 'local')->count();
