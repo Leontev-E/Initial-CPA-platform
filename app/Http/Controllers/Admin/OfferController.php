@@ -18,10 +18,14 @@ class OfferController extends Controller
         $sort = $request->input('sort', 'name');
         $direction = $request->input('direction', 'asc') === 'desc' ? 'desc' : 'asc';
 
-        $query = Offer::query()->with('category');
+        $query = Offer::query()->with(['category', 'categories']);
 
         if ($request->filled('category_id')) {
-            $query->where('offer_category_id', $request->integer('category_id'));
+            $categoryId = $request->integer('category_id');
+            $query->where(function ($q) use ($categoryId) {
+                $q->where('offer_category_id', $categoryId)
+                    ->orWhereHas('categories', fn ($c) => $c->where('offer_category_id', $categoryId));
+            });
         }
 
         if ($request->filled('status')) {
@@ -37,7 +41,8 @@ class OfferController extends Controller
         }
 
         if ($sort === 'category') {
-            $query->leftJoin('offer_categories', 'offers.offer_category_id', '=', 'offer_categories.id')
+            $query->leftJoin('offer_offer_category', 'offers.id', '=', 'offer_offer_category.offer_id')
+                ->leftJoin('offer_categories', 'offer_offer_category.offer_category_id', '=', 'offer_categories.id')
                 ->select('offers.*')
                 ->orderBy('offer_categories.name', $direction);
         } elseif (in_array($sort, ['name', 'default_payout', 'created_at'], true)) {
@@ -46,7 +51,7 @@ class OfferController extends Controller
             $query->orderBy('name');
         }
 
-        $offers = $query->paginate($perPage)->withQueryString();
+        $offers = $query->distinct()->paginate($perPage)->withQueryString();
 
         return Inertia::render('Admin/Offers/Index', [
             'offers' => $offers,
@@ -57,10 +62,11 @@ class OfferController extends Controller
 
     public function show(Offer $offer)
     {
-        $offer->load(['category', 'rates.webmaster']);
+        $offer->load(['category', 'categories', 'rates.webmaster']);
 
         return Inertia::render('Admin/Offers/Show', [
             'offer' => $offer,
+            'categories' => OfferCategory::orderBy('name')->get(),
         ]);
     }
 
@@ -75,7 +81,11 @@ class OfferController extends Controller
         $validated['slug'] = $validated['slug'] ?? Str::slug($validated['name']);
         $validated['allowed_geos'] = $this->normalizeGeos($validated['allowed_geos'] ?? []);
 
-        Offer::create($validated);
+        $primaryCategory = $validated['offer_category_id'] ?? ($validated['category_ids'][0] ?? null);
+        $validated['offer_category_id'] = $primaryCategory;
+
+        $offer = Offer::create($validated);
+        $offer->categories()->sync($validated['category_ids'] ?? array_filter([$primaryCategory]));
 
         return redirect()->route('admin.offers.index')->with('success', 'Оффер создан');
     }
@@ -91,7 +101,11 @@ class OfferController extends Controller
         $validated['slug'] = $validated['slug'] ?? Str::slug($validated['name']);
         $validated['allowed_geos'] = $this->normalizeGeos($validated['allowed_geos'] ?? []);
 
+        $primaryCategory = $validated['offer_category_id'] ?? ($validated['category_ids'][0] ?? $offer->offer_category_id);
+        $validated['offer_category_id'] = $primaryCategory;
+
         $offer->update($validated);
+        $offer->categories()->sync($validated['category_ids'] ?? array_filter([$primaryCategory]));
 
         return back()->with('success', 'Оффер обновлен');
     }
@@ -112,7 +126,9 @@ class OfferController extends Controller
     protected function validateData(Request $request, ?int $offerId = null): array
     {
         return $request->validate([
-            'offer_category_id' => ['required', 'exists:offer_categories,id'],
+            'offer_category_id' => ['nullable', 'exists:offer_categories,id'],
+            'category_ids' => ['array'],
+            'category_ids.*' => ['exists:offer_categories,id'],
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:offers,slug,'.$offerId],
             'default_payout' => ['required', 'numeric', 'min:0'],

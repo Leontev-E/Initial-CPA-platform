@@ -15,7 +15,9 @@ class OfferController extends Controller
         $user = $request->user();
 
         $offers = Offer::where('is_active', true)
-            ->with('category')
+            ->whereHas('category', fn ($q) => $q->where('is_active', true))
+            ->whereDoesntHave('categories', fn ($q) => $q->where('is_active', false))
+            ->with(['category', 'categories'])
             ->orderBy('name')
             ->get()
             ->map(function (Offer $offer) use ($user) {
@@ -38,7 +40,7 @@ class OfferController extends Controller
             ->where('webmaster_id', $user->id)
             ->value('custom_payout');
 
-        $offer->load('category');
+        $offer->load(['category', 'categories']);
         $offer->effective_payout = $custom ?? $offer->default_payout;
 
         return Inertia::render('Webmaster/Offers/Show', [

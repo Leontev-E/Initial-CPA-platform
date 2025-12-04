@@ -3,7 +3,8 @@ import { Link, usePage } from '@inertiajs/react';
 import { useMemo } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const { auth, impersonating } = usePage().props;
+    const user = auth.user;
 
     const allowedSections = user.invited_by ? (user.permissions?.sections || []) : null;
 
@@ -103,6 +104,19 @@ export default function AuthenticatedLayout({ header, children }) {
             </aside>
 
             <div className="flex-1 pb-16">
+                {impersonating && (
+                    <div className="bg-amber-100 text-amber-800 px-4 py-2 text-sm flex items-center justify-between">
+                        <div>Вы вошли под другим пользователем</div>
+                        <Link
+                            href={route('webmasters.stopImpersonate')}
+                            method="post"
+                            as="button"
+                            className="rounded bg-amber-200 px-3 py-1 text-xs font-semibold hover:bg-amber-300"
+                        >
+                            Вернуться в партнерскую программу
+                        </Link>
+                    </div>
+                )}
                 <header className="border-b bg-white/80 p-4 shadow-sm backdrop-blur">
                     <div className="flex items-center justify-between gap-4">
                         <div>

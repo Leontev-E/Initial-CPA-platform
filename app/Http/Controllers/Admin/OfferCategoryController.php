@@ -18,6 +18,10 @@ class OfferCategoryController extends Controller
         $sort = $request->input('sort', 'name');
         $direction = $request->input('direction', 'asc') === 'desc' ? 'desc' : 'asc';
         $status = $request->input('status');
+        $offerSearch = $request->string('offer_search')->toString();
+        $offerStatus = $request->input('offer_status');
+        $offerPerPage = (int) $request->integer('offer_per_page', 10);
+        $offerPerPage = in_array($offerPerPage, [10, 25, 50], true) ? $offerPerPage : 10;
 
         $categories = OfferCategory::query()
             ->when($search, fn ($query) => $query->where('name', 'like', "%{$search}%"))
@@ -34,6 +38,17 @@ class OfferCategoryController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
+        $attachOffers = \App\Models\Offer::query()
+            ->with('categories')
+            ->when($offerSearch, fn ($q) => $q->where('name', 'like', "%{$offerSearch}%"))
+            ->when($offerStatus === 'active', fn ($q) => $q->where('is_active', true))
+            ->when($offerStatus === 'inactive', fn ($q) => $q->where('is_active', false))
+            ->orderBy('name')
+            ->select('offers.*')
+            ->distinct()
+            ->paginate($offerPerPage, ['*'], 'offer_page')
+            ->withQueryString();
+
         return Inertia::render('Admin/OfferCategories/Index', [
             'categories' => $categories,
             'filters' => [
@@ -42,6 +57,12 @@ class OfferCategoryController extends Controller
                 'sort' => $sort,
                 'direction' => $direction,
                 'status' => $status,
+            ],
+            'attachOffers' => $attachOffers,
+            'attachFilters' => [
+                'offer_search' => $offerSearch,
+                'offer_status' => $offerStatus,
+                'offer_per_page' => $offerPerPage,
             ],
         ]);
     }
@@ -78,11 +99,8 @@ class OfferCategoryController extends Controller
 
     public function destroy(OfferCategory $offerCategory)
     {
-        // Удаляем офферы категории, каскадно удалятся связанные лиды и ставки
-        $offerCategory->offers()->each(function ($offer) {
-            $offer->delete();
-        });
-
+        // Отвязываем офферы и удаляем категорию
+        $offerCategory->offersMany()->detach();
         $offerCategory->delete();
 
         return back()->with('success', 'Категория удалена');
@@ -93,5 +111,16 @@ class OfferCategoryController extends Controller
         $offerCategory->update(['is_active' => ! $offerCategory->is_active]);
 
         return back()->with('success', 'Категория '.($offerCategory->is_active ? 'включена' : 'выключена'));
+    }
+
+    public function attachOffer(Request $request, OfferCategory $offerCategory)
+    {
+        $data = $request->validate([
+            'offer_id' => ['required', 'exists:offers,id'],
+        ]);
+
+        $offerCategory->offersMany()->syncWithoutDetaching([$data['offer_id']]);
+
+        return back()->with('success', 'Оффер добавлен в категорию');
     }
 }

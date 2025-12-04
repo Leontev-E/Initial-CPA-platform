@@ -1,9 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm } from '@inertiajs/react';
 
-export default function Show({ offer }) {
+export default function Show({ offer, categories }) {
     const { data, setData, post, processing, errors } = useForm({
         offer_category_id: offer.offer_category_id,
+        category_ids: (offer.categories || []).map((c) => c.id),
         name: offer.name,
         slug: offer.slug,
         default_payout: offer.default_payout,
@@ -56,6 +57,29 @@ export default function Show({ offer }) {
                             placeholder="ID (опционально, генерируется автоматически)"
                             onChange={(e) => setData('slug', e.target.value)}
                         />
+                        <div className="rounded border px-3 py-2">
+                            <div className="text-xs font-semibold text-gray-600">Категории</div>
+                            <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                                {categories.map((cat) => (
+                                    <label key={cat.id} className="inline-flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={data.category_ids.includes(cat.id)}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setData('category_ids', checked
+                                                    ? [...data.category_ids, cat.id]
+                                                    : data.category_ids.filter((id) => id !== cat.id));
+                                                setData('offer_category_id', checked ? (data.offer_category_id ?? cat.id) : data.category_ids.find((id) => id !== cat.id) ?? null);
+                                            }}
+                                        />
+                                        <span className={!cat.is_active ? 'text-gray-400' : 'text-gray-800'}>
+                                            {cat.name} {!cat.is_active && '(выключена)'}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
                         <input
                             className="w-full rounded-lg border px-3 py-2"
                             value={data.default_payout}

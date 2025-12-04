@@ -29,6 +29,7 @@ Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix(
 
     Route::resource('offer-categories', AdminOfferCategoryController::class)->except(['create', 'edit', 'show']);
     Route::patch('offer-categories/{offer_category}/toggle', [AdminOfferCategoryController::class, 'toggle'])->name('offer-categories.toggle');
+    Route::post('offer-categories/{offer_category}/attach-offer', [AdminOfferCategoryController::class, 'attachOffer'])->name('offer-categories.attach');
     Route::resource('offers', AdminOfferController::class)->except(['create', 'edit']);
     Route::patch('offers/{offer}/toggle', [AdminOfferController::class, 'toggle'])->name('offers.toggle');
 
@@ -40,6 +41,8 @@ Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix(
     Route::get('webmasters/{user}', [AdminWebmasterController::class, 'show'])->name('webmasters.show');
     Route::patch('webmasters/{user}', [AdminWebmasterController::class, 'update'])->name('webmasters.update');
     Route::patch('webmasters/{user}/password', [AdminWebmasterController::class, 'updatePassword'])->name('webmasters.updatePassword');
+    Route::post('webmasters/{user}/resend-password', [AdminWebmasterController::class, 'resendPassword'])->name('webmasters.resendPassword');
+    Route::post('webmasters/{user}/impersonate', [AdminWebmasterController::class, 'impersonate'])->name('webmasters.impersonate');
     Route::delete('webmasters/{user}', [AdminWebmasterController::class, 'destroy'])->name('webmasters.destroy');
 
     Route::get('payouts', [AdminPayoutController::class, 'index'])->name('payouts.index');
@@ -50,6 +53,10 @@ Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix(
     Route::get('reports/webmasters', [AdminReportController::class, 'webmasters'])->name('reports.webmasters');
     Route::get('reports/geo', [AdminReportController::class, 'geo'])->name('reports.geo');
 });
+
+Route::post('webmasters/stop-impersonate', [AdminWebmasterController::class, 'stopImpersonate'])
+    ->middleware('auth')
+    ->name('webmasters.stopImpersonate');
 
 Route::middleware(['auth', 'verified', 'role:webmaster'])->prefix('webmaster')->name('webmaster.')->group(function () {
     Route::get('/dashboard', [WebmasterDashboardController::class, 'index'])->name('dashboard');
@@ -71,6 +78,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/invite', [ProfileController::class, 'invite'])->name('profile.invite');
     Route::patch('/profile/employees/{user}', [ProfileController::class, 'updateEmployee'])->name('profile.employees.update');
     Route::delete('/profile/employees/{user}', [ProfileController::class, 'destroyEmployee'])->name('profile.employees.destroy');
+    Route::post('/profile/employees/{user}/impersonate', [ProfileController::class, 'impersonateEmployee'])->name('profile.employees.impersonate');
 });
 
 Route::post('/locale', function (Request $request) {

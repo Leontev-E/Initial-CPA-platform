@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 export default function Index({ offers, categories, filters }) {
     const { data, setData, post, processing, reset, errors } = useForm({
         offer_category_id: categories[0]?.id ?? '',
+        category_ids: categories[0]?.id ? [categories[0].id] : [],
         name: '',
         slug: '',
         default_payout: '',
@@ -39,10 +40,12 @@ export default function Index({ offers, categories, filters }) {
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('admin.offers.store'), {
+        const payload = { ...data, offer_category_id: data.category_ids[0] ?? data.offer_category_id ?? null };
+        post(route('admin.offers.store'), payload, {
             forceFormData: true,
-            onSuccess: () =>
+            onSuccess: () => {
                 reset(
+                    'category_ids',
                     'name',
                     'slug',
                     'default_payout',
@@ -50,7 +53,13 @@ export default function Index({ offers, categories, filters }) {
                     'description',
                     'notes',
                     'image',
-                ),
+                    'offer_category_id',
+                    'is_active',
+                );
+                setData('category_ids', categories[0]?.id ? [categories[0].id] : []);
+                setData('offer_category_id', categories[0]?.id ?? '');
+                setData('is_active', true);
+            },
         });
     };
 
@@ -66,19 +75,29 @@ export default function Index({ offers, categories, filters }) {
                         Новый оффер
                     </h3>
                     <form onSubmit={submit} className="mt-3 space-y-3" encType="multipart/form-data">
-                        <select
-                            className="w-full rounded-lg border px-3 py-2"
-                            value={data.offer_category_id}
-                            onChange={(e) =>
-                                setData('offer_category_id', e.target.value)
-                            }
-                        >
-                            {categories.map((cat) => (
-                                <option key={cat.id} value={cat.id}>
-                                    {cat.name}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="rounded border px-3 py-2">
+                            <div className="text-xs font-semibold text-gray-600">Категории</div>
+                            <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                                {categories.map((cat) => (
+                                    <label key={cat.id} className="inline-flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={data.category_ids.includes(cat.id)}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setData('category_ids', checked
+                                                    ? [...data.category_ids, cat.id]
+                                                    : data.category_ids.filter((id) => id !== cat.id));
+                                                setData('offer_category_id', checked ? (data.offer_category_id ?? cat.id) : data.category_ids.find((id) => id !== cat.id) ?? null);
+                                            }}
+                                        />
+                                        <span className={!cat.is_active ? 'text-gray-400' : 'text-gray-800'}>
+                                            {cat.name} {!cat.is_active && '(выключена)'}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
                         <input
                             className="w-full rounded-lg border px-3 py-2"
                             placeholder="Название"
@@ -240,13 +259,17 @@ export default function Index({ offers, categories, filters }) {
                                         )}
                                         <div>
                                             <div className="text-sm font-semibold text-gray-900">
-                                                {offer.name}
+                                                {offer.name}{' '}
+                                                {!offer.is_active && (
+                                                    <span className="rounded bg-gray-100 px-2 py-1 text-[11px] text-gray-600">
+                                                        выключен
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="text-xs text-gray-500">
-                                                {offer.category?.name} • GEO:{' '}
-                                                {(offer.allowed_geos || []).join(
-                                                    ', ',
-                                                )}
+                                                {(offer.categories || [offer.category]).filter(Boolean).map((c) => c.name).join(', ') || 'Без категории'}
+                                                {' '}• GEO:{' '}
+                                                {(offer.allowed_geos || []).join(', ')}
                                             </div>
                                         </div>
                                     </Link>
@@ -260,33 +283,24 @@ export default function Index({ offers, categories, filters }) {
                                             >
                                                 Редактировать
                                             </Link>
-                                            <form
-                                                method="post"
-                                                action={route('admin.offers.toggle', offer.id)}
+                                            <button
+                                                type="button"
+                                                onClick={() => router.patch(route('admin.offers.toggle', offer.id), {}, { preserveScroll: true })}
+                                                className="rounded border border-amber-200 px-2 py-1 text-[11px] font-semibold text-amber-700 hover:bg-amber-50"
                                             >
-                                                <input type="hidden" name="_method" value="patch" />
-                                                <button
-                                                    type="submit"
-                                                    className="rounded border border-amber-200 px-2 py-1 text-[11px] font-semibold text-amber-700 hover:bg-amber-50"
-                                                >
-                                                    {offer.is_active ? 'Отключить' : 'Включить'}
-                                                </button>
-                                            </form>
-                                            <form
-                                                method="post"
-                                                action={route('admin.offers.destroy', offer.id)}
-                                                onSubmit={(e) => {
-                                                    if (!confirm('Удалить оффер?')) e.preventDefault();
+                                                {offer.is_active ? 'Отключить' : 'Включить'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (confirm('Удалить оффер?')) {
+                                                        router.delete(route('admin.offers.destroy', offer.id), { preserveScroll: true });
+                                                    }
                                                 }}
+                                                className="rounded border border-red-200 px-2 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-50"
                                             >
-                                                <input type="hidden" name="_method" value="delete" />
-                                                <button
-                                                    type="submit"
-                                                    className="rounded border border-red-200 px-2 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-50"
-                                                >
-                                                    Удалить
-                                                </button>
-                                            </form>
+                                                Удалить
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -302,7 +316,7 @@ export default function Index({ offers, categories, filters }) {
                             <div className="flex items-center gap-2">
                                 <span className="text-xs text-gray-500">На странице:</span>
                                 <select
-                                    className="rounded border px-2 py-1 text-sm"
+                                    className="rounded border px-2 pr-8 py-1 text-sm"
                                     value={filterForm.data.per_page}
                                     onChange={(e) => filterForm.setData('per_page', e.target.value)}
                                 >

@@ -10,19 +10,19 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
     const defaultByRole = {
         admin: {
             sections: ['categories', 'offers', 'leads', 'webmasters', 'payouts', 'reports'],
-            actions: { create: true, update: true, delete: true },
+            actions: { create: true, update: true, delete: true, impersonate: true, impersonate_employee: true },
         },
         tech: {
             sections: ['offers', 'leads', 'reports'],
-            actions: { create: true, update: true, delete: false },
+            actions: { create: true, update: true, delete: false, impersonate: false, impersonate_employee: false },
         },
         accounting: {
             sections: ['payouts', 'reports'],
-            actions: { create: false, update: true, delete: false },
+            actions: { create: false, update: true, delete: false, impersonate: false, impersonate_employee: false },
         },
         operator: {
             sections: ['leads'],
-            actions: { create: false, update: true, delete: false },
+            actions: { create: false, update: true, delete: false, impersonate: false, impersonate_employee: false },
         },
     };
 
@@ -46,6 +46,8 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
             create: false,
             update: false,
             delete: false,
+            impersonate: false,
+            impersonate_employee: false,
         },
     });
     const [editingId, setEditingId] = useState(null);
@@ -67,7 +69,7 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
             telegram: emp.telegram ?? '',
             employee_role: emp.employee_role ?? 'admin',
             sections: emp.permissions?.sections ?? [],
-            actions: emp.permissions?.actions ?? { create: false, update: false, delete: false },
+            actions: emp.permissions?.actions ?? { create: false, update: false, delete: false, impersonate: false },
         });
     };
 
@@ -257,6 +259,32 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
                                             {actionLabels[action] ?? action}
                                         </label>
                                     ))}
+                                    <label className="inline-flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={inviteForm.data.actions.impersonate}
+                                            onChange={(e) =>
+                                                inviteForm.setData('actions', {
+                                                    ...inviteForm.data.actions,
+                                                    impersonate: e.target.checked,
+                                                })
+                                            }
+                                        />
+                                        Имперсонация вебмастеров
+                                    </label>
+                                    <label className="inline-flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={inviteForm.data.actions.impersonate_employee}
+                                            onChange={(e) =>
+                                                inviteForm.setData('actions', {
+                                                    ...inviteForm.data.actions,
+                                                    impersonate_employee: e.target.checked,
+                                                })
+                                            }
+                                        />
+                                        Имперсонация сотрудников
+                                    </label>
                                 </div>
                             </div>
                             <button
@@ -296,6 +324,13 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
                                         <div className="flex flex-col items-end gap-2 text-xs text-gray-500">
                                             <div>{formatDate(emp.created_at)}</div>
                                             <div className="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => router.post(route('profile.employees.impersonate', emp.id))}
+                                                    className="rounded border border-amber-200 px-2 py-1 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-50"
+                                                >
+                                                    Войти как сотрудник
+                                                </button>
                                                 <button
                                                     type="button"
                                                     onClick={() => startEdit(emp)}
@@ -375,11 +410,11 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
                                             <div className="mt-3">
                                                 <div className="text-sm font-semibold text-gray-700">Действия</div>
                                                 <div className="mt-2 flex flex-wrap gap-4 text-sm">
-                                                    {['create','update','delete'].map((action) => (
-                                                        <label key={action} className="inline-flex items-center gap-2">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={editForm.data.actions[action]}
+                                    {['create','update','delete'].map((action) => (
+                                        <label key={action} className="inline-flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={editForm.data.actions[action]}
                                                                 onChange={(e) =>
                                                                     editForm.setData('actions', {
                                                                         ...editForm.data.actions,
@@ -387,11 +422,37 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
                                                                     })
                                                                 }
                                                             />
-                                                            {actionLabels[action] ?? action}
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                            </div>
+                                            {actionLabels[action] ?? action}
+                                        </label>
+                                    ))}
+                                    <label className="inline-flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={editForm.data.actions.impersonate}
+                                            onChange={(e) =>
+                                                editForm.setData('actions', {
+                                                    ...editForm.data.actions,
+                                                    impersonate: e.target.checked,
+                                                })
+                                            }
+                                        />
+                                        Имперсонация вебмастеров
+                                    </label>
+                                    <label className="inline-flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={editForm.data.actions.impersonate_employee}
+                                            onChange={(e) =>
+                                                editForm.setData('actions', {
+                                                    ...editForm.data.actions,
+                                                    impersonate_employee: e.target.checked,
+                                                })
+                                            }
+                                        />
+                                        Имперсонация сотрудников
+                                    </label>
+                                </div>
+                            </div>
                                             <div className="mt-3 flex gap-2">
                                                 <button
                                                     type="submit"

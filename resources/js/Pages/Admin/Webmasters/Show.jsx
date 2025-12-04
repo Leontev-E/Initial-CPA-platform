@@ -1,9 +1,12 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 
 export default function Show({ webmaster, stats, balance }) {
     const { data, setData, patch, processing } = useForm({
         is_active: webmaster.is_active,
+        name: webmaster.name || '',
+        telegram: webmaster.telegram || '',
+        note: webmaster.note || '',
     });
 
     const passwordForm = useForm({
@@ -34,7 +37,24 @@ export default function Show({ webmaster, stats, balance }) {
             <div className="grid gap-4 lg:grid-cols-3">
                 <div className="rounded-xl bg-white p-4 shadow-sm space-y-3">
                     <div className="text-sm text-gray-700">Email: {webmaster.email ?? '—'}</div>
-                    <div className="text-sm text-gray-700">Telegram: {webmaster.telegram ?? '—'}</div>
+                    <input
+                        className="w-full rounded border px-3 py-2 text-sm"
+                        value={data.name}
+                        onChange={(e) => setData('name', e.target.value)}
+                        placeholder="Имя"
+                    />
+                    <input
+                        className="w-full rounded border px-3 py-2 text-sm"
+                        value={data.telegram}
+                        onChange={(e) => setData('telegram', e.target.value)}
+                        placeholder="Telegram"
+                    />
+                    <textarea
+                        className="w-full rounded border px-3 py-2 text-sm"
+                        value={data.note}
+                        onChange={(e) => setData('note', e.target.value)}
+                        placeholder="Примечание (опционально)"
+                    />
                     <div className="text-sm text-gray-700">
                         Баланс: <span className="font-semibold">{balance} $</span>
                     </div>
@@ -54,7 +74,7 @@ export default function Show({ webmaster, stats, balance }) {
                             disabled={processing}
                             className="mt-2 w-full rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
                         >
-                            Сохранить статус
+                            Сохранить
                         </button>
                     </form>
                     <form onSubmit={submitPassword} className="space-y-2 text-sm border-t pt-3">
@@ -88,6 +108,23 @@ export default function Show({ webmaster, stats, balance }) {
                             Обновить пароль
                         </button>
                     </form>
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            passwordForm.reset();
+                            passwordForm.clearErrors();
+                        }}
+                        className="space-y-2 text-sm"
+                    >
+                        <button
+                            type="button"
+                            onClick={() => passwordForm.post(route('admin.webmasters.resendPassword', webmaster.id))}
+                            className="w-full rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100"
+                            disabled={passwordForm.processing}
+                        >
+                            Отправить новый пароль
+                        </button>
+                    </form>
                     <div className="border-t pt-3">
                         <button
                             onClick={() => {
@@ -107,6 +144,17 @@ export default function Show({ webmaster, stats, balance }) {
                     <h3 className="text-sm font-semibold text-gray-700">
                         Статистика
                     </h3>
+                    {(usePage().props.auth.user?.permissions?.actions?.impersonate || usePage().props.auth.user?.invited_by === null) && (
+                        <div className="mt-3">
+                            <button
+                                type="button"
+                                onClick={() => router.post(route('admin.webmasters.impersonate', webmaster.id))}
+                                className="w-full rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-100"
+                            >
+                                Войти как вебмастер
+                            </button>
+                        </div>
+                    )}
                     <div className="mt-3 space-y-2 text-sm text-gray-700">
                         <div>Лиды: {stats.leads}</div>
                         <div>Продажи: {stats.sales}</div>

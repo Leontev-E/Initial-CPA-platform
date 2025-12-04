@@ -35,6 +35,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'locale' => app()->getLocale(),
+            'impersonating' => (bool) $request->session()->get('impersonate_admin_id'),
         ];
     }
 }

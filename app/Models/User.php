@@ -24,6 +24,7 @@ class User extends Authenticatable
         'name',
         'email',
         'telegram',
+        'note',
         'password',
         'role',
         'is_active',
@@ -94,5 +95,34 @@ class User extends Authenticatable
     public function isWebmaster(): bool
     {
         return $this->role === self::ROLE_WEBMASTER;
+    }
+
+    public function canImpersonateWebmaster(): bool
+    {
+        if (! $this->isAdmin()) {
+            return false;
+        }
+
+        // Владельцу всегда можно
+        if ($this->invited_by === null) {
+            return true;
+        }
+
+        return (bool) ($this->permissions['actions']['impersonate'] ?? false);
+    }
+
+    public function canImpersonateEmployee(): bool
+    {
+        // Только для администраторов ПП
+        if (! $this->isAdmin()) {
+            return false;
+        }
+
+        // Владельцу всегда можно
+        if ($this->invited_by === null) {
+            return true;
+        }
+
+        return (bool) ($this->permissions['actions']['impersonate_employee'] ?? false);
     }
 }

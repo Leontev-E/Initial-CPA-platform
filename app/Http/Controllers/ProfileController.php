@@ -72,6 +72,8 @@ class ProfileController extends Controller
             'actions.create' => ['boolean'],
             'actions.update' => ['boolean'],
             'actions.delete' => ['boolean'],
+            'actions.impersonate' => ['boolean'],
+            'actions.impersonate_employee' => ['boolean'],
         ], [
             'email.unique' => 'Email уже используется',
             'telegram.unique' => 'Telegram уже используется',
@@ -93,6 +95,8 @@ class ProfileController extends Controller
                     'create' => $data['actions']['create'] ?? false,
                     'update' => $data['actions']['update'] ?? false,
                     'delete' => $data['actions']['delete'] ?? false,
+                    'impersonate' => $data['actions']['impersonate'] ?? false,
+                    'impersonate_employee' => $data['actions']['impersonate_employee'] ?? false,
                 ],
             ],
             'invited_by' => $user->id,
@@ -131,6 +135,8 @@ class ProfileController extends Controller
             'actions.create' => ['boolean'],
             'actions.update' => ['boolean'],
             'actions.delete' => ['boolean'],
+            'actions.impersonate' => ['boolean'],
+            'actions.impersonate_employee' => ['boolean'],
         ]);
 
         $user->update([
@@ -143,6 +149,8 @@ class ProfileController extends Controller
                     'create' => $data['actions']['create'] ?? false,
                     'update' => $data['actions']['update'] ?? false,
                     'delete' => $data['actions']['delete'] ?? false,
+                    'impersonate' => $data['actions']['impersonate'] ?? false,
+                    'impersonate_employee' => $data['actions']['impersonate_employee'] ?? false,
                 ],
             ],
         ]);
@@ -160,6 +168,21 @@ class ProfileController extends Controller
         $user->delete();
 
         return back()->with('success', 'Сотрудник удален');
+    }
+
+    public function impersonateEmployee(Request $request, User $user): RedirectResponse
+    {
+        $owner = $request->user();
+        abort_unless($owner->isAdmin() && $owner->invited_by === null, 403);
+        abort_if($user->id === $owner->id, 403);
+        abort_if($user->invited_by !== $owner->id, 403);
+
+        abort_unless($owner->canImpersonateEmployee(), 403);
+
+        $request->session()->put('impersonate_admin_id', $owner->id);
+        Auth::login($user);
+
+        return redirect()->route('dashboard');
     }
 
     /**
