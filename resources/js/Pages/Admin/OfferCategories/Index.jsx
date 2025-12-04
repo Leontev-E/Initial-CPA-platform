@@ -91,30 +91,30 @@ export default function Index({ categories, filters }) {
 
                 <div className="lg:col-span-2">
                     <div className="rounded-xl bg-white p-4 shadow-sm">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                            <div>
-                                <h3 className="text-sm font-semibold text-gray-700">Список категорий</h3>
-                                <p className="text-xs text-gray-500">Поиск, сортировка, пагинация</p>
-                            </div>
-                            <div className="flex flex-wrap gap-2 text-sm">
+                        <div className="flex flex-col gap-2">
+                            <h3 className="text-sm font-semibold text-gray-700">Список категорий</h3>
+                            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                                 <input
-                                    className="w-44 rounded border px-3 py-2"
+                                    className="rounded border px-3 py-2 text-sm"
                                     placeholder="Поиск по названию"
                                     value={filterForm.data.search}
                                     onChange={(e) => filterForm.setData('search', e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
                                 />
                                 <select
-                                    className="rounded border px-3 py-2"
+                                    className="rounded border px-3 py-2 text-sm"
                                     value={filterForm.data.status}
-                                    onChange={(e) => filterForm.setData('status', e.target.value)}
+                                    onChange={(e) => {
+                                        filterForm.setData('status', e.target.value);
+                                        applyFilters();
+                                    }}
                                 >
                                     <option value="">Все статусы</option>
                                     <option value="active">Активные</option>
                                     <option value="inactive">Выключенные</option>
                                 </select>
                                 <select
-                                    className="rounded border px-3 py-2"
+                                    className="rounded border px-3 py-2 text-sm"
                                     value={filterForm.data.sort}
                                     onChange={(e) => filterForm.setData('sort', e.target.value)}
                                 >
@@ -122,26 +122,17 @@ export default function Index({ categories, filters }) {
                                     <option value="created_at">По дате создания</option>
                                 </select>
                                 <select
-                                    className="rounded border px-3 py-2"
+                                    className="rounded border px-3 py-2 text-sm"
                                     value={filterForm.data.direction}
                                     onChange={(e) => filterForm.setData('direction', e.target.value)}
                                 >
                                     <option value="asc">По возрастанию</option>
                                     <option value="desc">По убыванию</option>
                                 </select>
-                                <select
-                                    className="rounded border px-3 py-2"
-                                    value={filterForm.data.per_page}
-                                    onChange={(e) => filterForm.setData('per_page', e.target.value)}
-                                >
-                                    <option value={10}>10</option>
-                                    <option value={25}>25</option>
-                                    <option value={50}>50</option>
-                                </select>
                                 <button
                                     type="button"
                                     onClick={applyFilters}
-                                    className="rounded bg-slate-100 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-slate-200"
+                                    className="rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
                                 >
                                     Применить
                                 </button>
@@ -155,20 +146,38 @@ export default function Index({ categories, filters }) {
                                 <div className="py-6 text-center text-sm text-gray-500">Нет категорий по фильтрам</div>
                             )}
                         </div>
-                        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-gray-600">
+                        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">
                             <div>
                                 Показано {categories.from}–{categories.to} из {categories.total}
                             </div>
-                            <div className="flex gap-1">
-                                {categories.links?.map((link, idx) => (
-                                    <button
-                                        key={idx}
-                                        disabled={!link.url}
-                                        onClick={() => link.url && router.visit(link.url, { preserveState: true, preserveScroll: true })}
-                                        className={`rounded px-3 py-1 text-xs font-semibold ${link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 border'} ${!link.url ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-50'}`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                    />
-                                ))}
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500">На странице:</span>
+                                <select
+                                    className="rounded border px-2 py-1 text-sm"
+                                    value={filterForm.data.per_page}
+                                    onChange={(e) => filterForm.setData('per_page', e.target.value)}
+                                >
+                                    <option value={10}>10</option>
+                                    <option value={25}>25</option>
+                                    <option value={50}>50</option>
+                                </select>
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                                {categories.links?.map((link, idx) => {
+                                    let label = link.label;
+                                    if (label.includes('Previous')) label = 'Предыдущая';
+                                    if (label.includes('Next')) label = 'Следующая';
+                                    return (
+                                        <button
+                                            key={idx}
+                                            disabled={!link.url}
+                                            onClick={() => link.url && router.visit(link.url, { preserveState: true, preserveScroll: true })}
+                                            className={`rounded px-3 py-1 text-xs font-semibold ${link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 border'} ${!link.url ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-50'}`}
+                                        >
+                                            {label}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
