@@ -54,6 +54,7 @@ class LeadWebhookController extends Controller
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'url' => ['required', 'url', 'max:2048'],
+            'method' => ['required', 'in:get,post'],
             'statuses' => ['array'],
             'statuses.*' => ['in:new,in_work,sale,cancel,trash'],
             'fields' => ['array'],
@@ -63,6 +64,8 @@ class LeadWebhookController extends Controller
             'name.required' => 'Укажите название',
             'url.required' => 'Укажите URL',
             'url.url' => 'Некорректный URL',
+            'method.required' => 'Укажите метод отправки',
+            'method.in' => 'Метод должен быть GET или POST',
             'statuses.*.in' => 'Недопустимый статус',
         ]);
     }

@@ -10,6 +10,7 @@ class LeadWebhook extends Model
         'user_id',
         'name',
         'url',
+        'method',
         'statuses',
         'fields',
         'is_active',
