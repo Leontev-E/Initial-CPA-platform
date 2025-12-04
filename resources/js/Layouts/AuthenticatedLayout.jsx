@@ -1,10 +1,11 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Link, usePage } from '@inertiajs/react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
     const { auth, impersonating } = usePage().props;
     const user = auth.user;
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     const allowedSections = user.invited_by ? (user.permissions?.sections || []) : null;
 
@@ -45,6 +46,52 @@ export default function AuthenticatedLayout({ header, children }) {
         return `Дата: ${dd}.${mm}.${yyyy} · Время: ${hh}:${min}`;
     };
 
+    const Navigation = () => (
+        <>
+            <nav className="space-y-1">
+                {navItems
+                    .filter((item) => {
+                        if (!allowedSections || item.section === null) return true;
+                        return allowedSections.includes(item.section);
+                    })
+                    .map((item) => (
+                        <Link
+                            key={item.name}
+                            href={route(item.name)}
+                            className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition hover:bg-indigo-50 hover:text-indigo-700 ${
+                                isActive(item.name)
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'text-gray-700'
+                            }`}
+                            onClick={() => setMobileOpen(false)}
+                        >
+                            {item.label}
+                            {isActive(item.name) && (
+                                <span className="h-2 w-2 rounded-full bg-white" />
+                            )}
+                        </Link>
+                    ))}
+            </nav>
+            <div className="mt-auto space-y-2 border-t pt-4 text-sm text-gray-600">
+                <Link href={route('profile.edit')} className="block rounded-lg border border-indigo-100 px-3 py-2 transition hover:border-indigo-300 hover:bg-indigo-50">
+                    <div className="font-semibold text-gray-800">
+                        {user.name}
+                    </div>
+                    <div className="text-indigo-600 break-all">{user.email}</div>
+                    <div className="text-[11px] uppercase tracking-wide text-gray-500">Личный кабинет</div>
+                </Link>
+                <Link
+                    href={route('logout')}
+                    method="post"
+                    as="button"
+                    className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-gray-100 px-3 py-2 font-semibold text-gray-700 transition hover:bg-gray-200"
+                >
+                    Выйти
+                </Link>
+            </div>
+        </>
+    );
+
     return (
         <div className="flex min-h-screen bg-slate-50">
             <aside className="hidden w-64 flex-col border-r bg-white/90 p-4 pb-16 shadow-sm lg:flex">
@@ -61,49 +108,10 @@ export default function AuthenticatedLayout({ header, children }) {
                         </div>
                     </div>
                 </div>
-                <nav className="space-y-1">
-                    {navItems
-                        .filter((item) => {
-                            if (!allowedSections || item.section === null) return true;
-                            return allowedSections.includes(item.section);
-                        })
-                        .map((item) => (
-                            <Link
-                                key={item.name}
-                                href={route(item.name)}
-                                className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition hover:bg-indigo-50 hover:text-indigo-700 ${
-                                    isActive(item.name)
-                                        ? 'bg-indigo-600 text-white'
-                                        : 'text-gray-700'
-                                }`}
-                            >
-                                {item.label}
-                                {isActive(item.name) && (
-                                    <span className="h-2 w-2 rounded-full bg-white" />
-                                )}
-                            </Link>
-                        ))}
-                </nav>
-                <div className="mt-auto space-y-2 border-t pt-4 text-sm text-gray-600">
-                    <Link href={route('profile.edit')} className="block rounded-lg border border-indigo-100 px-3 py-2 transition hover:border-indigo-300 hover:bg-indigo-50">
-                        <div className="font-semibold text-gray-800">
-                            {user.name}
-                        </div>
-                        <div className="text-indigo-600">{user.email}</div>
-                        <div className="text-[11px] uppercase tracking-wide text-gray-500">Личный кабинет</div>
-                    </Link>
-                    <Link
-                        href={route('logout')}
-                        method="post"
-                        as="button"
-                        className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-gray-100 px-3 py-2 font-semibold text-gray-700 transition hover:bg-gray-200"
-                    >
-                        Выйти
-                    </Link>
-                </div>
+                <Navigation />
             </aside>
 
-            <div className="flex-1 pb-16">
+            <div className="flex-1 pb-24">
                 {impersonating && (
                     <div className="bg-amber-100 text-amber-800 px-4 py-2 text-sm flex items-center justify-between">
                         <div>Вы вошли под другим пользователем</div>
@@ -118,29 +126,49 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
                 )}
                 <header className="border-b bg-white/80 p-4 shadow-sm backdrop-blur">
-                    <div className="flex items-center justify-between gap-4">
-                        <div>
-                            {header ? (
-                                header
-                            ) : (
-                                <div className="text-lg font-semibold text-gray-900">
-                                    Добро пожаловать, {user.name}!
-                                </div>
-                            )}
-                            <div className="text-xs uppercase tracking-wide text-gray-500">
-                                {user.role === 'admin' ? 'Партнерская программа' : 'Кабинет вебмастера'}
-                            </div>
-                        </div>
-                            <div className="flex items-center gap-4 text-right text-xs text-gray-500">
-                                <Link
-                                    href={route('profile.edit')}
-                                    className="rounded-full border border-indigo-200 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50"
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    className="rounded-lg border border-gray-200 p-2 text-gray-700 hover:bg-gray-50 lg:hidden"
+                                    onClick={() => setMobileOpen((v) => !v)}
+                                    aria-label="Открыть меню"
                                 >
-                                    Личный кабинет
-                                </Link>
-                            <div>{formatLastLogin(user.last_login_at)}</div>
+                                    <span className="block h-0.5 w-5 bg-current mb-1"></span>
+                                    <span className="block h-0.5 w-5 bg-current mb-1"></span>
+                                    <span className="block h-0.5 w-5 bg-current"></span>
+                                </button>
+                                <div>
+                                    {header ? (
+                                        header
+                                    ) : (
+                                        <div className="text-lg font-semibold text-gray-900">
+                                            Добро пожаловать, {user.name}!
+                                        </div>
+                                    )}
+                                    <div className="text-xs uppercase tracking-wide text-gray-500">
+                                        {user.role === 'admin' ? 'Партнерская программа' : 'Кабинет вебмастера'}
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                        <div className="flex flex-col items-end gap-2 text-xs text-gray-500">
+                            <Link
+                                href={route('profile.edit')}
+                                className="rounded-full border border-indigo-200 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50"
+                            >
+                                Личный кабинет
+                            </Link>
+                            <div className="text-right">{formatLastLogin(user.last_login_at)}</div>
+                        </div>
+                    </div>
+
+                    {mobileOpen && (
+                        <div className="mt-3 rounded-xl border bg-white p-3 shadow-lg lg:hidden">
+                            <Navigation />
+                        </div>
+                    )}
                 </header>
 
                 <main className="p-4 lg:p-8">{children}</main>
