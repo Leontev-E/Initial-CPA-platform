@@ -67,6 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/profile/invite', [ProfileController::class, 'invite'])->name('profile.invite');
+    Route::patch('/profile/employees/{user}', [ProfileController::class, 'updateEmployee'])->name('profile.employees.update');
     Route::delete('/profile/employees/{user}', [ProfileController::class, 'destroyEmployee'])->name('profile.employees.destroy');
 });
 

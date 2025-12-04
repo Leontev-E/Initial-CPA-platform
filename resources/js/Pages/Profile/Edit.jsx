@@ -3,7 +3,7 @@ import { Head, useForm, usePage, router } from '@inertiajs/react';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Edit({ mustVerifyEmail, status, employees = [] }) {
     const { flash } = usePage().props;
@@ -35,11 +35,47 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
         actions: defaultByRole.admin.actions,
     });
 
+    const editForm = useForm({
+        id: null,
+        name: '',
+        email: '',
+        telegram: '',
+        employee_role: 'admin',
+        sections: [],
+        actions: {
+            create: false,
+            update: false,
+            delete: false,
+        },
+    });
+    const [editingId, setEditingId] = useState(null);
+
     const submitInvite = (e) => {
         e.preventDefault();
         inviteForm.post(route('profile.invite'), {
             preserveScroll: true,
             onSuccess: () => inviteForm.reset('name', 'email', 'telegram'),
+        });
+    };
+
+    const startEdit = (emp) => {
+        setEditingId(emp.id);
+        editForm.setData({
+            id: emp.id,
+            name: emp.name ?? '',
+            email: emp.email ?? '',
+            telegram: emp.telegram ?? '',
+            employee_role: emp.employee_role ?? 'admin',
+            sections: emp.permissions?.sections ?? [],
+            actions: emp.permissions?.actions ?? { create: false, update: false, delete: false },
+        });
+    };
+
+    const submitEdit = (e) => {
+        e.preventDefault();
+        router.patch(route('profile.employees.update', editForm.data.id), editForm.data, {
+            preserveScroll: true,
+            onSuccess: () => setEditingId(null),
         });
     };
 
@@ -91,6 +127,20 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
         if (!confirm('Удалить сотрудника?')) return;
         router.delete(route('profile.employees.destroy', id));
     };
+
+    const roleSectionDefaults = (role) => defaultByRole[role] || defaultByRole.admin;
+
+    useEffect(() => {
+        if (editingId) {
+            const defs = roleSectionDefaults(editForm.data.employee_role);
+            editForm.setData((prev) => ({
+                ...prev,
+                sections: defs.sections,
+                actions: defs.actions,
+            }));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editForm.data.employee_role, editingId]);
 
     return (
         <AuthenticatedLayout
@@ -222,29 +272,141 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
                                 <div className="text-sm text-gray-500">Сотрудников пока нет</div>
                             )}
                             {employees.map((emp) => (
-                                <div key={emp.id} className="flex items-start justify-between rounded border px-3 py-2 text-sm">
-                                    <div>
-                                        <div className="font-semibold text-gray-800">{emp.name}</div>
-                                        <div className="text-gray-600">Почта: {emp.email}</div>
-                                        <div className="text-gray-600">Telegram: {emp.telegram}</div>
-                                        <div className="text-gray-500">Роль: {roleLabels[emp.employee_role] ?? emp.employee_role}</div>
-                                        <div className="text-gray-500">
-                                            Разделы: {(emp.permissions?.sections || []).map((s) => sectionLabels[s] ?? s).join(', ') || '—'}
+                                <div key={emp.id} className="flex flex-col gap-3 rounded border px-3 py-2 text-sm">
+                                    <div className="flex items-start justify-between">
+                                        <div>
+                                            <div className="font-semibold text-gray-800">{emp.name}</div>
+                                            <div className="text-gray-600">Почта: {emp.email}</div>
+                                            <div className="text-gray-600">Telegram: {emp.telegram}</div>
+                                            <div className="text-gray-500">Роль: {roleLabels[emp.employee_role] ?? emp.employee_role}</div>
+                                            <div className="text-gray-500">
+                                                Разделы: {(emp.permissions?.sections || []).map((s) => sectionLabels[s] ?? s).join(', ') || '—'}
+                                            </div>
+                                            <div className="text-gray-500">
+                                                Действия: {Object.entries(emp.permissions?.actions || {}).filter(([,v])=>v).map(([k])=>actionLabels[k] ?? k).join(', ') || '—'}
+                                            </div>
                                         </div>
-                                        <div className="text-gray-500">
-                                            Действия: {Object.entries(emp.permissions?.actions || {}).filter(([,v])=>v).map(([k])=>actionLabels[k] ?? k).join(', ') || '—'}
+                                        <div className="flex flex-col items-end gap-2 text-xs text-gray-500">
+                                            <div>{formatDate(emp.created_at)}</div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => startEdit(emp)}
+                                                    className="rounded border border-indigo-200 px-2 py-1 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-50"
+                                                >
+                                                    Редактировать
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => deleteEmployee(emp.id)}
+                                                    className="rounded border border-red-200 px-2 py-1 text-[11px] font-semibold text-red-600 transition hover:bg-red-50"
+                                                >
+                                                    Удалить
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col items-end gap-2 text-xs text-gray-500">
-                                        <div>{formatDate(emp.created_at)}</div>
-                                        <button
-                                            type="button"
-                                            onClick={() => deleteEmployee(emp.id)}
-                                            className="rounded border border-red-200 px-2 py-1 text-[11px] font-semibold text-red-600 transition hover:bg-red-50"
-                                        >
-                                            Удалить
-                                        </button>
-                                    </div>
+
+                                    {editingId === emp.id && (
+                                        <form onSubmit={submitEdit} className="rounded border bg-slate-50 px-3 py-2">
+                                            <div className="grid gap-3 md:grid-cols-2">
+                                                <input
+                                                    className="w-full rounded border px-3 py-2"
+                                                    placeholder="Имя сотрудника"
+                                                    value={editForm.data.name}
+                                                    onChange={(e) => editForm.setData('name', e.target.value)}
+                                                />
+                                                <input
+                                                    className="w-full rounded border px-3 py-2"
+                                                    placeholder="Email"
+                                                    value={editForm.data.email}
+                                                    onChange={(e) => editForm.setData('email', e.target.value)}
+                                                />
+                                                <input
+                                                    className="w-full rounded border px-3 py-2"
+                                                    placeholder="Telegram"
+                                                    value={editForm.data.telegram}
+                                                    onChange={(e) => {
+                                                        const v = e.target.value.startsWith('@')
+                                                            ? e.target.value
+                                                            : '@' + e.target.value;
+                                                        editForm.setData('telegram', v);
+                                                    }}
+                                                />
+                                                <select
+                                                    className="w-full rounded border px-3 py-2"
+                                                    value={editForm.data.employee_role}
+                                                    onChange={(e) => editForm.setData('employee_role', e.target.value)}
+                                                >
+                                                    <option value="admin">Админ</option>
+                                                    <option value="tech">Технический специалист</option>
+                                                    <option value="accounting">Бухгалтерия</option>
+                                                    <option value="operator">Оператор</option>
+                                                </select>
+                                            </div>
+                                            <div className="mt-3">
+                                                <div className="text-sm font-semibold text-gray-700">Доступные разделы</div>
+                                                <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                                                    {['categories','offers','leads','webmasters','payouts','reports'].map((section) => (
+                                                        <label key={section} className="inline-flex items-center gap-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={editForm.data.sections.includes(section)}
+                                                                onChange={(e) => {
+                                                                    const checked = e.target.checked;
+                                                                    editForm.setData('sections', checked
+                                                                        ? [...editForm.data.sections, section]
+                                                                        : editForm.data.sections.filter((s) => s !== section));
+                                                                }}
+                                                            />
+                                                            {sectionLabels[section] ?? section}
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="mt-3">
+                                                <div className="text-sm font-semibold text-gray-700">Действия</div>
+                                                <div className="mt-2 flex flex-wrap gap-4 text-sm">
+                                                    {['create','update','delete'].map((action) => (
+                                                        <label key={action} className="inline-flex items-center gap-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={editForm.data.actions[action]}
+                                                                onChange={(e) =>
+                                                                    editForm.setData('actions', {
+                                                                        ...editForm.data.actions,
+                                                                        [action]: e.target.checked,
+                                                                    })
+                                                                }
+                                                            />
+                                                            {actionLabels[action] ?? action}
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="mt-3 flex gap-2">
+                                                <button
+                                                    type="submit"
+                                                    disabled={editForm.processing}
+                                                    className="rounded bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                                                >
+                                                    Сохранить
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEditingId(null)}
+                                                    className="rounded border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+                                                >
+                                                    Отмена
+                                                </button>
+                                            </div>
+                                            {(editForm.errors.email || editForm.errors.telegram) && (
+                                                <div className="mt-2 text-xs text-red-600">
+                                                    {editForm.errors.email || editForm.errors.telegram}
+                                                </div>
+                                            )}
+                                        </form>
+                                    )}
                                 </div>
                             ))}
                         </div>

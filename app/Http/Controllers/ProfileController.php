@@ -110,6 +110,48 @@ class ProfileController extends Controller
         return back()->with('success', 'Данные для входа отправлены сотруднику '.$employee->email.' с ролью '.$employee->employee_role);
     }
 
+    public function updateEmployee(Request $request, User $user): RedirectResponse
+    {
+        $owner = $request->user();
+        abort_unless($owner->isAdmin() && $owner->invited_by === null, 403);
+        abort_if($user->id === $owner->id, 403);
+        abort_if($user->invited_by !== $owner->id, 403);
+
+        $telegramInput = $request->input('telegram', '');
+        $normalizedTelegram = str_starts_with($telegramInput, '@') ? $telegramInput : '@'.$telegramInput;
+        $request->merge(['telegram' => $normalizedTelegram]);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'min:2', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'telegram' => ['required', 'string', 'max:255', 'unique:users,telegram,'.$user->id],
+            'employee_role' => ['required', 'in:admin,tech,accounting,operator'],
+            'sections' => ['array'],
+            'sections.*' => ['string'],
+            'actions' => ['array'],
+            'actions.create' => ['boolean'],
+            'actions.update' => ['boolean'],
+            'actions.delete' => ['boolean'],
+        ]);
+
+        $user->update([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'telegram' => $data['telegram'],
+            'employee_role' => $data['employee_role'],
+            'permissions' => [
+                'sections' => $data['sections'] ?? [],
+                'actions' => [
+                    'create' => $data['actions']['create'] ?? false,
+                    'update' => $data['actions']['update'] ?? false,
+                    'delete' => $data['actions']['delete'] ?? false,
+                ],
+            ],
+        ]);
+
+        return back()->with('success', 'Данные сотрудника обновлены');
+    }
+
     public function destroyEmployee(Request $request, User $user): RedirectResponse
     {
         $owner = $request->user();
