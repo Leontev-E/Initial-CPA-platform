@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers\Webmaster;
 
@@ -44,6 +44,8 @@ class ToolController extends Controller
     public function savePostbacks(Request $request)
     {
         $user = $request->user();
+        $allEvents = ['lead', 'in_work', 'sale', 'cancel', 'trash'];
+
         $filtered = collect($request->input('postbacks', []))
             ->map(function ($pb) {
                 return [
@@ -52,7 +54,7 @@ class ToolController extends Controller
                     'is_active' => $pb['is_active'] ?? true,
                 ];
             })
-            ->filter(fn ($pb) => $pb['url'] !== '');
+            ->filter(fn ($pb) => $pb['url'] !== '' && in_array($pb['event'], $allEvents, true));
 
         $validated = validator($filtered->toArray(), [
             '*.event' => ['required', 'in:lead,in_work,sale,cancel,trash'],
@@ -66,6 +68,11 @@ class ToolController extends Controller
                 ['url' => $pb['url'], 'is_active' => $pb['is_active'] ?? true],
             );
         }
+
+        $savedEvents = array_column($validated, 'event');
+        PostbackSetting::where('webmaster_id', $user->id)
+            ->whereNotIn('event', $savedEvents)
+            ->delete();
 
         return back()->with('success', 'Постбеки сохранены');
     }
