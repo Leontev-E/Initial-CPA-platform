@@ -6,10 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
 use App\Models\Lead;
 use App\Models\Offer;
+use App\Services\PostbackDispatcher;
 use Illuminate\Http\Request;
 
 class LeadController extends Controller
 {
+    public function __construct(private readonly PostbackDispatcher $postbackDispatcher)
+    {
+    }
+
     public function store(Request $request)
     {
         $apiKey = ApiKey::where('key', $request->header('X-API-KEY'))
@@ -67,6 +72,8 @@ class LeadController extends Controller
         ]);
 
         $apiKey->update(['last_used_at' => now()]);
+
+        $this->postbackDispatcher->dispatch($lead, null);
 
         return response()->json([
             'status' => 'ok',

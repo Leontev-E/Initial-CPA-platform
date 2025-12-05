@@ -7,16 +7,17 @@ use App\Models\Lead;
 use App\Models\LeadStatusLog;
 use App\Models\Offer;
 use App\Models\OfferWebmasterRate;
-use App\Models\PostbackLog;
-use App\Models\PostbackSetting;
 use App\Models\User;
+use App\Services\PostbackDispatcher;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class LeadController extends Controller
 {
+    public function __construct(private readonly PostbackDispatcher $postbackDispatcher)
+    {
+    }
+
     public function index(Request $request)
     {
         $query = Lead::query()->with(['offer.category', 'webmaster']);
@@ -124,7 +125,7 @@ class LeadController extends Controller
             'comment' => $request->string('comment')->toString(),
         ]);
 
-        $this->triggerPostback($lead, $fromStatus);
+        $this->postbackDispatcher->dispatch($lead, $fromStatus);
 
         return back()->with('success', 'Статус лида обновлён');
     }
@@ -138,70 +139,4 @@ class LeadController extends Controller
         return $custom ?? $lead->offer->default_payout;
     }
 
-    protected function triggerPostback(Lead $lead, ?string $fromStatus = null): void
-    {
-        $lead->loadMissing('offer');
-        $event = match ($lead->status) {
-            'sale' => 'sale',
-            'cancel' => 'cancel',
-            'trash' => 'trash',
-            'in_work' => 'in_work',
-            default => 'lead',
-        };
-
-        $settings = PostbackSetting::where('webmaster_id', $lead->webmaster_id)
-            ->where('event', $event)
-            ->where('is_active', true)
-            ->get();
-
-        foreach ($settings as $setting) {
-            $statusCode = null;
-            $responseBody = null;
-            $error = null;
-            $finalUrl = $this->expandPostbackMacros($setting->url, $lead, $fromStatus);
-
-            try {
-                $response = Http::timeout(5)->get($finalUrl);
-                $statusCode = $response->status();
-                $responseBody = Str::limit($response->body(), 4000);
-            } catch (\Throwable $e) {
-                $error = $e->getMessage();
-            }
-
-            PostbackLog::create([
-                'webmaster_id' => $lead->webmaster_id,
-                'lead_id' => $lead->id,
-                'offer_id' => $lead->offer_id,
-                'event' => $event,
-                'url' => $finalUrl,
-                'status_code' => $statusCode,
-                'response_body' => $responseBody,
-                'error_message' => $error,
-            ]);
-        }
-    }
-
-    protected function expandPostbackMacros(string $template, Lead $lead, ?string $fromStatus = null): string
-    {
-        $payload = [
-            '{lead_id}' => $lead->id,
-            '{status}' => $lead->status,
-            '{from}' => $fromStatus ?? '',
-            '{from_status}' => $fromStatus ?? '',
-            '{payout}' => $lead->payout,
-            '{offer_id}' => $lead->offer_id,
-            '{offer_name}' => $lead->offer?->name,
-            '{subid}' => $lead->subid,
-            '{geo}' => $lead->geo,
-            '{landing_url}' => $lead->landing_url,
-            '{customer_name}' => $lead->customer_name,
-            '{customer_phone}' => $lead->customer_phone,
-            '{customer_email}' => $lead->customer_email,
-            '{shipping_address}' => $lead->shipping_address,
-            '{customer_address}' => $lead->shipping_address,
-            '{webmaster_id}' => $lead->webmaster_id,
-        ];
-
-        return strtr($template, $payload);
-    }
 }
