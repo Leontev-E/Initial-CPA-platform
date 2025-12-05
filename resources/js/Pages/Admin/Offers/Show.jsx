@@ -1,11 +1,13 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import geos from '@/data/geos.json';
 import { Head, Link, useForm, router } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function Show({ offer, categories }) {
     const [geoInput, setGeoInput] = useState('');
     const [geoOpen, setGeoOpen] = useState(false);
+    const [startTime, setStartTime] = useState('');
+    const [endTime, setEndTime] = useState('');
     const geoMap = useMemo(() => Object.fromEntries(geos.map((g) => [g.value, g.text])), []);
     const { data, setData, post, processing, errors } = useForm({
         offer_category_id: offer.offer_category_id,
@@ -55,6 +57,22 @@ export default function Show({ offer, categories }) {
             )
             .slice(0, 8);
     }, [geoInput]);
+
+    useEffect(() => {
+        const hours = offer.call_center_hours || '';
+        const [start, end] = hours.split('-');
+        if (start) setStartTime(start);
+        if (end) setEndTime(end);
+    }, [offer.call_center_hours]);
+
+    useEffect(() => {
+        if (startTime && endTime) {
+            setData('call_center_hours', `${startTime}-${endTime}`);
+        } else {
+            setData('call_center_hours', '');
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [startTime, endTime]);
 
     const submit = (e) => {
         e.preventDefault();
@@ -219,12 +237,26 @@ export default function Show({ offer, categories }) {
                             placeholder="Ссылка на материалы (Google/Яндекс диск)"
                         />
                         <div className="grid gap-2 md:grid-cols-2">
-                            <input
-                                className="w-full rounded-lg border px-3 py-2"
-                                value={data.call_center_hours}
-                                onChange={(e) => setData('call_center_hours', e.target.value)}
-                                placeholder="График работы КЦ (например 09:00-21:00)"
-                            />
+                            <div className="flex gap-2">
+                                <div className="w-full">
+                                    <div className="text-xs text-gray-600">Начало</div>
+                                    <input
+                                        type="time"
+                                        className="w-full rounded-lg border px-3 py-2"
+                                        value={startTime}
+                                        onChange={(e) => setStartTime(e.target.value)}
+                                    />
+                                </div>
+                                <div className="w-full">
+                                    <div className="text-xs text-gray-600">Окончание</div>
+                                    <input
+                                        type="time"
+                                        className="w-full rounded-lg border px-3 py-2"
+                                        value={endTime}
+                                        onChange={(e) => setEndTime(e.target.value)}
+                                    />
+                                </div>
+                            </div>
                             <select
                                 className="w-full rounded-lg border px-3 py-2 text-sm"
                                 value={data.call_center_timezone}

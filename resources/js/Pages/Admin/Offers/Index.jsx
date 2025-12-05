@@ -8,6 +8,8 @@ export default function Index({ offers, categories, filters }) {
     const [geoOpen, setGeoOpen] = useState(false);
     const [filterGeoInput, setFilterGeoInput] = useState('');
     const [filterGeoOpen, setFilterGeoOpen] = useState(false);
+    const [startTime, setStartTime] = useState('');
+    const [endTime, setEndTime] = useState('');
     const geoMap = useMemo(() => Object.fromEntries(geos.map((g) => [g.value, g.text])), []);
 
     const { data, setData, post, processing, reset, errors } = useForm({
@@ -123,6 +125,15 @@ export default function Index({ offers, categories, filters }) {
             )
             .slice(0, 8);
     }, [filterGeoInput]);
+
+    useEffect(() => {
+        if (startTime && endTime) {
+            setData('call_center_hours', `${startTime}-${endTime}`);
+        } else {
+            setData('call_center_hours', '');
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [startTime, endTime]);
 
     return (
         <AuthenticatedLayout
@@ -254,20 +265,36 @@ export default function Index({ offers, categories, filters }) {
                             onChange={(e) => setData('materials_link', e.target.value)}
                         />
                         <div className="grid gap-2 md:grid-cols-2">
-                            <input
-                                className="w-full rounded-lg border px-3 py-2"
-                                placeholder="График работы КЦ (например 09:00-21:00)"
-                                value={data.call_center_hours}
-                                onChange={(e) => setData('call_center_hours', e.target.value)}
-                            />
-                            <select
-                                className="w-full rounded-lg border px-3 py-2 text-sm"
-                                value={data.call_center_timezone}
-                                onChange={(e) => setData('call_center_timezone', e.target.value)}
-                            >
-                                <option value="local">По местному времени</option>
-                                <option value="msk">По МСК</option>
-                            </select>
+                            <div className="flex gap-2">
+                                <div className="w-full">
+                                    <div className="text-xs text-gray-600">Начало</div>
+                                    <input
+                                        type="time"
+                                        className="w-full rounded-lg border px-3 py-2"
+                                        value={startTime}
+                                        onChange={(e) => setStartTime(e.target.value)}
+                                    />
+                                </div>
+                                <div className="w-full">
+                                    <div className="text-xs text-gray-600">Окончание</div>
+                                    <input
+                                        type="time"
+                                        className="w-full rounded-lg border px-3 py-2"
+                                        value={endTime}
+                                        onChange={(e) => setEndTime(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="w-full">
+                                <select
+                                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                                    value={data.call_center_timezone}
+                                    onChange={(e) => setData('call_center_timezone', e.target.value)}
+                                >
+                                    <option value="local">По местному времени</option>
+                                    <option value="msk">По МСК</option>
+                                </select>
+                            </div>
                         </div>
                         <div>
                             <label className="text-sm text-gray-700">
