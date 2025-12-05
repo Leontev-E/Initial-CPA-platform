@@ -7,19 +7,21 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('postback_logs', function (Blueprint ) {
-            ->bigIncrements('id');
-            ->unsignedBigInteger('webmaster_id');
-            ->unsignedBigInteger('lead_id')->nullable();
-            ->string('event', 50);
-            ->text('url');
-            ->integer('status_code')->nullable();
-            ->text('response_body')->nullable();
-            ->text('error_message')->nullable();
-            ->timestamps();
+        Schema::create('postback_logs', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('lead_id')->nullable();
+            $table->unsignedBigInteger('webmaster_id')->nullable();
+            $table->string('event', 50)->nullable();
+            $table->string('url', 2048);
+            $table->integer('status_code')->nullable();
+            $table->text('response_body')->nullable();
+            $table->text('error_message')->nullable();
+            $table->timestamps();
 
-            ->index('webmaster_id');
-            ->index('lead_id');
+            $table->index(['lead_id']);
+            $table->index(['webmaster_id']);
+            $table->index(['event']);
+            $table->index(['created_at']);
         });
     }
 
