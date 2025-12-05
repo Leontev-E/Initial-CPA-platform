@@ -15,7 +15,7 @@ export default function Index({ leads, offers, webmasters, filters, geos }) {
         webmaster_id: filters?.webmaster_id ?? '',
         offer_id: filters?.offer_id ?? '',
         status: filters?.status ?? '',
-        geo: Array.isArray(filters?.geo) ? filters.geo : (filters?.geo ? [filters.geo] : []),
+        geo: filters?.geo ?? [],
         date_from: filters?.date_from ?? '',
         date_to: filters?.date_to ?? '',
         category_id: filters?.category_id ?? '',
@@ -52,7 +52,7 @@ export default function Index({ leads, offers, webmasters, filters, geos }) {
                     <div className="flex flex-col">
                         <span className="text-[10px] uppercase text-gray-400">Вебмастер</span>
                         <select
-                            className="h-10 rounded border px-2 py-2 text-sm"
+                            className="rounded border px-2 py-2 text-sm"
                             value={filterForm.data.webmaster_id}
                             onChange={(e) => {
                                 filterForm.setData('webmaster_id', e.target.value);
@@ -68,7 +68,7 @@ export default function Index({ leads, offers, webmasters, filters, geos }) {
                     <div className="flex flex-col">
                         <span className="text-[10px] uppercase text-gray-400">Оффер</span>
                         <select
-                            className="h-10 rounded border px-2 py-2 text-sm"
+                            className="rounded border px-2 py-2 text-sm"
                             value={filterForm.data.offer_id}
                             onChange={(e) => {
                                 filterForm.setData('offer_id', e.target.value);
@@ -84,7 +84,7 @@ export default function Index({ leads, offers, webmasters, filters, geos }) {
                     <div className="flex flex-col">
                         <span className="text-[10px] uppercase text-gray-400">Статус</span>
                         <select
-                            className="h-10 rounded border px-2 py-2 text-sm"
+                            className="rounded border px-2 py-2 text-sm"
                             value={filterForm.data.status}
                             onChange={(e) => {
                                 filterForm.setData('status', e.target.value);
@@ -111,7 +111,7 @@ export default function Index({ leads, offers, webmasters, filters, geos }) {
                         <span className="text-[10px] uppercase text-gray-400">Дата от</span>
                         <input
                             type="date"
-                            className="h-10 rounded border px-2 py-2 text-sm"
+                            className="rounded border px-2 py-2 text-sm"
                             value={filterForm.data.date_from}
                             onChange={(e) => {
                                 filterForm.setData('date_from', e.target.value);
@@ -123,7 +123,7 @@ export default function Index({ leads, offers, webmasters, filters, geos }) {
                         <span className="text-[10px] uppercase text-gray-400">Дата до</span>
                         <input
                             type="date"
-                            className="h-10 rounded border px-2 py-2 text-sm"
+                            className="rounded border px-2 py-2 text-sm"
                             value={filterForm.data.date_to}
                             onChange={(e) => {
                                 filterForm.setData('date_to', e.target.value);

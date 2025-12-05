@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 export default function OffersByWebmaster({ rows, filters, offers, geos, webmaster }) {
     const filterForm = useForm({
         offer_id: filters?.offer_id ?? '',
-        geo: Array.isArray(filters?.geo) ? filters.geo : (filters?.geo ? [filters.geo] : []),
+        geo: filters?.geo ?? [],
         date_from: filters?.date_from ?? '',
         date_to: filters?.date_to ?? '',
         sort: filters?.sort ?? 'leads',
@@ -64,7 +64,7 @@ export default function OffersByWebmaster({ rows, filters, offers, geos, webmast
                     </div>
                     <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                         <select
-                            className="h-10 rounded border px-3 py-2 text-sm"
+                            className="rounded border px-3 py-2 text-sm"
                             value={filterForm.data.offer_id}
                             onChange={(e) => {
                                 filterForm.setData('offer_id', e.target.value);
@@ -87,7 +87,7 @@ export default function OffersByWebmaster({ rows, filters, offers, geos, webmast
                         />
                         <input
                             type="date"
-                            className="h-10 rounded border px-3 py-2 text-sm"
+                            className="rounded border px-3 py-2 text-sm"
                             value={filterForm.data.date_from}
                             onChange={(e) => {
                                 filterForm.setData('date_from', e.target.value);
@@ -96,7 +96,7 @@ export default function OffersByWebmaster({ rows, filters, offers, geos, webmast
                         />
                         <input
                             type="date"
-                            className="h-10 rounded border px-3 py-2 text-sm"
+                            className="rounded border px-3 py-2 text-sm"
                             value={filterForm.data.date_to}
                             onChange={(e) => {
                                 filterForm.setData('date_to', e.target.value);
@@ -105,7 +105,7 @@ export default function OffersByWebmaster({ rows, filters, offers, geos, webmast
                         />
                         <div className="grid grid-cols-2 gap-2">
                             <select
-                                className="h-10 rounded border px-3 py-2 text-sm"
+                                className="rounded border px-3 py-2 text-sm"
                                 value={filterForm.data.sort}
                                 onChange={(e) => {
                                     filterForm.setData('sort', e.target.value);
@@ -119,7 +119,7 @@ export default function OffersByWebmaster({ rows, filters, offers, geos, webmast
                                 <option value="offer">По названию</option>
                             </select>
                             <select
-                                className="h-10 rounded border px-3 py-2 text-sm"
+                                className="rounded border px-3 py-2 text-sm"
                                 value={filterForm.data.direction}
                                 onChange={(e) => {
                                     filterForm.setData('direction', e.target.value);
