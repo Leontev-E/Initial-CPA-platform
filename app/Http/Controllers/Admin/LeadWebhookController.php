@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\LeadWebhook;
+use App\Models\LeadWebhookLog;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -15,8 +16,42 @@ class LeadWebhookController extends Controller
             ->latest()
             ->get();
 
+        $logs = LeadWebhookLog::with('webhook:id,name')
+            ->where('user_id', $request->user()->id)
+            ->where('created_at', '>=', now()->subDays(10))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $term = $request->string('search')->toString();
+                $query->where(function ($q) use ($term) {
+                    $q->where('url', 'like', "%{$term}%")
+                        ->orWhere('event', 'like', "%{$term}%")
+                        ->orWhere('status_code', 'like', "%{$term}%")
+                        ->orWhere('lead_id', 'like', "%{$term}%");
+                });
+            })
+            ->when($request->filled('event'), fn($q) => $q->where('event', $request->string('event')->toString()))
+            ->when($request->filled('webhook_id'), fn($q) => $q->where('webhook_id', $request->integer('webhook_id')))
+            ->when($request->filled('result'), function ($q) use ($request) {
+                $res = $request->string('result')->toString();
+                if ($res === 'ok') {
+                    $q->whereNull('error_message');
+                } elseif ($res === 'error') {
+                    $q->whereNotNull('error_message');
+                }
+            })
+            ->orderByDesc('created_at')
+            ->paginate(20)
+            ->withQueryString();
+
         return Inertia::render('Admin/Webhooks/Index', [
             'webhooks' => $webhooks,
+            'logs' => $logs,
+            'webhookOptions' => $webhooks->map(fn($hook) => ['id' => $hook->id, 'name' => $hook->name]),
+            'filters' => [
+                'search' => $request->query('search'),
+                'event' => $request->query('event'),
+                'result' => $request->query('result'),
+                'webhook_id' => $request->query('webhook_id'),
+            ],
         ]);
     }
 

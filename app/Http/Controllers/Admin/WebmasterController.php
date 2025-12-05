@@ -40,13 +40,15 @@ class WebmasterController extends Controller
             });
         }
 
-        $query = $query
-            ->withCount([
-                'leads',
-                'leads as sales_count' => fn ($q) => $q->where('status', 'sale'),
-            ])
-            ->withSum(['leads as payout_sum' => fn ($q) => $q->where('status', 'sale')], 'payout')
-            ->select('*');
+        $query = $query->select('*')->addSelect([
+            'leads_count' => Lead::selectRaw('count(*)')->whereColumn('webmaster_id', 'users.id'),
+            'sales_count' => Lead::selectRaw('count(*)')
+                ->whereColumn('webmaster_id', 'users.id')
+                ->where('status', 'sale'),
+            'payout_sum' => Lead::selectRaw('coalesce(sum(payout),0)')
+                ->whereColumn('webmaster_id', 'users.id')
+                ->where('status', 'sale'),
+        ]);
 
         if (in_array($sort, ['name', 'created_at', 'leads_count', 'sales_count'], true)) {
             $query->orderBy($sort, $direction);
@@ -58,7 +60,8 @@ class WebmasterController extends Controller
 
         $webmasters->getCollection()->transform(function (User $user) {
             $paid = PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
-            $balance = $user->payout_sum - $paid;
+            $payout = (float) ($user->payout_sum ?? 0);
+            $balance = $payout - (float) $paid;
             $user->balance = $balance;
             $user->created_at_human = $user->created_at?->format('d.m.Y');
             return $user;
@@ -102,9 +105,9 @@ class WebmasterController extends Controller
         $user->load(['rates.offer', 'leads.offer']);
 
         $stats = [
-            'leads' => $user->leads()->count(),
-            'sales' => $user->leads()->where('status', 'sale')->count(),
-            'payout' => $user->leads()->where('status', 'sale')->sum('payout'),
+            'leads' => Lead::where('webmaster_id', $user->id)->count(),
+            'sales' => Lead::where('webmaster_id', $user->id)->where('status', 'sale')->count(),
+            'payout' => (float) Lead::where('webmaster_id', $user->id)->where('status', 'sale')->sum('payout'),
         ];
 
         $paid = PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
