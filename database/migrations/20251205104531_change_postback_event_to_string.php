@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+        $driver = Schema::getConnection()->getDriverName();
+        if (in_array($driver, ['sqlite', 'pgsql'], true)) {
             return;
         }
 

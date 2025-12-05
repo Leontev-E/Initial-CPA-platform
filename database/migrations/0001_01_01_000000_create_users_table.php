@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->enum('role', ['admin', 'webmaster'])->default('webmaster');
+            $table->string('role', 50)->default('webmaster');
             $table->timestamp('last_login_at')->nullable();
             $table->timestamp('last_activity_at')->nullable();
             $table->boolean('is_active')->default(true);

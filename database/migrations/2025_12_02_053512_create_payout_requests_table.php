@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('webmaster_id')->constrained('users')->cascadeOnDelete();
             $table->decimal('amount', 10, 2);
-            $table->enum('status', ['pending', 'in_process', 'paid', 'cancelled'])->default('pending');
+            $table->string('status', 50)->default('pending');
             $table->string('method');
             $table->text('details')->nullable();
             $table->timestamp('processed_at')->nullable();

@@ -40,12 +40,12 @@ class ReportController extends Controller
             ->select(
                 'webmaster_id',
                 DB::raw('count(*) as leads'),
-                DB::raw('sum(case when status = "new" then 1 else 0 end) as new_count'),
-                DB::raw('sum(case when status = "in_work" then 1 else 0 end) as in_work_count'),
-                DB::raw('sum(case when status = "sale" then 1 else 0 end) as sale_count'),
-                DB::raw('sum(case when status = "cancel" then 1 else 0 end) as cancel_count'),
-                DB::raw('sum(case when status = "trash" then 1 else 0 end) as trash_count'),
-                DB::raw('sum(case when status = "sale" then payout else 0 end) as payout_sum')
+                DB::raw("sum(case when status = 'new' then 1 else 0 end) as new_count"),
+                DB::raw("sum(case when status = 'in_work' then 1 else 0 end) as in_work_count"),
+                DB::raw("sum(case when status = 'sale' then 1 else 0 end) as sale_count"),
+                DB::raw("sum(case when status = 'cancel' then 1 else 0 end) as cancel_count"),
+                DB::raw("sum(case when status = 'trash' then 1 else 0 end) as trash_count"),
+                DB::raw("sum(case when status = 'sale' then payout else 0 end) as payout_sum")
             )
             ->groupBy('webmaster_id')
             ->with('webmaster:id,name,email,telegram')
@@ -103,12 +103,12 @@ class ReportController extends Controller
             ->select(
                 'offer_id',
                 DB::raw('count(*) as leads'),
-                DB::raw('sum(case when status = "new" then 1 else 0 end) as new_count'),
-                DB::raw('sum(case when status = "in_work" then 1 else 0 end) as in_work_count'),
-                DB::raw('sum(case when status = "sale" then 1 else 0 end) as sale_count'),
-                DB::raw('sum(case when status = "cancel" then 1 else 0 end) as cancel_count'),
-                DB::raw('sum(case when status = "trash" then 1 else 0 end) as trash_count'),
-                DB::raw('sum(case when status = "sale" then payout else 0 end) as payout_sum')
+                DB::raw("sum(case when status = 'new' then 1 else 0 end) as new_count"),
+                DB::raw("sum(case when status = 'in_work' then 1 else 0 end) as in_work_count"),
+                DB::raw("sum(case when status = 'sale' then 1 else 0 end) as sale_count"),
+                DB::raw("sum(case when status = 'cancel' then 1 else 0 end) as cancel_count"),
+                DB::raw("sum(case when status = 'trash' then 1 else 0 end) as trash_count"),
+                DB::raw("sum(case when status = 'sale' then payout else 0 end) as payout_sum")
             )
             ->groupBy('offer_id')
             ->with('offer:id,name')
@@ -158,9 +158,9 @@ class ReportController extends Controller
             ->select(
                 'webmaster_id',
                 DB::raw('count(*) as leads'),
-                DB::raw('sum(case when status = "sale" then 1 else 0 end) as sales'),
-                DB::raw('sum(case when status in ("cancel","trash") then 1 else 0 end) as rejected'),
-                DB::raw('sum(case when status = "sale" then payout else 0 end) as payout_sum')
+                DB::raw("sum(case when status = 'sale' then 1 else 0 end) as sales"),
+                DB::raw("sum(case when status in ('cancel','trash') then 1 else 0 end) as rejected"),
+                DB::raw("sum(case when status = 'sale' then payout else 0 end) as payout_sum")
             )
             ->whereBetween('created_at', [$from, $to])
             ->when($request->filled('offer_id'), fn ($q) => $q->where('offer_id', $request->integer('offer_id')))
@@ -210,9 +210,9 @@ class ReportController extends Controller
             ->select(
                 'geo',
                 DB::raw('count(*) as leads'),
-                DB::raw('sum(case when status = "sale" then 1 else 0 end) as sales'),
-                DB::raw('sum(case when status in ("cancel","trash") then 1 else 0 end) as rejected'),
-                DB::raw('sum(case when status = "sale" then payout else 0 end) as payout_sum')
+                DB::raw("sum(case when status = 'sale' then 1 else 0 end) as sales"),
+                DB::raw("sum(case when status in ('cancel','trash') then 1 else 0 end) as rejected"),
+                DB::raw("sum(case when status = 'sale' then payout else 0 end) as payout_sum")
             )
             ->whereBetween('created_at', [$from, $to])
             ->when($request->filled('offer_id'), fn ($q) => $q->where('offer_id', $request->integer('offer_id')))

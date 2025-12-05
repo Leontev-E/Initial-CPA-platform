@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('lead_id')->constrained('leads')->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->enum('from_status', ['new', 'in_work', 'sale', 'cancel', 'trash'])->nullable();
-            $table->enum('to_status', ['new', 'in_work', 'sale', 'cancel', 'trash']);
+            $table->string('from_status', 50)->nullable();
+            $table->string('to_status', 50);
             $table->text('comment')->nullable();
             $table->timestamps();
         });

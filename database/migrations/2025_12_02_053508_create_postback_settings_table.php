@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('postback_settings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('webmaster_id')->constrained('users')->cascadeOnDelete();
-            $table->enum('event', ['lead', 'sale', 'trash']);
+            $table->string('event', 50);
             $table->string('url');
             $table->boolean('is_active')->default(true);
             $table->unique(['webmaster_id', 'event']);

@@ -34,7 +34,7 @@ class DashboardController extends Controller
             ->select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('count(*) as leads_count'),
-                DB::raw('sum(case when status = "sale" then 1 else 0 end) as sales_count')
+                DB::raw("sum(case when status = 'sale' then 1 else 0 end) as sales_count")
             )
             ->groupBy(DB::raw('DATE(created_at)'))
             ->orderBy('date')

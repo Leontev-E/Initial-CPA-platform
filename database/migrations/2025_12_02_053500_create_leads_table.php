@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('offer_id')->constrained('offers')->cascadeOnDelete();
             $table->foreignId('webmaster_id')->constrained('users')->cascadeOnDelete();
             $table->string('geo', 4);
-            $table->enum('status', ['new', 'in_work', 'sale', 'cancel', 'trash'])->default('new');
+            $table->string('status', 50)->default('new');
             $table->decimal('payout', 10, 2)->nullable();
             $table->string('customer_name');
             $table->string('customer_phone');

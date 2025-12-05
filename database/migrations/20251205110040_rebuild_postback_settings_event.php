@@ -9,8 +9,8 @@ return new class extends Migration {
     {
         $driver = Schema::getConnection()->getDriverName();
 
-        if ($driver === 'sqlite') {
-            // На SQLite храним как TEXT — ничего менять не нужно.
+        if (in_array($driver, ['sqlite', 'pgsql'], true)) {
+            // На SQLite и Postgres оставляем строкой / текстом — ничего менять не нужно.
             return;
         }
 
