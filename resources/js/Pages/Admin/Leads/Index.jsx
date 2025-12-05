@@ -21,25 +21,12 @@ export default function Index({ leads, offers, webmasters, filters, geos }) {
         category_id: filters?.category_id ?? '',
     });
 
-    useEffect(() => {
-        filterForm.setData({
-            webmaster_id: filters?.webmaster_id ?? '',
-            offer_id: filters?.offer_id ?? '',
-            status: filters?.status ?? '',
-            geo: Array.isArray(filters?.geo) ? filters.geo : (filters?.geo ? [filters.geo] : []),
-            date_from: filters?.date_from ?? '',
-            date_to: filters?.date_to ?? '',
-            category_id: filters?.category_id ?? '',
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filters]);
-
     const applyFilters = (nextData = null) => {
         const payload = nextData ?? filterForm.data;
         router.get(route('admin.leads.index'), payload, {
             preserveScroll: true,
             replace: true,
-            preserveState: true,
+            preserveState: false,
         });
     };
 

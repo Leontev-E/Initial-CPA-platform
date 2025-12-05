@@ -64,7 +64,7 @@ export default function GeoMultiSelect({ value = [], onChange, placeholder = 'GE
                     </div>
                 )}
             </div>
-            <div className="flex min-h-[28px] flex-wrap items-center gap-2">
+            <div className="flex flex-wrap gap-2">
                 {(value || []).map((code) => (
                     <span key={code} className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-1 text-[11px] text-indigo-700">
                         {code}

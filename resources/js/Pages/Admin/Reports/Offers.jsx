@@ -15,20 +15,6 @@ export default function Offers({ rows, filters, offers, geos }) {
         search: filters?.search ?? '',
     });
 
-    useEffect(() => {
-        filterForm.setData({
-            offer_id: filters?.offer_id ?? '',
-            geo: Array.isArray(filters?.geo) ? filters.geo : (filters?.geo ? [filters.geo] : []),
-            date_from: filters?.date_from ?? '',
-            date_to: filters?.date_to ?? '',
-            sort: filters?.sort ?? 'leads',
-            direction: filters?.direction ?? 'desc',
-            per_page: filters?.per_page ?? 10,
-            search: filters?.search ?? '',
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filters]);
-
     const applyFilters = (nextData = null) => {
         const payload = nextData ?? filterForm.data;
         filterForm.get(route('admin.reports.offers'), payload, {
