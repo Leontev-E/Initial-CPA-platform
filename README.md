@@ -8,7 +8,7 @@
 
 ## 🛠️ Стек
 - PHP 8.2, Laravel 12, Inertia, Sanctum
-- MySQL 8 (локально, тот же сервер)
+- PostgreSQL 14+ (основная БД)
 - React + Tailwind + Vite (сборка в `public/build`)
 - Nginx + PHP-FPM, HTTPS `https://openai-book.store`
 
@@ -51,7 +51,7 @@ sudo apt update
 sudo apt install -y software-properties-common curl git zip unzip
 sudo add-apt-repository -y ppa:ondrej/php
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nginx mysql-server nodejs php8.2 php8.2-fpm php8.2-mysql php8.2-xml php8.2-mbstring php8.2-zip php8.2-curl php8.2-gd php8.2-bcmath composer
+sudo apt install -y nginx postgresql postgresql-contrib nodejs php8.2 php8.2-fpm php8.2-pgsql php8.2-xml php8.2-mbstring php8.2-zip php8.2-curl php8.2-gd php8.2-bcmath composer
 ```
 2) Код и сборка  
 ```
@@ -71,6 +71,10 @@ APP_URL=https://openai-book.store
 DB_DATABASE=<db>
 DB_USERNAME=<user>
 DB_PASSWORD=<pass>
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_SCHEMA=public
 SESSION_DRIVER=database
 QUEUE_CONNECTION=database
 SANCTUM_STATEFUL_DOMAINS=openai-book.store
@@ -110,7 +114,7 @@ server {
 Смените пароли сразу.
 
 ## 📘 English (short)
-Monolith CPA platform on Laravel + React (Inertia) + Tailwind. Roles: admin/webmaster. Features: offers/categories CRUD, leads with statuses, per-webmaster payouts, balances & payout requests, reports (offers/webmasters/GEO), API intake `POST https://openai-book.store/api/leads` with `X-API-KEY`. Stack: PHP 8.2, Laravel 12, MySQL 8, Nginx + PHP-FPM, React/Tailwind build via Vite. Install: clone, `composer install --no-dev`, `npm ci && npm run build`, set `.env` (production, DB creds, APP_URL=https://openai-book.store), `php artisan migrate --seed`, cache config/routes/views, configure Nginx as above. Default seeded logins: admin `admin@cpa.test` / `password`, webmaster `webmaster@cpa.test` / `password`.
+Monolith CPA platform on Laravel + React (Inertia) + Tailwind. Roles: admin/webmaster. Features: offers/categories CRUD, leads with statuses, per-webmaster payouts, balances & payout requests, reports (offers/webmasters/GEO), API intake `POST https://openai-book.store/api/leads` with `X-API-KEY`. Stack: PHP 8.2, Laravel 12, PostgreSQL 14+, Nginx + PHP-FPM, React/Tailwind build via Vite. Install: clone, `composer install --no-dev`, `npm ci && npm run build`, set `.env` (production, DB creds, APP_URL=https://openai-book.store, DB_CONNECTION=pgsql, DB_HOST/PORT/DB/USER/PASSWORD/SCHEMA), `php artisan migrate --seed`, cache config/routes/views, configure Nginx as above. Default seeded logins: admin `admin@cpa.test` / `password`, webmaster `webmaster@cpa.test` / `password`.
 
 ## Автор
 BoostClicks — Евгений Леонтьев — https://t.me/boostclicks  
