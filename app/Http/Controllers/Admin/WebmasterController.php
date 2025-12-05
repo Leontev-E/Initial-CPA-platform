@@ -8,6 +8,7 @@ use App\Models\Offer;
 use App\Models\OfferWebmasterRate;
 use App\Models\PayoutRequest;
 use App\Models\User;
+use App\Models\BalanceAdjustment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -48,6 +49,8 @@ class WebmasterController extends Controller
             'payout_sum' => Lead::selectRaw('coalesce(sum(payout),0)')
                 ->whereColumn('webmaster_id', 'users.id')
                 ->where('status', 'sale'),
+            'manual_sum' => BalanceAdjustment::selectRaw('coalesce(sum(amount),0)')
+                ->whereColumn('webmaster_id', 'users.id'),
         ]);
 
         if (in_array($sort, ['name', 'created_at', 'leads_count', 'sales_count'], true)) {
@@ -60,8 +63,10 @@ class WebmasterController extends Controller
 
         $webmasters->getCollection()->transform(function (User $user) {
             $paid = PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
+            $locked = PayoutRequest::where('webmaster_id', $user->id)->whereIn('status', ['pending', 'in_process'])->sum('amount');
+            $manual = (float) ($user->manual_sum ?? 0);
             $payout = (float) ($user->payout_sum ?? 0);
-            $balance = $payout - (float) $paid;
+            $balance = $payout + $manual - (float) $paid - (float) $locked;
             $user->balance = $balance;
             $user->created_at_human = $user->created_at?->format('d.m.Y');
             return $user;
@@ -110,10 +115,12 @@ class WebmasterController extends Controller
             'leads' => Lead::where('webmaster_id', $user->id)->count(),
             'sales' => Lead::where('webmaster_id', $user->id)->where('status', 'sale')->count(),
             'payout' => (float) Lead::where('webmaster_id', $user->id)->where('status', 'sale')->sum('payout'),
+            'manual' => (float) BalanceAdjustment::where('webmaster_id', $user->id)->sum('amount'),
         ];
 
         $paid = PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
-        $balance = $stats['payout'] - $paid;
+        $locked = PayoutRequest::where('webmaster_id', $user->id)->whereIn('status', ['pending', 'in_process'])->sum('amount');
+        $balance = $stats['payout'] + $stats['manual'] - $paid - $locked;
 
         $offers = Offer::with(['categories'])
             ->orderBy('name')
@@ -258,5 +265,24 @@ class WebmasterController extends Controller
         ]);
 
         return back()->with('success', 'Заявка на выплату создана');
+    }
+
+    public function adjustBalance(Request $request, User $user)
+    {
+        abort_unless($user->role === User::ROLE_WEBMASTER, 404);
+
+        $data = $request->validate([
+            'amount' => ['required', 'numeric', 'not_in:0'],
+            'comment' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        BalanceAdjustment::create([
+            'webmaster_id' => $user->id,
+            'created_by' => $request->user()->id,
+            'amount' => $data['amount'],
+            'comment' => $data['comment'] ?? null,
+        ]);
+
+        return back()->with('success', 'Баланс обновлён');
     }
 }

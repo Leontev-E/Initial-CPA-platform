@@ -52,6 +52,7 @@ Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix(
     Route::post('webmasters/{user}/impersonate', [AdminWebmasterController::class, 'impersonate'])->name('webmasters.impersonate');
     Route::post('webmasters/{user}/rate', [AdminWebmasterController::class, 'updateRate'])->name('webmasters.rate');
     Route::post('webmasters/{user}/payout', [AdminWebmasterController::class, 'createPayout'])->name('webmasters.payout');
+    Route::post('webmasters/{user}/adjust-balance', [AdminWebmasterController::class, 'adjustBalance'])->name('webmasters.adjustBalance');
     Route::delete('webmasters/{user}', [AdminWebmasterController::class, 'destroy'])->name('webmasters.destroy');
 
     Route::get('payouts', [AdminPayoutController::class, 'index'])->name('payouts.index');

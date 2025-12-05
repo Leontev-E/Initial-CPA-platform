@@ -59,13 +59,15 @@ export default function Index({ payouts, balance, minPayout, canRequest }) {
                         {errors.amount && (
                             <div className="text-xs text-red-600">{errors.amount}</div>
                         )}
-                        <input
+                        <select
                             className="w-full rounded border px-3 py-2"
-                            placeholder="Метод (например, USDT TRC20)"
                             value={data.method}
                             onChange={(e) => setData('method', e.target.value)}
                             disabled={!canRequest}
-                        />
+                        >
+                            <option value="USDT TRC20">USDT TRC20</option>
+                            <option value="Карта банка">Карта банка</option>
+                        </select>
                         <input
                             className="w-full rounded border px-3 py-2"
                             placeholder="Адрес кошелька"

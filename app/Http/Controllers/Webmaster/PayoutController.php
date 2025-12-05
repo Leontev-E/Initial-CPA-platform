@@ -25,7 +25,8 @@ class PayoutController extends Controller
         $earned = Lead::where('webmaster_id', $user->id)->where('status', 'sale')->sum('payout');
         $paid = PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
         $locked = PayoutRequest::where('webmaster_id', $user->id)->whereIn('status', ['pending', 'in_process'])->sum('amount');
-        $available = $earned - $paid - $locked;
+        $manual = \App\Models\BalanceAdjustment::where('webmaster_id', $user->id)->sum('amount');
+        $available = $earned + $manual - $paid - $locked;
         $minPayout = $user->min_payout ?? 0;
         $canRequest = $available >= $minPayout;
 
@@ -42,14 +43,15 @@ class PayoutController extends Controller
         $user = $request->user();
         $validated = $request->validate([
             'amount' => ['required', 'numeric', 'min:0'],
-            'method' => ['required', 'string', 'max:255'],
+            'method' => ['required', 'string', 'in:USDT TRC20,Карта банка'],
             'wallet_address' => ['required', 'string', 'max:255'],
         ]);
 
         $earned = Lead::where('webmaster_id', $user->id)->where('status', 'sale')->sum('payout');
         $paid = PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
         $locked = PayoutRequest::where('webmaster_id', $user->id)->whereIn('status', ['pending', 'in_process'])->sum('amount');
-        $available = $earned - $paid - $locked;
+        $manual = \App\Models\BalanceAdjustment::where('webmaster_id', $user->id)->sum('amount');
+        $available = $earned + $manual - $paid - $locked;
         $minPayout = $user->min_payout ?? 0;
 
         if ($available < $minPayout) {

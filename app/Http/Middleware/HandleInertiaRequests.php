@@ -36,7 +36,8 @@ class HandleInertiaRequests extends Middleware
             $earned = (float) \App\Models\Lead::where('webmaster_id', $user->id)->where('status', 'sale')->sum('payout');
             $paid = (float) \App\Models\PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
             $locked = (float) \App\Models\PayoutRequest::where('webmaster_id', $user->id)->whereIn('status', ['pending', 'in_process'])->sum('amount');
-            $available = $earned - $paid - $locked;
+            $manual = (float) \App\Models\BalanceAdjustment::where('webmaster_id', $user->id)->sum('amount');
+            $available = $earned + $manual - $paid - $locked;
             $webmasterMeta = [
                 'balance' => $available,
                 'min_payout' => (float) ($user->min_payout ?? 0),

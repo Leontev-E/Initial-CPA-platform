@@ -11,6 +11,11 @@ export default function Show({ webmaster, stats, balance, offers }) {
         min_payout: webmaster.min_payout ?? '',
     });
 
+    const adjustForm = useForm({
+        amount: '',
+        comment: '',
+    });
+
     const payoutForm = useForm({
         amount: '',
         method: '',
@@ -135,6 +140,7 @@ export default function Show({ webmaster, stats, balance, offers }) {
                         <div>Лиды: {stats.leads}</div>
                         <div>Продажи: {stats.sales}</div>
                         <div>Payout: {stats.payout} $</div>
+                        <div>Ручные начисления: {stats.manual ?? 0} $</div>
                     </div>
 
                     <div className="mt-4 border-t pt-3">
@@ -166,6 +172,39 @@ export default function Show({ webmaster, stats, balance, offers }) {
                                 className="w-full rounded bg-green-600 px-4 py-2 text-xs font-semibold text-white hover:bg-green-700"
                             >
                                 Создать заявку на выплату
+                            </button>
+                        </form>
+                    </div>
+
+                    <div className="mt-4 border-t pt-3">
+                        <div className="text-sm font-semibold text-gray-700 mb-2">Ручное начисление</div>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                adjustForm.post(route('admin.webmasters.adjustBalance', webmaster.id), {
+                                    onSuccess: () => adjustForm.reset(),
+                                });
+                            }}
+                            className="space-y-2 text-sm"
+                        >
+                            <input
+                                className="w-full rounded border px-3 py-2"
+                                placeholder="Сумма (можно отрицательно)"
+                                value={adjustForm.data.amount}
+                                onChange={(e) => adjustForm.setData('amount', e.target.value)}
+                            />
+                            <textarea
+                                className="w-full rounded border px-3 py-2"
+                                placeholder="Комментарий (опционально)"
+                                value={adjustForm.data.comment}
+                                onChange={(e) => adjustForm.setData('comment', e.target.value)}
+                            />
+                            <button
+                                type="submit"
+                                disabled={adjustForm.processing}
+                                className="w-full rounded bg-slate-700 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                            >
+                                Начислить
                             </button>
                         </form>
                     </div>
