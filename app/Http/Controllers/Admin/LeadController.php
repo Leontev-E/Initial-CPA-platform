@@ -124,7 +124,7 @@ class LeadController extends Controller
             'comment' => $request->string('comment')->toString(),
         ]);
 
-        $this->triggerPostback($lead);
+        $this->triggerPostback($lead, $fromStatus);
 
         return back()->with('success', 'Статус лида обновлён');
     }
@@ -138,7 +138,7 @@ class LeadController extends Controller
         return $custom ?? $lead->offer->default_payout;
     }
 
-    protected function triggerPostback(Lead $lead): void
+    protected function triggerPostback(Lead $lead, ?string $fromStatus = null): void
     {
         $lead->loadMissing('offer');
         $event = match ($lead->status) {
@@ -158,7 +158,7 @@ class LeadController extends Controller
             $statusCode = null;
             $responseBody = null;
             $error = null;
-            $finalUrl = $this->expandPostbackMacros($setting->url, $lead);
+            $finalUrl = $this->expandPostbackMacros($setting->url, $lead, $fromStatus);
 
             try {
                 $response = Http::timeout(5)->get($finalUrl);
@@ -181,16 +181,19 @@ class LeadController extends Controller
         }
     }
 
-    protected function expandPostbackMacros(string $template, Lead $lead): string
+    protected function expandPostbackMacros(string $template, Lead $lead, ?string $fromStatus = null): string
     {
         $payload = [
             '{lead_id}' => $lead->id,
             '{status}' => $lead->status,
+            '{from}' => $fromStatus ?? '',
+            '{from_status}' => $fromStatus ?? '',
             '{payout}' => $lead->payout,
             '{offer_id}' => $lead->offer_id,
             '{offer_name}' => $lead->offer?->name,
             '{subid}' => $lead->subid,
             '{geo}' => $lead->geo,
+            '{landing_url}' => $lead->landing_url,
             '{customer_name}' => $lead->customer_name,
             '{customer_phone}' => $lead->customer_phone,
             '{customer_email}' => $lead->customer_email,

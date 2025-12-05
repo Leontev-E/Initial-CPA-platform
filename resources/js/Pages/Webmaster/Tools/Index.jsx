@@ -2,10 +2,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
 
-export default function Index({ apiKey, postbacks, logs, filters }) {
+export default function Index({ apiKey, postbacks, logs, filters, eventOptions = [] }) {
     const [tab, setTab] = useState('api');
     const { post } = useForm({});
-    const defaultEvents = ['lead', 'in_work', 'sale', 'cancel', 'trash'];
+    const defaultEvents = eventOptions?.length ? eventOptions : ['lead', 'in_work', 'sale', 'cancel', 'trash'];
 
     const initialPostbacks = () => {
         const map = {};
@@ -26,6 +26,8 @@ export default function Index({ apiKey, postbacks, logs, filters }) {
 
     const searchForm = useForm({
         search: filters?.search ?? '',
+        event: filters?.event ?? '',
+        result: filters?.result ?? '',
     });
 
     const regenerate = () => {
@@ -41,7 +43,16 @@ export default function Index({ apiKey, postbacks, logs, filters }) {
         e.preventDefault();
         router.get(
             route('webmaster.tools.index'),
-            { search: searchForm.data.search },
+            { search: searchForm.data.search, event: searchForm.data.event, result: searchForm.data.result },
+            { preserveScroll: true, preserveState: true },
+        );
+    };
+
+    const resetSearch = () => {
+        searchForm.setData(() => ({ search: '', event: '', result: '' }));
+        router.get(
+            route('webmaster.tools.index'),
+            { search: '', event: '', result: '' },
             { preserveScroll: true, preserveState: true },
         );
     };
@@ -139,10 +150,10 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                         <div className="rounded bg-slate-50 p-3 text-sm text-gray-700">
                             <div className="font-semibold">Основное</div>
                             <p className="mt-1">
-                                Постбек — это запрос после смены статуса лида. Поддерживаемые события: <strong>lead, in_work, sale, cancel, trash</strong>.
+                                Постбек — это запрос после смены статуса лида. Поддерживаемые события: <strong>{defaultEvents.join(', ')}</strong>.
                             </p>
                             <p className="mt-1">
-                                Макросы: <code>{'{lead_id}'}</code>, <code>{'{status}'}</code>, <code>{'{payout}'}</code>, <code>{'{subid}'}</code>, <code>{'{geo}'}</code>, <code>{'{offer_id}'}</code>.
+                                Макросы: <code>{'{lead_id}'}</code>, <code>{'{status}'}</code>, <code>{'{from}'}</code>, <code>{'{payout}'}</code>, <code>{'{subid}'}</code>, <code>{'{geo}'}</code>, <code>{'{offer_id}'}</code>, <code>{'{offer_name}'}</code>, <code>{'{landing_url}'}</code>.
                             </p>
                             <p className="mt-1">
                                 Пример URL: <code>https://tracker.com/postback?subid={'{subid}'}&status={'{status}'}&payout={'{payout}'}&lead={'{lead_id}'}</code>
@@ -207,19 +218,51 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
 
                         <div className="mt-6">
                             <h3 className="text-sm font-semibold text-gray-800">Лог постбеков (последние 10 дней)</h3>
-                            <form onSubmit={submitSearch} className="mt-2 flex gap-2 text-sm">
-                                <input
-                                    className="w-full rounded border px-3 py-2"
-                                    placeholder="Поиск по URL, событию, статусу или Lead ID"
-                                    value={searchForm.data.search}
-                                    onChange={(e) => searchForm.setData('search', e.target.value)}
-                                />
-                                <button
-                                    type="submit"
-                                    className="rounded bg-indigo-600 px-3 py-2 font-semibold text-white hover:bg-indigo-700"
+                            <form onSubmit={submitSearch} className="mt-2 grid gap-2 text-sm md:grid-cols-4">
+                                <div className="md:col-span-2">
+                                    <input
+                                        className="w-full rounded border px-3 py-2"
+                                        placeholder="Поиск по URL, событию, статусу или Lead ID"
+                                        value={searchForm.data.search}
+                                        onChange={(e) => searchForm.setData('search', e.target.value)}
+                                    />
+                                </div>
+                                <select
+                                    className="rounded border px-3 py-2"
+                                    value={searchForm.data.event}
+                                    onChange={(e) => searchForm.setData('event', e.target.value)}
                                 >
-                                    Искать
-                                </button>
+                                    <option value="">Все события</option>
+                                    {defaultEvents.map((ev) => (
+                                        <option key={ev} value={ev}>
+                                            {ev}
+                                        </option>
+                                    ))}
+                                </select>
+                                <select
+                                    className="rounded border px-3 py-2"
+                                    value={searchForm.data.result}
+                                    onChange={(e) => searchForm.setData('result', e.target.value)}
+                                >
+                                    <option value="">Любой результат</option>
+                                    <option value="ok">Успешно</option>
+                                    <option value="error">С ошибкой</option>
+                                </select>
+                                <div className="flex gap-2 md:col-span-4">
+                                    <button
+                                        type="submit"
+                                        className="rounded bg-indigo-600 px-3 py-2 font-semibold text-white hover:bg-indigo-700"
+                                    >
+                                        Применить
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={resetSearch}
+                                        className="rounded border px-3 py-2 font-semibold text-gray-700 hover:bg-gray-50"
+                                    >
+                                        Сбросить
+                                    </button>
+                                </div>
                             </form>
                             <div className="mt-3 overflow-x-auto rounded border">
                                 <table className="min-w-full divide-y divide-gray-200 text-sm">

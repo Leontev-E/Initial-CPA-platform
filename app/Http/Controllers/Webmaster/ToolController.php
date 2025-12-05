@@ -60,10 +60,11 @@ class ToolController extends Controller
             'apiKey' => $apiKey,
             'postbacks' => $postbacks,
             'logs' => $logs,
+            'eventOptions' => $this->allowedEvents,
             'filters' => [
-                'search' => $request->string('search')->toString(),
-                'event' => $request->string('event')->toString(),
-                'result' => $request->string('result')->toString(),
+                'search' => $request->query('search'),
+                'event' => $request->query('event'),
+                'result' => $request->query('result'),
             ],
         ]);
     }
@@ -94,7 +95,8 @@ class ToolController extends Controller
                     'is_active' => $pb['is_active'] ?? true,
                 ];
             })
-            ->filter(fn($pb) => $pb['url'] !== '' && in_array($pb['event'], $this->allowedEvents, true));
+            ->filter(fn($pb) => $pb['url'] !== '' && in_array($pb['event'], $this->allowedEvents, true))
+            ->values();
 
         $validated = validator($filtered->toArray(), [
             '*.event' => ['required', 'in:lead,in_work,sale,cancel,trash'],
@@ -111,6 +113,7 @@ class ToolController extends Controller
 
         $savedEvents = array_column($validated, 'event');
         PostbackSetting::where('webmaster_id', $user->id)
+            ->whereIn('event', $this->allowedEvents)
             ->whereNotIn('event', $savedEvents)
             ->delete();
 
