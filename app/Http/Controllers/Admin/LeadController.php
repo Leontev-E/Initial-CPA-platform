@@ -7,10 +7,12 @@ use App\Models\Lead;
 use App\Models\LeadStatusLog;
 use App\Models\Offer;
 use App\Models\OfferWebmasterRate;
+use App\Models\PostbackLog;
 use App\Models\PostbackSetting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class LeadController extends Controller
@@ -138,6 +140,7 @@ class LeadController extends Controller
 
     protected function triggerPostback(Lead $lead): void
     {
+        $lead->loadMissing('offer');
         $event = match ($lead->status) {
             'sale' => 'sale',
             'cancel' => 'cancel',
@@ -152,13 +155,28 @@ class LeadController extends Controller
             ->get();
 
         foreach ($settings as $setting) {
+            $statusCode = null;
+            $responseBody = null;
+            $error = null;
+            $finalUrl = $this->expandPostbackMacros($setting->url, $lead);
+
             try {
-                $url = $this->expandPostbackMacros($setting->url, $lead);
-                // Отправляем GET, чтобы макросы были прямо в строке
-                Http::timeout(5)->get($url);
+                $response = Http::timeout(5)->get($finalUrl);
+                $statusCode = $response->status();
+                $responseBody = Str::limit($response->body(), 4000);
             } catch (\Throwable $e) {
-                // ignore errors for now
+                $error = $e->getMessage();
             }
+
+            PostbackLog::create([
+                'webmaster_id' => $lead->webmaster_id,
+                'lead_id' => $lead->id,
+                'event' => $event,
+                'url' => $finalUrl,
+                'status_code' => $statusCode,
+                'response_body' => $responseBody,
+                'error_message' => $error,
+            ]);
         }
     }
 
@@ -175,6 +193,7 @@ class LeadController extends Controller
             '{customer_name}' => $lead->customer_name,
             '{customer_phone}' => $lead->customer_phone,
             '{customer_email}' => $lead->customer_email,
+            '{shipping_address}' => $lead->shipping_address,
             '{webmaster_id}' => $lead->webmaster_id,
         ];
 

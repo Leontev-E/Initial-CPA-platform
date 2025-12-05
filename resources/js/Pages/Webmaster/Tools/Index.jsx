@@ -1,8 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
 
-export default function Index({ apiKey, postbacks }) {
+export default function Index({ apiKey, postbacks, logs, filters }) {
     const [tab, setTab] = useState('api');
     const { post } = useForm({});
     const defaultEvents = ['lead', 'in_work', 'sale', 'cancel', 'trash'];
@@ -24,6 +24,10 @@ export default function Index({ apiKey, postbacks }) {
         postbacks: initialPostbacks(),
     });
 
+    const searchForm = useForm({
+        search: filters?.search ?? '',
+    });
+
     const regenerate = () => {
         post(route('webmaster.tools.regenerate'));
     };
@@ -33,10 +37,29 @@ export default function Index({ apiKey, postbacks }) {
         pbForm.post(route('webmaster.tools.postbacks'));
     };
 
+    const submitSearch = (e) => {
+        e.preventDefault();
+        router.get(
+            route('webmaster.tools.index'),
+            { search: searchForm.data.search },
+            { preserveScroll: true, preserveState: true },
+        );
+    };
+
+    const formatDate = (value) => {
+        if (!value) return '—';
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return value;
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        const hh = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
+    };
+
     return (
-        <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold text-gray-800">Инструменты</h2>}
-        >
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800">Инструменты</h2>}>
             <Head title="Инструменты" />
             <div className="rounded-xl bg-white p-4 shadow-sm">
                 <div className="mb-4 flex gap-2">
@@ -65,7 +88,7 @@ export default function Index({ apiKey, postbacks }) {
                                 onClick={regenerate}
                                 className="rounded bg-indigo-600 px-3 py-1 text-xs font-semibold text-white"
                             >
-                                Перегенерировать
+                                Пересоздать
                             </button>
                         </div>
                         <div className="space-y-2 text-sm text-gray-700">
@@ -73,7 +96,7 @@ export default function Index({ apiKey, postbacks }) {
                             <div className="font-mono break-all">POST https://openai-book.store/api/leads</div>
                             <div className="text-xs uppercase text-gray-500">Заголовок</div>
                             <div className="font-mono break-all">X-API-KEY: {apiKey.key}</div>
-                            <div className="text-xs uppercase text-gray-500">Пример тела</div>
+                            <div className="text-xs uppercase text-gray-500">Тело запроса</div>
                             <pre className="whitespace-pre-wrap rounded bg-slate-50 p-3 text-xs text-gray-800">
 {`{
   "offer_id": 1,
@@ -101,7 +124,7 @@ $geo = $data['geo'] ?? null;
 $name = $data['customer_name'] ?? null;
 $phone = $data['customer_phone'] ?? null;
 
-// Сохраните лид в своей системе...
+// Сохраняете или обрабатываете одноразовый запрос...
 
 http_response_code(200);
 echo json_encode(['status' => 'ok', 'lead_id' => 123]);
@@ -114,9 +137,9 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                 {tab === 'postbacks' && (
                     <div className="space-y-4">
                         <div className="rounded bg-slate-50 p-3 text-sm text-gray-700">
-                            <div className="font-semibold">Что это?</div>
+                            <div className="font-semibold">Основное</div>
                             <p className="mt-1">
-                                Постбек — мы отправляем запрос при смене статуса лида. Поддерживаем статусы: <strong>lead, in_work, sale, cancel, trash</strong>.
+                                Постбек — это запрос после смены статуса лида. Поддерживаемые события: <strong>lead, in_work, sale, cancel, trash</strong>.
                             </p>
                             <p className="mt-1">
                                 Макросы: <code>{'{lead_id}'}</code>, <code>{'{status}'}</code>, <code>{'{payout}'}</code>, <code>{'{subid}'}</code>, <code>{'{geo}'}</code>, <code>{'{offer_id}'}</code>.
@@ -171,7 +194,7 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                         </form>
                         <div className="rounded bg-slate-50 p-3 text-xs text-gray-700">
                             <div className="font-semibold">Пример отправки:</div>
-                            <div>POST {`<ваш URL>`} с form-data:</div>
+                            <div>POST {`<Ваш URL>`} с form-data:</div>
                             <ul className="list-disc pl-4">
                                 <li>lead_id</li>
                                 <li>status</li>
@@ -180,6 +203,75 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                                 <li>subid</li>
                                 <li>geo</li>
                             </ul>
+                        </div>
+
+                        <div className="mt-6">
+                            <h3 className="text-sm font-semibold text-gray-800">Лог постбеков (последние 10 дней)</h3>
+                            <form onSubmit={submitSearch} className="mt-2 flex gap-2 text-sm">
+                                <input
+                                    className="w-full rounded border px-3 py-2"
+                                    placeholder="Поиск по URL, событию, статусу или Lead ID"
+                                    value={searchForm.data.search}
+                                    onChange={(e) => searchForm.setData('search', e.target.value)}
+                                />
+                                <button
+                                    type="submit"
+                                    className="rounded bg-indigo-600 px-3 py-2 font-semibold text-white hover:bg-indigo-700"
+                                >
+                                    Искать
+                                </button>
+                            </form>
+                            <div className="mt-3 overflow-x-auto rounded border">
+                                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                                    <thead className="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-600">
+                                        <tr>
+                                            <th className="px-3 py-2">Дата</th>
+                                            <th className="px-3 py-2">Событие</th>
+                                            <th className="px-3 py-2">Lead ID</th>
+                                            <th className="px-3 py-2">HTTP</th>
+                                            <th className="px-3 py-2">URL</th>
+                                            <th className="px-3 py-2">Результат</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y">
+                                        {logs?.data?.map((log) => (
+                                            <tr key={log.id} className="text-gray-700">
+                                                <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-600">
+                                                    {formatDate(log.created_at)}
+                                                </td>
+                                                <td className="px-3 py-2">{log.event}</td>
+                                                <td className="px-3 py-2">{log.lead_id ?? '—'}</td>
+                                                <td className="px-3 py-2">{log.status_code ?? '—'}</td>
+                                                <td className="px-3 py-2 break-all text-xs text-gray-700">{log.url}</td>
+                                                <td className="px-3 py-2">
+                                                    {log.error_message
+                                                        ? <span className="rounded bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">Ошибка</span>
+                                                        : <span className="rounded bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">OK</span>}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {(logs?.data?.length ?? 0) === 0 && (
+                                            <tr>
+                                                <td className="px-3 py-4 text-center text-xs text-gray-500" colSpan={6}>
+                                                    Нет записей
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                                {logs?.links?.map((link, idx) => (
+                                    <button
+                                        key={idx}
+                                        disabled={!link.url}
+                                        onClick={() => link.url && router.visit(link.url, { preserveScroll: true, preserveState: true })}
+                                        className={`rounded px-3 py-1 font-semibold ${link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 border'} ${!link.url ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-50'}`}
+                                    >
+                                        {link.label?.replace(/&laquo;|&raquo;/g, '').trim() || idx + 1}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 )}

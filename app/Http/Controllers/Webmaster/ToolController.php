@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Webmaster;
 
 use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
+use App\Models\PostbackLog;
 use App\Models\PostbackSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -21,9 +22,28 @@ class ToolController extends Controller
 
         $postbacks = PostbackSetting::where('webmaster_id', $user->id)->get();
 
+        $logs = PostbackLog::where('webmaster_id', $user->id)
+            ->where('created_at', '>=', now()->subDays(10))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $term = $request->string('search')->toString();
+                $query->where(function ($q) use ($term) {
+                    $q->where('url', 'like', '%' . $term . '%')
+                        ->orWhere('event', 'like', '%' . $term . '%')
+                        ->orWhere('status_code', 'like', '%' . $term . '%')
+                        ->orWhere('lead_id', 'like', '%' . $term . '%');
+                });
+            })
+            ->orderByDesc('created_at')
+            ->paginate(20)
+            ->withQueryString();
+
         return Inertia::render('Webmaster/Tools/Index', [
             'apiKey' => $apiKey,
             'postbacks' => $postbacks,
+            'logs' => $logs,
+            'filters' => [
+                'search' => $request->string('search')->toString(),
+            ],
         ]);
     }
 
