@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, router } from '@inertiajs/react';
 import GeoMultiSelect from '@/Components/GeoMultiSelect';
+import { useEffect } from 'react';
 
 const statuses = [
     { value: 'new', label: 'Новый' },
