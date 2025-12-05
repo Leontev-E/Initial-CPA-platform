@@ -25,7 +25,7 @@ class ToolController extends Controller
         $postbacks = PostbackSetting::where('webmaster_id', $user->id)
             ->whereIn('event', $this->allowedEvents)
             ->get()
-            ->map(fn ($pb) => [
+            ->map(fn($pb) => [
                 'event' => $pb->event,
                 'url' => $pb->url,
                 'is_active' => (bool) $pb->is_active,
@@ -43,7 +43,7 @@ class ToolController extends Controller
                         ->orWhere('lead_id', 'like', "%{$term}%");
                 });
             })
-            ->when($request->filled('event'), fn ($q) => $q->where('event', $request->string('event')->toString()))
+            ->when($request->filled('event'), fn($q) => $q->where('event', $request->string('event')->toString()))
             ->when($request->filled('result'), function ($q) use ($request) {
                 $res = $request->string('result')->toString();
                 if ($res === 'ok') {
@@ -94,7 +94,7 @@ class ToolController extends Controller
                     'is_active' => $pb['is_active'] ?? true,
                 ];
             })
-            ->filter(fn ($pb) => $pb['url'] !== '' && in_array($pb['event'], $this->allowedEvents, true));
+            ->filter(fn($pb) => $pb['url'] !== '' && in_array($pb['event'], $this->allowedEvents, true));
 
         $validated = validator($filtered->toArray(), [
             '*.event' => ['required', 'in:lead,in_work,sale,cancel,trash'],
