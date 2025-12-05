@@ -44,14 +44,23 @@ class ToolController extends Controller
     public function savePostbacks(Request $request)
     {
         $user = $request->user();
-        $validated = $request->validate([
-            'postbacks' => ['array'],
-            'postbacks.*.event' => ['required', 'in:lead,in_work,sale,cancel,trash'],
-            'postbacks.*.url' => ['required', 'url'],
-            'postbacks.*.is_active' => ['boolean'],
-        ]);
+        $filtered = collect($request->input('postbacks', []))
+            ->map(function ($pb) {
+                return [
+                    'event' => $pb['event'] ?? '',
+                    'url' => trim($pb['url'] ?? ''),
+                    'is_active' => $pb['is_active'] ?? true,
+                ];
+            })
+            ->filter(fn ($pb) => $pb['url'] !== '');
 
-        foreach ($validated['postbacks'] ?? [] as $pb) {
+        $validated = validator($filtered->toArray(), [
+            '*.event' => ['required', 'in:lead,in_work,sale,cancel,trash'],
+            '*.url' => ['required', 'url'],
+            '*.is_active' => ['boolean'],
+        ])->validate();
+
+        foreach ($validated as $pb) {
             PostbackSetting::updateOrCreate(
                 ['webmaster_id' => $user->id, 'event' => $pb['event']],
                 ['url' => $pb['url'], 'is_active' => $pb['is_active'] ?? true],
