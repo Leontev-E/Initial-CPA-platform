@@ -7,10 +7,11 @@ use App\Models\Lead;
 use App\Models\Offer;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
@@ -298,7 +299,9 @@ class ReportController extends Controller
 
     protected function geoOptions()
     {
-        return Lead::select('geo')->whereNotNull('geo')->distinct()->orderBy('geo')->pluck('geo');
+        return Cache::remember('report_geo_options', 300, function () {
+            return Lead::select('geo')->whereNotNull('geo')->distinct()->orderBy('geo')->pluck('geo');
+        });
     }
 
     protected function csvResponse(string $filename, $rows, array $headers)

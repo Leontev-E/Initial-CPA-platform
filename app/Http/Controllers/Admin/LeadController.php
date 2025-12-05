@@ -3,21 +3,17 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendPostbacksJob;
 use App\Models\Lead;
 use App\Models\LeadStatusLog;
 use App\Models\Offer;
 use App\Models\OfferWebmasterRate;
 use App\Models\User;
-use App\Services\PostbackDispatcher;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class LeadController extends Controller
 {
-    public function __construct(private readonly PostbackDispatcher $postbackDispatcher)
-    {
-    }
-
     public function index(Request $request)
     {
         $query = $this->baseQuery($request);
@@ -141,7 +137,7 @@ class LeadController extends Controller
             'comment' => $request->string('comment')->toString(),
         ]);
 
-        $this->postbackDispatcher->dispatch($lead, $fromStatus);
+        dispatch(new SendPostbacksJob($lead->id, $fromStatus));
 
         return back()->with('success', 'Статус лида обновлён');
     }

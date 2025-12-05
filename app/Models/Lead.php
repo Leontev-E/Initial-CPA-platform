@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Services\LeadWebhookDispatcher;
+use App\Jobs\SendLeadWebhooksJob;
 
 class Lead extends Model
 {
@@ -55,7 +55,7 @@ class Lead extends Model
     protected static function booted()
     {
         static::created(function (Lead $lead) {
-            app(LeadWebhookDispatcher::class)->dispatch($lead, null);
+            dispatch(new SendLeadWebhooksJob($lead->id, null));
         });
 
         static::updating(function (Lead $lead) {
@@ -65,7 +65,7 @@ class Lead extends Model
         static::updated(function (Lead $lead) {
             if ($lead->wasChanged('status')) {
                 $fromStatus = $lead->fromStatusForWebhook ?? $lead->getOriginal('status');
-                app(LeadWebhookDispatcher::class)->dispatch($lead, $fromStatus);
+                dispatch(new SendLeadWebhooksJob($lead->id, $fromStatus));
             }
         });
     }
