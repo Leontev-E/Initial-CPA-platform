@@ -11,6 +11,7 @@ class PayoutRequest extends Model
         'amount',
         'status',
         'method',
+        'wallet_address',
         'details',
         'processed_at',
     ];

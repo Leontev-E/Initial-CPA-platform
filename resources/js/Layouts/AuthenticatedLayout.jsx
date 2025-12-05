@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 export default function AuthenticatedLayout({ header, children }) {
     const { auth, impersonating } = usePage().props;
     const user = auth.user;
+    const wmMeta = auth.webmasterMeta;
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const allowedSections = user.invited_by ? (user.permissions?.sections || []) : null;
@@ -47,6 +48,13 @@ export default function AuthenticatedLayout({ header, children }) {
         return `Дата: ${dd}.${mm}.${yyyy} · Время: ${hh}:${min}`;
     };
 
+    const formatMoney = (value) => {
+        if (value === null || value === undefined || Number.isNaN(Number(value))) {
+            return '0.00';
+        }
+        return Number(value).toFixed(2);
+    };
+
     const Navigation = () => (
         <>
             <nav className="space-y-1">
@@ -81,6 +89,15 @@ export default function AuthenticatedLayout({ header, children }) {
                     <div className="text-indigo-600 break-all">{user.email}</div>
                     <div className="text-[11px] uppercase tracking-wide text-gray-500">Личный кабинет</div>
                 </Link>
+                {user.role === 'webmaster' && wmMeta && (
+                    <div className="rounded-lg border bg-slate-50 px-3 py-2">
+                        <div className="text-[11px] uppercase text-gray-500">Баланс</div>
+                        <div className={`text-sm font-semibold ${wmMeta.balance >= wmMeta.min_payout ? 'text-green-700' : 'text-gray-600'}`}>
+                            {formatMoney(wmMeta.balance)} $
+                        </div>
+                        <div className="text-[11px] text-gray-500">Минимум к выводу: {formatMoney(wmMeta.min_payout)} $</div>
+                    </div>
+                )}
                 <Link
                     href={route('logout')}
                     method="post"

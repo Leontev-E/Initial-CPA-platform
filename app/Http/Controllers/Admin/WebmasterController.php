@@ -80,6 +80,7 @@ class WebmasterController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'telegram' => ['nullable', 'string', 'max:255'],
             'note' => ['nullable', 'string'],
+            'min_payout' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $password = Str::password(10);
@@ -91,6 +92,7 @@ class WebmasterController extends Controller
             'note' => $validated['note'] ?? null,
             'password' => Hash::make($password),
             'role' => User::ROLE_WEBMASTER,
+            'min_payout' => $validated['min_payout'] ?? 0,
         ]);
 
         $this->sendCredentialsEmail($user, $password, $request->user());
@@ -143,6 +145,7 @@ class WebmasterController extends Controller
             'telegram' => ['nullable', 'string', 'max:255'],
             'note' => ['nullable', 'string'],
             'dashboard_message' => ['nullable', 'string'],
+            'min_payout' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $user->update($validated);

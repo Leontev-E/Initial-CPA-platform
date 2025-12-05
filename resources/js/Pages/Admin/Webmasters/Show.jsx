@@ -8,6 +8,7 @@ export default function Show({ webmaster, stats, balance, offers }) {
         telegram: webmaster.telegram || '',
         note: webmaster.note || '',
         dashboard_message: webmaster.dashboard_message || '',
+        min_payout: webmaster.min_payout ?? '',
     });
 
     const payoutForm = useForm({
@@ -62,6 +63,12 @@ export default function Show({ webmaster, stats, balance, offers }) {
                         value={data.dashboard_message}
                         onChange={(e) => setData('dashboard_message', e.target.value)}
                         placeholder="Сообщение в шапке кабинета вебмастера"
+                    />
+                    <input
+                        className="w-full rounded border px-3 py-2 text-sm"
+                        value={data.min_payout}
+                        onChange={(e) => setData('min_payout', e.target.value)}
+                        placeholder="Минимальная сумма выплаты"
                     />
                     <div className="text-sm text-gray-700">
                         Баланс: <span className="font-semibold">{balance} $</span>

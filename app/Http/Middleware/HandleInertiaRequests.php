@@ -29,10 +29,25 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
+        $webmasterMeta = null;
+        if ($user && $user->role === 'webmaster') {
+            $earned = (float) \App\Models\Lead::where('webmaster_id', $user->id)->where('status', 'sale')->sum('payout');
+            $paid = (float) \App\Models\PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
+            $locked = (float) \App\Models\PayoutRequest::where('webmaster_id', $user->id)->whereIn('status', ['pending', 'in_process'])->sum('amount');
+            $available = $earned - $paid - $locked;
+            $webmasterMeta = [
+                'balance' => $available,
+                'min_payout' => (float) ($user->min_payout ?? 0),
+            ];
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
+                'webmasterMeta' => $webmasterMeta,
             ],
             'locale' => app()->getLocale(),
             'impersonating' => (bool) $request->session()->get('impersonate_admin_id'),

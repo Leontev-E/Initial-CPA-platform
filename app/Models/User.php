@@ -34,6 +34,7 @@ class User extends Authenticatable
         'employee_role',
         'permissions',
         'invited_by',
+        'min_payout',
     ];
 
     /**

@@ -8,6 +8,7 @@ export default function Index({ webmasters, filters }) {
         email: '',
         telegram: '',
         note: '',
+        min_payout: '',
     });
 
     const filterForm = useForm({
@@ -73,6 +74,12 @@ export default function Index({ webmasters, filters }) {
                             placeholder="Примечание (опционально)"
                             value={data.note}
                             onChange={(e) => setData('note', e.target.value)}
+                        />
+                        <input
+                            className="w-full rounded-lg border px-3 py-2"
+                            placeholder="Минимальная выплата (например, 100)"
+                            value={data.min_payout}
+                            onChange={(e) => setData('min_payout', e.target.value)}
                         />
                         <button
                             type="submit"

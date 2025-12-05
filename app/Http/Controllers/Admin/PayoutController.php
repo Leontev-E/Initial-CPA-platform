@@ -49,6 +49,7 @@ class PayoutController extends Controller
                     'Email' => $payout->webmaster?->email ?? '—',
                     'Сумма' => $payout->amount,
                     'Метод' => $payout->method,
+                    'Кошелек' => $payout->wallet_address,
                     'Статус' => $payout->status,
                     'Создано' => optional($payout->created_at)->format('d.m.Y H:i'),
                     'Обработано' => optional($payout->processed_at)->format('d.m.Y H:i'),
@@ -57,6 +58,7 @@ class PayoutController extends Controller
 
             $callback = function () use ($rows) {
                 $stream = fopen('php://output', 'w');
+                fwrite($stream, "\xEF\xBB\xBF");
                 fputcsv($stream, array_keys($rows->first() ?? []));
                 foreach ($rows as $row) {
                     fputcsv($stream, array_values($row));
@@ -65,7 +67,7 @@ class PayoutController extends Controller
             };
 
             return response()->streamDownload($callback, 'payouts.csv', [
-                'Content-Type' => 'text/csv',
+                'Content-Type' => 'text/csv; charset=UTF-8',
             ]);
         }
 
@@ -102,6 +104,7 @@ class PayoutController extends Controller
             'webmaster_id' => ['required', 'exists:users,id'],
             'amount' => ['required', 'numeric', 'min:0'],
             'method' => ['required', 'string', 'max:255'],
+            'wallet_address' => ['nullable', 'string', 'max:255'],
             'details' => ['nullable', 'string'],
         ]);
 
