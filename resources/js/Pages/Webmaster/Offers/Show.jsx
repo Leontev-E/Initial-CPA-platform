@@ -1,7 +1,22 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
+import { useState } from 'react';
 
 export default function Show({ offer }) {
+    const [copied, setCopied] = useState(false);
+
+    const copyId = async () => {
+        try {
+            await navigator.clipboard.writeText(String(offer.id));
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1200);
+        } catch (e) {
+            // ignore
+        }
+    };
+
+    const formatText = (text) => (text || '').trim();
+
     return (
         <AuthenticatedLayout
             header={<h2 className="text-xl font-semibold text-gray-800">{offer.name}</h2>}
@@ -9,7 +24,17 @@ export default function Show({ offer }) {
             <Head title={offer.name} />
             <div className="grid gap-4 lg:grid-cols-3">
                 <div className="rounded-xl bg-white p-4 shadow-sm lg:col-span-2 space-y-3">
-                    <div className="text-xs text-gray-500">ID оффера: {offer.id}</div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span className="font-semibold text-gray-700">ID оффера:</span>
+                        <button
+                            type="button"
+                            onClick={copyId}
+                            className="rounded border border-indigo-200 px-2 py-1 text-[11px] font-semibold text-indigo-700 hover:bg-indigo-50"
+                        >
+                            {offer.id}
+                        </button>
+                        {copied && <span className="text-emerald-600">скопировано</span>}
+                    </div>
                     {offer.image_url && (
                         <img
                             src={offer.image_url}
@@ -17,13 +42,14 @@ export default function Show({ offer }) {
                             className="h-52 w-full rounded object-contain bg-slate-50"
                         />
                     )}
-                    <div className="text-sm text-gray-700">
-                        {offer.description}
+                    <div className="space-y-2 rounded-lg border border-slate-100 bg-slate-50/60 p-3 text-sm text-gray-800 leading-relaxed whitespace-pre-line">
+                        <div className="text-xs uppercase text-gray-500">Описание</div>
+                        <div>{formatText(offer.description)}</div>
                     </div>
                     {offer.notes && (
-                        <div className="rounded border px-3 py-2 text-sm text-gray-700">
-                            <div className="text-xs uppercase text-gray-500">Примечание</div>
-                            <div>{offer.notes}</div>
+                        <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-gray-800">
+                            <div className="text-xs uppercase text-amber-600">Примечание</div>
+                            <div className="whitespace-pre-line">{formatText(offer.notes)}</div>
                         </div>
                     )}
                 </div>
