@@ -1,1 +1,21 @@
-<?php\n\nuse Illuminate\\Database\\Migrations\\Migration;\nuse Illuminate\\Database\\Schema\\Blueprint;\nuse Illuminate\\Support\\Facades\\Schema;\n\nreturn new class extends Migration {\n    public function up(): void\n    {\n        Schema::table('leads', function (Blueprint ) {\n            ->text('comment')->nullable()->after('tags');\n        });\n    }\n\n    public function down(): void\n    {\n        Schema::table('leads', function (Blueprint ) {\n            ->dropColumn('comment');\n        });\n    }\n};\n
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        Schema::table('leads', function (Blueprint $table) {
+            $table->text('comment')->nullable()->after('tags');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('leads', function (Blueprint $table) {
+            $table->dropColumn('comment');
+        });
+    }
+};
