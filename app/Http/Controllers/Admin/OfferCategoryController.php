@@ -46,7 +46,6 @@ class OfferCategoryController extends Controller
             ->when($offerStatus === 'inactive', fn ($q) => $q->where('is_active', false))
             ->orderBy('name')
             ->select('offers.*')
-            ->distinct()
             ->paginate($offerPerPage, ['*'], 'offer_page')
             ->withQueryString();
 

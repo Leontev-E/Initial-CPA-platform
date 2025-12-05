@@ -62,17 +62,15 @@ class OfferController extends Controller
         }
 
         if ($sort === 'category') {
-            $query->leftJoin('offer_offer_category', 'offers.id', '=', 'offer_offer_category.offer_id')
-                ->leftJoin('offer_categories', 'offer_offer_category.offer_category_id', '=', 'offer_categories.id')
-                ->select('offers.*')
-                ->orderBy('offer_categories.name', $direction);
+            // Сортируем по основной категории без JOIN, чтобы не дублировать строки и не требовать сравнения JSON
+            $query->orderByRaw('(select oc.name from offer_categories oc where oc.id = offers.offer_category_id limit 1) '.$direction);
         } elseif (in_array($sort, ['name', 'default_payout', 'created_at'], true)) {
             $query->orderBy($sort, $direction);
         } else {
             $query->orderBy('name');
         }
 
-        $offers = $query->distinct()->paginate($perPage)->withQueryString();
+        $offers = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('Admin/Offers/Index', [
             'offers' => $offers,
