@@ -54,7 +54,7 @@ class DashboardController extends Controller
             ->select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('count(*) as leads_count'),
-                DB::raw('sum(case when status = "sale" then payout else 0 end) as payout_sum')
+                DB::raw("sum(case when status = 'sale' then payout else 0 end) as payout_sum")
             )
             ->groupBy(DB::raw('DATE(created_at)'))
             ->orderBy('date')
