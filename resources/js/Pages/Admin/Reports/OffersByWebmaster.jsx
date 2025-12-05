@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, router } from '@inertiajs/react';
 import { useEffect } from 'react';
 
-export default function Offers({ rows, filters, offers, geos }) {
+export default function OffersByWebmaster({ rows, filters, offers, geos, webmaster }) {
     const filterForm = useForm({
         offer_id: filters?.offer_id ?? '',
         geo: filters?.geo ?? '',
@@ -11,11 +11,10 @@ export default function Offers({ rows, filters, offers, geos }) {
         sort: filters?.sort ?? 'leads',
         direction: filters?.direction ?? 'desc',
         per_page: filters?.per_page ?? 10,
-        search: filters?.search ?? '',
     });
 
     const applyFilters = () => {
-        filterForm.get(route('admin.reports.offers'), {
+        filterForm.get(route('admin.reports.offers.webmaster', webmaster.id), {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -27,12 +26,10 @@ export default function Offers({ rows, filters, offers, geos }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filterForm.data.sort, filterForm.data.direction, filterForm.data.per_page]);
 
-    const exportUrl = route('admin.reports.offers', { ...filterForm.data, export: 1 });
+    const exportUrl = route('admin.reports.offers.webmaster', { user: webmaster.id, ...filterForm.data, export: 1 });
 
     const headers = [
-        'Вебмастер',
-        'Email',
-        'Telegram',
+        'Оффер',
         'Лиды',
         'Новый',
         'В работе',
@@ -49,9 +46,9 @@ export default function Offers({ rows, filters, offers, geos }) {
 
     return (
         <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold text-gray-800">Отчет по офферам</h2>}
+            header={<h2 className="text-xl font-semibold text-gray-800">Вебмастер: {webmaster.name}</h2>}
         >
-            <Head title="Отчет по офферам" />
+            <Head title={`Отчет по офферам — ${webmaster.name}`} />
             <div className="space-y-3">
                 <div className="rounded-xl bg-white p-4 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -77,13 +74,6 @@ export default function Offers({ rows, filters, offers, geos }) {
                                 <option key={offer.id} value={offer.id}>{offer.name}</option>
                             ))}
                         </select>
-                        <input
-                            className="rounded border px-3 py-2 text-sm"
-                            placeholder="Поиск по вебмастеру/email/Telegram"
-                            value={filterForm.data.search}
-                            onChange={(e) => filterForm.setData('search', e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
-                        />
                         <select
                             className="rounded border px-3 py-2 text-sm"
                             value={filterForm.data.geo}
@@ -119,7 +109,7 @@ export default function Offers({ rows, filters, offers, geos }) {
                                 <option value="sale">По продажам</option>
                                 <option value="payout_sum">По выплатам</option>
                                 <option value="trash">По трешу</option>
-                                <option value="webmaster">По имени</option>
+                                <option value="offer">По названию</option>
                             </select>
                             <select
                                 className="rounded border px-3 py-2 text-sm"
@@ -165,14 +155,8 @@ export default function Offers({ rows, filters, offers, geos }) {
                         </thead>
                         <tbody className="divide-y text-sm text-gray-700">
                             {rows.data.map((row, idx) => (
-                                <tr
-                                    key={idx}
-                                    className="cursor-pointer hover:bg-slate-50"
-                                    onClick={() => router.visit(route('admin.reports.offers.webmaster', row.webmaster_id))}
-                                >
-                                    <td className="px-3 py-2">{row.webmaster}</td>
-                                    <td className="px-3 py-2 text-xs text-gray-500">{row.email ?? '—'}</td>
-                                    <td className="px-3 py-2 text-xs text-gray-500">{row.telegram ?? '—'}</td>
+                                <tr key={idx}>
+                                    <td className="px-3 py-2">{row.offer}</td>
                                     <td className="px-3 py-2">{row.leads}</td>
                                     <td className="px-3 py-2">{row.new} ({row.pct_new}%)</td>
                                     <td className="px-3 py-2">{row.in_work} ({row.pct_in_work}%)</td>

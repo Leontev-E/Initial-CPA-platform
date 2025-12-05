@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix(
     Route::patch('payouts/{payoutRequest}', [AdminPayoutController::class, 'update'])->name('payouts.update');
 
     Route::get('reports/offers', [AdminReportController::class, 'offers'])->name('reports.offers');
+    Route::get('reports/offers/{user}', [AdminReportController::class, 'offersByWebmaster'])->name('reports.offers.webmaster');
     Route::get('reports/webmasters', [AdminReportController::class, 'webmasters'])->name('reports.webmasters');
     Route::get('reports/geo', [AdminReportController::class, 'geo'])->name('reports.geo');
 

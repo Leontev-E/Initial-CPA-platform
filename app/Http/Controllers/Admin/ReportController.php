@@ -19,51 +19,133 @@ class ReportController extends Controller
         [$from, $to] = $this->dateRange($request);
         [$perPage, $sort, $direction] = $this->commonPagination($request, 'leads');
 
-        $rows = Lead::query()
-            ->select(
-                'offer_id',
-                DB::raw('count(*) as leads'),
-                DB::raw('sum(case when status = "sale" then 1 else 0 end) as sales'),
-                DB::raw('sum(case when status in ("cancel","trash") then 1 else 0 end) as rejected'),
-                DB::raw('sum(case when status = "sale" then payout else 0 end) as payout_sum')
-            )
+        $base = Lead::query()
             ->whereBetween('created_at', [$from, $to])
             ->when($request->filled('offer_id'), fn ($q) => $q->where('offer_id', $request->integer('offer_id')))
-            ->when($request->filled('webmaster_id'), fn ($q) => $q->where('webmaster_id', $request->integer('webmaster_id')))
-            ->when($request->filled('geo'), fn ($q) => $q->where('geo', strtoupper($request->string('geo')->toString())))
-            ->groupBy('offer_id')
-            ->with('offer:id,name')
+            ->when($request->filled('geo'), fn ($q) => $q->where('geo', strtoupper($request->string('geo')->toString())));
+
+        if ($request->filled('search')) {
+            $term = $request->string('search')->toString();
+            $ids = User::where('role', User::ROLE_WEBMASTER)
+                ->where(function ($q) use ($term) {
+                    $q->where('name', 'like', "%{$term}%")
+                        ->orWhere('email', 'like', "%{$term}%")
+                        ->orWhere('telegram', 'like', "%{$term}%");
+                })
+                ->pluck('id');
+            $base->whereIn('webmaster_id', $ids);
+        }
+
+        $rows = $base
+            ->select(
+                'webmaster_id',
+                DB::raw('count(*) as leads'),
+                DB::raw('sum(case when status = "new" then 1 else 0 end) as new_count'),
+                DB::raw('sum(case when status = "in_work" then 1 else 0 end) as in_work_count'),
+                DB::raw('sum(case when status = "sale" then 1 else 0 end) as sale_count'),
+                DB::raw('sum(case when status = "cancel" then 1 else 0 end) as cancel_count'),
+                DB::raw('sum(case when status = "trash" then 1 else 0 end) as trash_count'),
+                DB::raw('sum(case when status = "sale" then payout else 0 end) as payout_sum')
+            )
+            ->groupBy('webmaster_id')
+            ->with('webmaster:id,name,email,telegram')
             ->get()
             ->map(function ($row) {
-                $approveDenominator = $row->sales + $row->rejected;
-                $conversion = $row->leads > 0 ? round($row->sales / $row->leads * 100, 2) : 0;
-                $approve = $approveDenominator > 0 ? round($row->sales / $approveDenominator * 100, 2) : 0;
-                $avgPayout = $row->sales > 0 ? round($row->payout_sum / $row->sales, 2) : 0;
+                $leads = (int) $row->leads;
+                $pct = fn ($v) => $leads > 0 ? round($v / $leads * 100, 2) : 0;
+                $approve = $pct($row->sale_count);
 
                 return [
-                    'offer' => $row->offer?->name ?? 'N/A',
-                    'leads' => $row->leads,
-                    'sales' => $row->sales,
-                    'rejected' => $row->rejected,
-                    'conversion' => $conversion,
-                    'approve' => $approve,
+                    'webmaster_id' => $row->webmaster_id,
+                    'webmaster' => $row->webmaster?->name ?? 'N/A',
+                    'email' => $row->webmaster?->email,
+                    'telegram' => $row->webmaster?->telegram,
+                    'leads' => $leads,
+                    'new' => (int) $row->new_count,
+                    'in_work' => (int) $row->in_work_count,
+                    'sale' => (int) $row->sale_count,
+                    'cancel' => (int) $row->cancel_count,
+                    'trash' => (int) $row->trash_count,
+                    'pct_new' => $pct($row->new_count),
+                    'pct_in_work' => $pct($row->in_work_count),
+                    'pct_sale' => $approve,
+                    'pct_cancel' => $pct($row->cancel_count),
+                    'pct_trash' => $pct($row->trash_count),
                     'payout_sum' => (float) $row->payout_sum,
-                    'avg_payout' => $avgPayout,
                 ];
             });
 
         if ($request->boolean('export')) {
             return $this->csvResponse('offer-report.csv', $rows, [
-                'Оффер', 'Лиды', 'Продажи', 'Cancel+Trash', 'Конверсия %', 'Апрув %', 'Payout суммарно', 'Средний payout',
+                'Вебмастер', 'Email', 'Telegram', 'Лиды', 'Новый', 'В работе', 'Продажа', 'Отмена', 'Треш', 'Новый %', 'В работе %', 'Апрув %', 'Отмена %', 'Треш %', 'Payout суммарно',
             ]);
         }
 
         return inertia('Admin/Reports/Offers', [
             'rows' => $this->paginateCollection($this->sortRows($rows, $sort, $direction), $perPage, $request),
-            'filters' => $request->only(['offer_id', 'webmaster_id', 'geo', 'date_from', 'date_to', 'sort', 'direction', 'per_page']),
+            'filters' => $request->only(['offer_id', 'geo', 'date_from', 'date_to', 'sort', 'direction', 'per_page', 'search']),
             'offers' => Offer::orderBy('name')->get(['id', 'name']),
-            'webmasters' => User::where('role', User::ROLE_WEBMASTER)->orderBy('name')->get(['id', 'name']),
             'geos' => $this->geoOptions(),
+        ]);
+    }
+
+    public function offersByWebmaster(Request $request, User $webmaster)
+    {
+        abort_unless($webmaster->role === User::ROLE_WEBMASTER, 404);
+        [$from, $to] = $this->dateRange($request);
+        [$perPage, $sort, $direction] = $this->commonPagination($request, 'leads');
+
+        $rows = Lead::query()
+            ->where('webmaster_id', $webmaster->id)
+            ->whereBetween('created_at', [$from, $to])
+            ->when($request->filled('offer_id'), fn ($q) => $q->where('offer_id', $request->integer('offer_id')))
+            ->when($request->filled('geo'), fn ($q) => $q->where('geo', strtoupper($request->string('geo')->toString())))
+            ->select(
+                'offer_id',
+                DB::raw('count(*) as leads'),
+                DB::raw('sum(case when status = "new" then 1 else 0 end) as new_count'),
+                DB::raw('sum(case when status = "in_work" then 1 else 0 end) as in_work_count'),
+                DB::raw('sum(case when status = "sale" then 1 else 0 end) as sale_count'),
+                DB::raw('sum(case when status = "cancel" then 1 else 0 end) as cancel_count'),
+                DB::raw('sum(case when status = "trash" then 1 else 0 end) as trash_count'),
+                DB::raw('sum(case when status = "sale" then payout else 0 end) as payout_sum')
+            )
+            ->groupBy('offer_id')
+            ->with('offer:id,name')
+            ->get()
+            ->map(function ($row) {
+                $leads = (int) $row->leads;
+                $pct = fn ($v) => $leads > 0 ? round($v / $leads * 100, 2) : 0;
+                return [
+                    'offer_id' => $row->offer_id,
+                    'offer' => $row->offer?->name ?? 'N/A',
+                    'leads' => $leads,
+                    'new' => (int) $row->new_count,
+                    'in_work' => (int) $row->in_work_count,
+                    'sale' => (int) $row->sale_count,
+                    'cancel' => (int) $row->cancel_count,
+                    'trash' => (int) $row->trash_count,
+                    'pct_new' => $pct($row->new_count),
+                    'pct_in_work' => $pct($row->in_work_count),
+                    'pct_sale' => $pct($row->sale_count),
+                    'pct_cancel' => $pct($row->cancel_count),
+                    'pct_trash' => $pct($row->trash_count),
+                    'payout_sum' => (float) $row->payout_sum,
+                ];
+            });
+
+        if ($request->boolean('export')) {
+            return $this->csvResponse('webmaster-offers-report.csv', $rows, [
+                'Оффер', 'Лиды', 'Новый', 'В работе', 'Продажа', 'Отмена', 'Треш', 'Новый %', 'В работе %', 'Продажа %', 'Отмена %', 'Треш %', 'Payout суммарно',
+            ]);
+        }
+
+        return inertia('Admin/Reports/OffersByWebmaster', [
+            'rows' => $this->paginateCollection($this->sortRows($rows, $sort, $direction), $perPage, $request),
+            'filters' => $request->only(['offer_id', 'geo', 'date_from', 'date_to', 'sort', 'direction', 'per_page']),
+            'offers' => Offer::orderBy('name')->get(['id', 'name']),
+            'geos' => $this->geoOptions(),
+            'webmaster' => $webmaster->only(['id', 'name', 'email', 'telegram']),
         ]);
     }
 
@@ -194,7 +276,7 @@ class ReportController extends Controller
 
     protected function sortRows(Collection $rows, string $sort, string $direction): Collection
     {
-        $allowed = ['offer', 'webmaster', 'geo', 'leads', 'sales', 'rejected', 'conversion', 'approve', 'payout_sum', 'avg_payout'];
+        $allowed = ['offer', 'webmaster', 'geo', 'leads', 'sales', 'rejected', 'conversion', 'approve', 'payout_sum', 'avg_payout', 'new', 'in_work', 'sale', 'cancel', 'trash', 'pct_sale', 'pct_trash'];
         $sortKey = in_array($sort, $allowed) ? $sort : 'leads';
 
         return $rows->sortBy($sortKey, SORT_REGULAR, $direction === 'desc')->values();
