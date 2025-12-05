@@ -28,7 +28,7 @@ export default function Dashboard({
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard title="Всего лидов" value={totalLeads} />
                 <StatCard title="Продажи" value={salesCount} />
-                <StatCard title="Доход за период" value={`${totalPayout} $`} />
+                <StatCard title="Сумма апрувов" value={`${totalPayout} $`} />
                 <StatCard title="Конверсия" value={`${kpi.conversion}%`} />
             </div>
 

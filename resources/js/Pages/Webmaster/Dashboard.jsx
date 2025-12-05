@@ -24,7 +24,7 @@ export default function Dashboard({
             )}
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Stat title="Баланс" value={`${balance} $`} />
+                <Stat title="Сумма заработка" value={`${balance} $`} />
                 <Stat title="Лиды" value={leadsCount} />
                 <Stat title="Продажи" value={sales} />
                 <Stat title="Доход" value={`${payoutSum} $`} />
