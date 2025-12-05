@@ -11,6 +11,7 @@ const statuses = [
 ];
 
 export default function Index({ leads, offers, webmasters, filters, geos }) {
+    // Форма фильтров для списка лидов
     const filterForm = useForm({
         webmaster_id: filters?.webmaster_id ?? '',
         offer_id: filters?.offer_id ?? '',
