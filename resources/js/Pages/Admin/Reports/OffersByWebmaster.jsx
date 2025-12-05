@@ -26,7 +26,7 @@ export default function OffersByWebmaster({ rows, filters, offers, geos, webmast
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filterForm.data.sort, filterForm.data.direction, filterForm.data.per_page]);
 
-    const exportUrl = route('admin.reports.offers.webmaster', { user: webmaster.id, ...filterForm.data, export: 1 });
+    const exportUrl = route('admin.reports.offers.webmaster', { webmaster: webmaster.id, ...filterForm.data, export: 1 });
 
     const headers = [
         'Оффер',

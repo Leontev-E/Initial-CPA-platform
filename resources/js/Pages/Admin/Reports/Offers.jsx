@@ -168,7 +168,7 @@ export default function Offers({ rows, filters, offers, geos }) {
                                 <tr
                                     key={idx}
                                     className="cursor-pointer hover:bg-slate-50"
-                                    onClick={() => router.visit(route('admin.reports.offers.webmaster', { user: row.webmaster_id }))}
+                                    onClick={() => router.visit(route('admin.reports.offers.webmaster', { webmaster: row.webmaster_id }))}
                                 >
                                     <td className="px-3 py-2">{row.webmaster}</td>
                                     <td className="px-3 py-2 text-xs text-gray-500">{row.email ?? '—'}</td>
