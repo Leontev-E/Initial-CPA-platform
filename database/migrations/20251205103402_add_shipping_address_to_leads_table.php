@@ -1,1 +1,21 @@
-<?php\n\nuse Illuminate\\Database\\Migrations\\Migration;\nuse Illuminate\\Database\\Schema\\Blueprint;\nuse Illuminate\\Support\\Facades\\Schema;\n\nreturn new class extends Migration {\n    public function up(): void\n    {\n        Schema::table('leads', function (Blueprint ) {\n            ->string('shipping_address')->nullable()->after('customer_email');\n        });\n    }\n\n    public function down(): void\n    {\n        Schema::table('leads', function (Blueprint ) {\n            ->dropColumn('shipping_address');\n        });\n    }\n};\n
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        Schema::table('leads', function (Blueprint $table) {
+            $table->string('shipping_address')->nullable()->after('customer_email');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('leads', function (Blueprint $table) {
+            $table->dropColumn('shipping_address');
+        });
+    }
+};
