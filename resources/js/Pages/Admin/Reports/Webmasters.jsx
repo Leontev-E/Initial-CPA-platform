@@ -14,8 +14,9 @@ export default function Webmasters({ rows, filters, offers, geos }) {
         per_page: filters?.per_page ?? 10,
     });
 
-    const applyFilters = () => {
-        filterForm.get(route('admin.reports.webmasters'), {
+    const applyFilters = (nextData = null) => {
+        const payload = nextData ?? filterForm.data;
+        filterForm.get(route('admin.reports.webmasters'), payload, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -63,7 +64,7 @@ export default function Webmasters({ rows, filters, offers, geos }) {
                             value={filterForm.data.geo}
                             onChange={(vals) => {
                                 filterForm.setData('geo', vals);
-                                applyFilters();
+                                applyFilters({ ...filterForm.data, geo: vals });
                             }}
                             placeholder="GEO"
                             emptyLabel="Все GEO"

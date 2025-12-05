@@ -15,8 +15,9 @@ export default function Offers({ rows, filters, offers, geos }) {
         search: filters?.search ?? '',
     });
 
-    const applyFilters = () => {
-        filterForm.get(route('admin.reports.offers'), {
+    const applyFilters = (nextData = null) => {
+        const payload = nextData ?? filterForm.data;
+        filterForm.get(route('admin.reports.offers'), payload, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -92,7 +93,7 @@ export default function Offers({ rows, filters, offers, geos }) {
                             value={filterForm.data.geo}
                             onChange={(vals) => {
                                 filterForm.setData('geo', vals);
-                                applyFilters();
+                                applyFilters({ ...filterForm.data, geo: vals });
                             }}
                             placeholder="GEO"
                             emptyLabel="Все GEO"

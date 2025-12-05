@@ -21,11 +21,12 @@ export default function Index({ leads, offers, webmasters, filters, geos }) {
         category_id: filters?.category_id ?? '',
     });
 
-    const applyFilters = () => {
-        router.get(route('admin.leads.index'), filterForm.data, {
+    const applyFilters = (nextData = null) => {
+        const payload = nextData ?? filterForm.data;
+        router.get(route('admin.leads.index'), payload, {
             preserveScroll: true,
-            preserveState: true,
             replace: true,
+            preserveState: false,
         });
     };
 
@@ -100,10 +101,11 @@ export default function Index({ leads, offers, webmasters, filters, geos }) {
                         value={filterForm.data.geo}
                         onChange={(vals) => {
                             filterForm.setData('geo', vals);
-                            applyFilters();
+                            applyFilters({ ...filterForm.data, geo: vals });
                         }}
                         placeholder="GEO"
                         emptyLabel="Все GEO"
+                        className="md:col-span-2 lg:col-span-1"
                     />
                     <div className="flex flex-col">
                         <span className="text-[10px] uppercase text-gray-400">Дата от</span>
@@ -134,8 +136,7 @@ export default function Index({ leads, offers, webmasters, filters, geos }) {
                             <button
                                 type="button"
                                 onClick={() => {
-                                    filterForm.reset();
-                                    filterForm.setData({
+                                    const cleared = {
                                         webmaster_id: '',
                                         offer_id: '',
                                         status: '',
@@ -143,8 +144,9 @@ export default function Index({ leads, offers, webmasters, filters, geos }) {
                                         date_from: '',
                                         date_to: '',
                                         category_id: '',
-                                    });
-                                    applyFilters();
+                                    };
+                                    filterForm.setData(cleared);
+                                    applyFilters(cleared);
                                 }}
                                 className="w-full rounded border px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
                             >
