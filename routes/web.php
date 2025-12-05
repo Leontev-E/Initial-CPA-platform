@@ -38,6 +38,7 @@ Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix(
     Route::post('offers/{offer}/landings', [AdminOfferController::class, 'addLanding'])->name('offers.landings.add');
     Route::delete('offers/{offer}/landings/{landing}', [AdminOfferController::class, 'removeLanding'])->name('offers.landings.remove');
 
+    Route::get('reports', fn () => redirect()->route('admin.reports.offers'))->name('reports.index');
     Route::get('leads', [AdminLeadController::class, 'index'])->name('leads.index');
     Route::get('leads/export', [AdminLeadController::class, 'export'])->name('leads.export');
     Route::get('leads/{lead}', [AdminLeadController::class, 'show'])->name('leads.show');

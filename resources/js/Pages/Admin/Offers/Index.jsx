@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import GeoMultiSelect from '@/Components/GeoMultiSelect';
 import geos from '@/data/geos.json';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
@@ -6,8 +7,6 @@ import { useEffect, useMemo, useState } from 'react';
 export default function Index({ offers, categories, filters }) {
     const [geoInput, setGeoInput] = useState('');
     const [geoOpen, setGeoOpen] = useState(false);
-    const [filterGeoInput, setFilterGeoInput] = useState('');
-    const [filterGeoOpen, setFilterGeoOpen] = useState(false);
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
     const geoMap = useMemo(() => Object.fromEntries(geos.map((g) => [g.value, g.text])), []);
@@ -37,9 +36,20 @@ export default function Index({ offers, categories, filters }) {
         geos: filters?.geos ?? [],
     });
 
-    const applyFilters = () => {
-        filterForm.get(route('admin.offers.index'), {
-            preserveState: true,
+    const hasActiveFilters = Boolean(
+        filterForm.data.search ||
+        filterForm.data.category_id ||
+        filterForm.data.status ||
+        (filterForm.data.geos || []).length > 0 ||
+        filterForm.data.sort !== 'name' ||
+        filterForm.data.direction !== 'asc' ||
+        filterForm.data.per_page !== 10
+    );
+
+    const applyFilters = (nextData = null) => {
+        const payload = nextData ?? filterForm.data;
+        filterForm.get(route('admin.offers.index'), payload, {
+            preserveState: false,
             replace: true,
             preserveScroll: true,
         });
@@ -91,17 +101,6 @@ export default function Index({ offers, categories, filters }) {
         setGeoInput('');
     };
 
-    const addFilterGeo = (value) => {
-        const code = value.trim().toUpperCase();
-        if (!code) return;
-        const exists = geos.some((g) => g.value === code);
-        if (!exists) return;
-        if (!filterForm.data.geos.includes(code)) {
-            filterForm.setData('geos', [...filterForm.data.geos, code]);
-        }
-        setFilterGeoInput('');
-    };
-
     const geoMatches = useMemo(() => {
         const term = geoInput.trim().toLowerCase();
         if (!term) return geos.slice(0, 8);
@@ -113,18 +112,6 @@ export default function Index({ offers, categories, filters }) {
             )
             .slice(0, 8);
     }, [geoInput]);
-
-    const filterGeoMatches = useMemo(() => {
-        const term = filterGeoInput.trim().toLowerCase();
-        if (!term) return geos.slice(0, 8);
-        return geos
-            .filter(
-                (g) =>
-                    g.value.toLowerCase().includes(term) ||
-                    g.text.toLowerCase().includes(term),
-            )
-            .slice(0, 8);
-    }, [filterGeoInput]);
 
     useEffect(() => {
         if (startTime && endTime) {
@@ -264,36 +251,40 @@ export default function Index({ offers, categories, filters }) {
                             value={data.materials_link}
                             onChange={(e) => setData('materials_link', e.target.value)}
                         />
-                        <div className="grid gap-2 md:grid-cols-2">
-                            <div className="flex gap-2">
-                                <div className="w-full">
-                                    <div className="text-xs text-gray-600">Начало</div>
-                                    <input
-                                        type="time"
-                                        className="w-full rounded-lg border px-3 py-2"
-                                        value={startTime}
-                                        onChange={(e) => setStartTime(e.target.value)}
-                                    />
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div>
+                                    <div className="text-sm font-semibold text-gray-800">График звонков</div>
+                                    <div className="text-xs text-gray-500">Укажите время работы колл-центра</div>
                                 </div>
-                                <div className="w-full">
-                                    <div className="text-xs text-gray-600">Окончание</div>
-                                    <input
-                                        type="time"
-                                        className="w-full rounded-lg border px-3 py-2"
-                                        value={endTime}
-                                        onChange={(e) => setEndTime(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            <div className="w-full">
                                 <select
-                                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                                    className="h-10 rounded-lg border px-3 py-2 text-sm"
                                     value={data.call_center_timezone}
                                     onChange={(e) => setData('call_center_timezone', e.target.value)}
                                 >
                                     <option value="local">По местному времени</option>
                                     <option value="msk">По МСК</option>
                                 </select>
+                            </div>
+                            <div className="mt-3 grid gap-3 md:grid-cols-2">
+                                <label className="flex flex-col">
+                                    <span className="text-[11px] uppercase text-gray-500">Начало</span>
+                                    <input
+                                        type="time"
+                                        className="h-10 rounded-lg border px-3 py-2"
+                                        value={startTime}
+                                        onChange={(e) => setStartTime(e.target.value)}
+                                    />
+                                </label>
+                                <label className="flex flex-col">
+                                    <span className="text-[11px] uppercase text-gray-500">Окончание</span>
+                                    <input
+                                        type="time"
+                                        className="h-10 rounded-lg border px-3 py-2"
+                                        value={endTime}
+                                        onChange={(e) => setEndTime(e.target.value)}
+                                    />
+                                </label>
                             </div>
                         </div>
                         <div>
@@ -341,7 +332,10 @@ export default function Index({ offers, categories, filters }) {
                                     className="rounded border px-3 py-2 text-sm"
                                     placeholder="Поиск по названию"
                                     value={filterForm.data.search}
-                                    onChange={(e) => filterForm.setData('search', e.target.value)}
+                                    onChange={(e) => {
+                                        filterForm.setData('search', e.target.value);
+                                    }}
+                                    onBlur={() => applyFilters()}
                                     onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
                                 />
                                 <select
@@ -357,66 +351,15 @@ export default function Index({ offers, categories, filters }) {
                                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                                     ))}
                                 </select>
-                                <div className="flex flex-col gap-1">
-                                    <div className="relative">
-                                        <input
-                                            className="w-full rounded border px-3 py-2 text-sm"
-                                            placeholder="Добавить GEO в фильтр"
-                                            value={filterGeoInput}
-                                            onChange={(e) => setFilterGeoInput(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
-                                                    e.preventDefault();
-                                                    addFilterGeo(filterGeoInput);
-                                                }
-                                            }}
-                                            onFocus={() => setFilterGeoOpen(true)}
-                                            onBlur={() => setTimeout(() => setFilterGeoOpen(false), 120)}
-                                        />
-                                        {filterGeoOpen && filterGeoMatches.length > 0 && (
-                                            <div className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-lg border bg-white shadow-lg">
-                                                {filterGeoMatches.map((geo) => (
-                                                    <button
-                                                        type="button"
-                                                        key={geo.value}
-                                                        className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-indigo-50"
-                                                        onClick={() => {
-                                                            addFilterGeo(geo.value);
-                                                            setFilterGeoOpen(true);
-                                                        }}
-                                                    >
-                                                        <span>{geo.value} — {geo.text}</span>
-                                                        {filterForm.data.geos.includes(geo.value) && (
-                                                            <span className="text-[11px] text-indigo-600">добавлен</span>
-                                                        )}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {filterForm.data.geos.map((code) => (
-                                            <span key={code} className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-1 text-[11px] text-indigo-700">
-                                                {code}
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        filterForm.setData(
-                                                            'geos',
-                                                            filterForm.data.geos.filter((g) => g !== code),
-                                                        )
-                                                    }
-                                                    className="text-indigo-500 hover:text-indigo-700"
-                                                >
-                                                    ×
-                                                </button>
-                                            </span>
-                                        ))}
-                                        {filterForm.data.geos.length === 0 && (
-                                            <span className="text-xs text-gray-500">Все GEO</span>
-                                        )}
-                                    </div>
-                                </div>
+                                <GeoMultiSelect
+                                    value={filterForm.data.geos}
+                                    onChange={(vals) => {
+                                        filterForm.setData('geos', vals);
+                                        applyFilters();
+                                    }}
+                                    placeholder="GEO"
+                                    emptyLabel="Все GEO"
+                                />
                                 <select
                                     className="rounded border px-3 py-2 text-sm"
                                     value={filterForm.data.status}
@@ -432,7 +375,10 @@ export default function Index({ offers, categories, filters }) {
                                 <select
                                     className="rounded border px-3 py-2 text-sm"
                                     value={filterForm.data.sort}
-                                    onChange={(e) => filterForm.setData('sort', e.target.value)}
+                                    onChange={(e) => {
+                                        filterForm.setData('sort', e.target.value);
+                                        applyFilters();
+                                    }}
                                 >
                                     <option value="name">По алфавиту</option>
                                     <option value="default_payout">По ставке</option>
@@ -442,18 +388,35 @@ export default function Index({ offers, categories, filters }) {
                                 <select
                                     className="rounded border px-3 py-2 text-sm"
                                     value={filterForm.data.direction}
-                                    onChange={(e) => filterForm.setData('direction', e.target.value)}
+                                    onChange={(e) => {
+                                        filterForm.setData('direction', e.target.value);
+                                        applyFilters();
+                                    }}
                                 >
                                     <option value="asc">По возрастанию</option>
                                     <option value="desc">По убыванию</option>
                                 </select>
-                                <button
-                                    type="button"
-                                    onClick={applyFilters}
-                                    className="rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
-                                >
-                                    Применить
-                                </button>
+                                {hasActiveFilters && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const cleared = {
+                                                search: '',
+                                                category_id: '',
+                                                status: '',
+                                                sort: 'name',
+                                                direction: 'asc',
+                                                per_page: 10,
+                                                geos: [],
+                                            };
+                                            filterForm.setData(cleared);
+                                            applyFilters(cleared);
+                                        }}
+                                        className="rounded border px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+                                    >
+                                        Сбросить
+                                    </button>
+                                )}
                             </div>
                         </div>
                         <div className="mt-3 divide-y">
@@ -534,7 +497,11 @@ export default function Index({ offers, categories, filters }) {
                                 <select
                                     className="rounded border px-2 pr-8 py-1 text-sm"
                                     value={filterForm.data.per_page}
-                                    onChange={(e) => filterForm.setData('per_page', e.target.value)}
+                                    onChange={(e) => {
+                                        const next = { ...filterForm.data, per_page: e.target.value };
+                                        filterForm.setData('per_page', e.target.value);
+                                        applyFilters(next);
+                                    }}
                                 >
                                     <option value={10}>10</option>
                                     <option value={25}>25</option>
