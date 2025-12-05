@@ -9,6 +9,7 @@ class PostbackLog extends Model
     protected $fillable = [
         'webmaster_id',
         'lead_id',
+        'offer_id',
         'event',
         'url',
         'status_code',

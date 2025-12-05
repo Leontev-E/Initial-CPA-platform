@@ -1,19 +1,24 @@
-<?php
+﻿<?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        // Переводим колонку event в VARCHAR для поддержки дополнительных статусов
-        DB::statement("ALTER TABLE postback_settings MODIFY event VARCHAR(32) NOT NULL");
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
+        Schema::table('postback_settings', function (Blueprint $table) {
+            $table->string('event', 50)->change();
+        });
     }
 
     public function down(): void
     {
-        // При откате оставляем как есть (enum назад не возвращаем)
+        // оставляем строкой
     }
 };

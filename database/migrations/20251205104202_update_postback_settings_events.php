@@ -1,25 +1,23 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void
     {
-        if (DB::getDriverName() === 'sqlite') {
-            // SQLite хранит enum как TEXT, менять не требуется.
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
             return;
         }
 
-        DB::statement("ALTER TABLE postback_settings MODIFY COLUMN event ENUM('lead','in_work','sale','cancel','trash') NOT NULL");
+        Schema::table('postback_settings', function (Blueprint $table) {
+            $table->string('event', 50)->change();
+        });
     }
 
     public function down(): void
     {
-        if (DB::getDriverName() === 'sqlite') {
-            return;
-        }
-
-        DB::statement("ALTER TABLE postback_settings MODIFY COLUMN event ENUM('lead','sale','trash') NOT NULL");
+        // Оставляем строкой
     }
 };

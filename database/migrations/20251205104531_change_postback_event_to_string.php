@@ -8,16 +8,17 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        if (DB::getDriverName() === 'mysql') {
-            DB::statement("ALTER TABLE postback_settings MODIFY COLUMN event VARCHAR(50) NOT NULL");
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            return;
         }
-        // sqlite stores as TEXT already; nothing to do.
+
+        Schema::table('postback_settings', function (Blueprint $table) {
+            $table->string('event', 50)->change();
+        });
     }
 
     public function down(): void
     {
-        if (DB::getDriverName() === 'mysql') {
-            DB::statement("ALTER TABLE postback_settings MODIFY COLUMN event ENUM('lead','in_work','sale','cancel','trash') NOT NULL");
-        }
+        // оставляем строкой
     }
 };

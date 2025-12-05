@@ -171,6 +171,7 @@ class LeadController extends Controller
             PostbackLog::create([
                 'webmaster_id' => $lead->webmaster_id,
                 'lead_id' => $lead->id,
+                'offer_id' => $lead->offer_id,
                 'event' => $event,
                 'url' => $finalUrl,
                 'status_code' => $statusCode,
@@ -194,6 +195,7 @@ class LeadController extends Controller
             '{customer_phone}' => $lead->customer_phone,
             '{customer_email}' => $lead->customer_email,
             '{shipping_address}' => $lead->shipping_address,
+            '{customer_address}' => $lead->shipping_address,
             '{webmaster_id}' => $lead->webmaster_id,
         ];
 
