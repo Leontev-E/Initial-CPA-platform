@@ -20,35 +20,7 @@ class LeadController extends Controller
 
     public function index(Request $request)
     {
-        $query = Lead::query()->with(['offer.category', 'webmaster']);
-
-        if ($request->filled('webmaster_id')) {
-            $query->where('webmaster_id', $request->integer('webmaster_id'));
-        }
-
-        if ($request->filled('offer_id')) {
-            $query->where('offer_id', $request->integer('offer_id'));
-        }
-
-        if ($request->filled('geo')) {
-            $query->where('geo', strtoupper($request->string('geo')->toString()));
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->string('status'));
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date('date_from'));
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date('date_to'));
-        }
-
-        if ($request->filled('category_id')) {
-            $query->whereHas('offer', fn($q) => $q->where('offer_category_id', $request->integer('category_id')));
-        }
+        $query = $this->baseQuery($request);
 
         $leads = $query->latest()->paginate(25)->withQueryString();
 
@@ -57,6 +29,50 @@ class LeadController extends Controller
             'offers' => Offer::orderBy('name')->get(['id', 'name']),
             'webmasters' => User::where('role', User::ROLE_WEBMASTER)->orderBy('name')->get(['id', 'name', 'email']),
             'filters' => $request->only(['webmaster_id', 'offer_id', 'geo', 'status', 'date_from', 'date_to', 'category_id']),
+        ]);
+    }
+
+    public function export(Request $request)
+    {
+        $query = $this->baseQuery($request)->orderByDesc('created_at');
+
+        $callback = function () use ($query) {
+            $stream = fopen('php://output', 'w');
+            fwrite($stream, "\xEF\xBB\xBF");
+            fputcsv($stream, [
+                'ID', 'Дата', 'Вебмастер', 'Оффер', 'GEO', 'Статус', 'Payout',
+                'SubID', 'Имя', 'Телефон', 'Email', 'Landing URL', 'UTM Source', 'UTM Campaign', 'UTM Medium', 'UTM Term', 'UTM Content',
+            ]);
+
+            $query->chunkById(500, function ($chunk) use ($stream) {
+                foreach ($chunk as $lead) {
+                    fputcsv($stream, [
+                        $lead->id,
+                        optional($lead->created_at)->format('Y-m-d H:i:s'),
+                        $lead->webmaster?->name,
+                        $lead->offer?->name,
+                        $lead->geo,
+                        $lead->status,
+                        $lead->payout,
+                        $lead->subid,
+                        $lead->customer_name,
+                        $lead->customer_phone,
+                        $lead->customer_email,
+                        $lead->landing_url,
+                        $lead->utm_source,
+                        $lead->utm_campaign,
+                        $lead->utm_medium,
+                        $lead->utm_term,
+                        $lead->utm_content,
+                    ]);
+                }
+            });
+
+            fclose($stream);
+        };
+
+        return response()->streamDownload($callback, 'leads.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 
@@ -137,6 +153,41 @@ class LeadController extends Controller
             ->value('custom_payout');
 
         return $custom ?? $lead->offer->default_payout;
+    }
+
+    protected function baseQuery(Request $request)
+    {
+        $query = Lead::query()->with(['offer.category', 'webmaster']);
+
+        if ($request->filled('webmaster_id')) {
+            $query->where('webmaster_id', $request->integer('webmaster_id'));
+        }
+
+        if ($request->filled('offer_id')) {
+            $query->where('offer_id', $request->integer('offer_id'));
+        }
+
+        if ($request->filled('geo')) {
+            $query->where('geo', strtoupper($request->string('geo')->toString()));
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status'));
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date('date_from'));
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date('date_to'));
+        }
+
+        if ($request->filled('category_id')) {
+            $query->whereHas('offer', fn($q) => $q->where('offer_category_id', $request->integer('category_id')));
+        }
+
+        return $query;
     }
 
 }

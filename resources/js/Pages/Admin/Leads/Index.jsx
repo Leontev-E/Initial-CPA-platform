@@ -10,11 +10,24 @@ const statuses = [
 ];
 
 export default function Index({ leads, offers, webmasters, filters }) {
+    const exportParams = Object.fromEntries(
+        Object.entries(filters || {}).filter(([, v]) => v !== null && v !== undefined && v !== ''),
+    );
+
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800">Лиды</h2>}>
             <Head title="Лиды" />
 
             <form method="get" className="rounded-xl bg-white p-4 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2">
+                    <div className="text-sm font-semibold text-gray-800">Фильтры</div>
+                    <Link
+                        href={route('admin.leads.export', exportParams)}
+                        className="rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100"
+                    >
+                        Экспорт CSV
+                    </Link>
+                </div>
                 <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 md:grid-cols-7">
                     <FilterInput
                         name="webmaster_id"

@@ -223,6 +223,8 @@ class ReportController extends Controller
     {
         $callback = function () use ($rows, $headers) {
             $stream = fopen('php://output', 'w');
+            // BOM, чтобы Excel корректно открывал UTF-8
+            fwrite($stream, "\xEF\xBB\xBF");
             fputcsv($stream, $headers);
             foreach ($rows as $row) {
                 fputcsv($stream, array_values($row));
@@ -231,7 +233,7 @@ class ReportController extends Controller
         };
 
         return response()->streamDownload($callback, $filename, [
-            'Content-Type' => 'text/csv',
+            'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 }
