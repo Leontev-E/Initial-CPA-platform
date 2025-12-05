@@ -11,6 +11,18 @@ use Inertia\Inertia;
 
 class PayoutController extends Controller
 {
+    public function show(PayoutRequest $payoutRequest)
+    {
+        $payoutRequest->load('webmaster');
+        $payoutRequest->created_at_human = optional($payoutRequest->created_at)->format('d.m.Y H:i');
+        $payoutRequest->processed_at_human = optional($payoutRequest->processed_at)->format('d.m.Y H:i');
+
+        return Inertia::render('Admin/Payouts/Show', [
+            'payout' => $payoutRequest,
+            'webmasters' => User::where('role', User::ROLE_WEBMASTER)->orderBy('name')->get(['id', 'name', 'email']),
+        ]);
+    }
+
     public function index(Request $request)
     {
         $perPage = in_array((int) $request->input('per_page'), [10, 25, 50]) ? (int) $request->input('per_page') : 10;
@@ -51,6 +63,7 @@ class PayoutController extends Controller
                     'Метод' => $payout->method,
                     'Кошелек' => $payout->wallet_address,
                     'Статус' => $payout->status,
+                    'Комментарий' => $payout->public_comment,
                     'Создано' => optional($payout->created_at)->format('d.m.Y H:i'),
                     'Обработано' => optional($payout->processed_at)->format('d.m.Y H:i'),
                 ];
@@ -117,12 +130,16 @@ class PayoutController extends Controller
     {
         $validated = $request->validate([
             'status' => ['required', 'in:pending,in_process,paid,cancelled'],
+            'public_comment' => ['nullable', 'string'],
+            'internal_comment' => ['nullable', 'string'],
         ]);
 
         $payoutRequest->status = $validated['status'];
         if ($validated['status'] === 'paid') {
             $payoutRequest->processed_at = now();
         }
+        $payoutRequest->public_comment = $validated['public_comment'] ?? $payoutRequest->public_comment;
+        $payoutRequest->internal_comment = $validated['internal_comment'] ?? $payoutRequest->internal_comment;
         $payoutRequest->save();
 
         return back()->with('success', 'Статус выплаты обновлен');

@@ -19,6 +19,7 @@ class PayoutController extends Controller
             ->withQueryString()
             ->through(function (PayoutRequest $payout) {
                 $payout->created_at_human = optional($payout->created_at)->format('d.m.Y H:i');
+                $payout->public_comment = $payout->public_comment;
                 return $payout;
             });
 

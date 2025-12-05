@@ -8,6 +8,12 @@ const statuses = [
     { value: 'paid', label: 'Оплачено' },
     { value: 'cancelled', label: 'Отменена' },
 ];
+const statusColors = {
+    pending: 'bg-amber-50 text-amber-700 border border-amber-200',
+    in_process: 'bg-blue-50 text-blue-700 border border-blue-200',
+    paid: 'bg-green-50 text-green-700 border border-green-200',
+    cancelled: 'bg-red-50 text-red-700 border border-red-200',
+};
 
 export default function Index({ payouts, balances, webmasters, filters }) {
     const createForm = useForm({
@@ -266,19 +272,14 @@ export default function Index({ payouts, balances, webmasters, filters }) {
 }
 
 function PayoutRow({ payout }) {
-    const { data, setData, patch, processing } = useForm({
-        status: payout.status,
-    });
-
-    const submit = (e) => {
-        e.preventDefault();
-        patch(route('admin.payouts.update', payout.id));
-    };
-
     const statusLabel = statuses.find((s) => s.value === payout.status)?.label ?? payout.status;
 
     return (
-        <div className="flex flex-col gap-2 py-3 text-sm text-gray-700 md:flex-row md:items-center md:justify-between">
+        <button
+            type="button"
+            onClick={() => router.visit(route('admin.payouts.show', payout.id))}
+            className="flex w-full flex-col gap-2 rounded border px-3 py-3 text-left text-sm text-gray-700 transition hover:bg-slate-50 md:flex-row md:items-center md:justify-between"
+        >
             <div>
                 <div className="font-semibold text-gray-900">
                     {payout.webmaster?.name ?? '—'}
@@ -289,28 +290,10 @@ function PayoutRow({ payout }) {
                 <div className="text-xs text-gray-500">
                     Создано: {payout.created_at_human ?? '—'} {payout.processed_at_human && `• Обработано: ${payout.processed_at_human}`}
                 </div>
-                <div className="text-xs text-gray-500">Статус: {statusLabel}</div>
             </div>
-            <form onSubmit={submit} className="flex items-center gap-2">
-                <select
-                    value={data.status}
-                    onChange={(e) => setData('status', e.target.value)}
-                    className="rounded border px-2 py-1 text-xs"
-                >
-                    {statuses.map((s) => (
-                        <option key={s.value} value={s.value}>
-                            {s.label}
-                        </option>
-                    ))}
-                </select>
-                <button
-                    type="submit"
-                    disabled={processing}
-                    className="rounded bg-indigo-600 px-2 py-1 text-xs font-semibold text-white"
-                >
-                    OK
-                </button>
-            </form>
-        </div>
+            <span className={`inline-flex items-center gap-2 self-start rounded px-2 py-1 text-[11px] font-semibold uppercase ${statusColors[payout.status] || 'bg-gray-100 text-gray-700 border'}`}>
+                {statusLabel}
+            </span>
+        </button>
     );
 }

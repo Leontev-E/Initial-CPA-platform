@@ -44,6 +44,11 @@ class HandleInertiaRequests extends Middleware
             ];
         }
 
+        $pendingPayouts = 0;
+        if ($user && $user->role === 'admin') {
+            $pendingPayouts = (int) \App\Models\PayoutRequest::where('status', 'pending')->count();
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
@@ -52,6 +57,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'locale' => app()->getLocale(),
             'impersonating' => (bool) $request->session()->get('impersonate_admin_id'),
+            'pendingPayouts' => $pendingPayouts,
         ];
     }
 }

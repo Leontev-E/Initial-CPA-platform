@@ -19,7 +19,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 { label: 'Лиды', name: 'admin.leads.index', section: 'leads' },
                 { label: 'Вебмастера', name: 'admin.webmasters.index', section: 'webmasters' },
                 { label: 'Аналитика', name: 'admin.reports.offers', section: 'reports' },
-                { label: 'Выплаты', name: 'admin.payouts.index', section: 'payouts' },
+                { label: 'Выплаты', name: 'admin.payouts.index', section: 'payouts', badge: auth.pendingPayouts },
                 { label: 'Вебхуки лидов', name: 'admin.webhooks.index', section: 'webhooks' },
             ];
         }
@@ -74,7 +74,14 @@ export default function AuthenticatedLayout({ header, children }) {
                             }`}
                             onClick={() => setMobileOpen(false)}
                         >
-                            {item.label}
+                            <span className="flex items-center gap-2">
+                                {item.label}
+                                {item.badge ? (
+                                    <span className="inline-flex min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-2 py-[2px] text-[10px] font-semibold text-white">
+                                        {item.badge}
+                                    </span>
+                                ) : null}
+                            </span>
                             {isActive(item.name) && (
                                 <span className="h-2 w-2 rounded-full bg-white" />
                             )}

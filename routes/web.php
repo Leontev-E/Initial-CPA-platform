@@ -56,6 +56,7 @@ Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix(
     Route::delete('webmasters/{user}', [AdminWebmasterController::class, 'destroy'])->name('webmasters.destroy');
 
     Route::get('payouts', [AdminPayoutController::class, 'index'])->name('payouts.index');
+    Route::get('payouts/{payoutRequest}', [AdminPayoutController::class, 'show'])->name('payouts.show');
     Route::post('payouts', [AdminPayoutController::class, 'store'])->name('payouts.store');
     Route::patch('payouts/{payoutRequest}', [AdminPayoutController::class, 'update'])->name('payouts.update');
 

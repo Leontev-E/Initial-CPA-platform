@@ -12,6 +12,8 @@ class PayoutRequest extends Model
         'status',
         'method',
         'wallet_address',
+        'public_comment',
+        'internal_comment',
         'details',
         'processed_at',
     ];

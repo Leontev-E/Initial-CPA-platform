@@ -97,6 +97,7 @@ export default function Index({ payouts, balance, minPayout, canRequest }) {
                                     <th className="px-3 py-2">Сумма</th>
                                     <th className="px-3 py-2">Метод</th>
                                     <th className="px-3 py-2">Статус</th>
+                                    <th className="px-3 py-2">Комментарий</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
@@ -113,6 +114,9 @@ export default function Index({ payouts, balance, minPayout, canRequest }) {
                                             <span className={`inline-flex rounded px-2 py-1 text-[11px] font-semibold uppercase ${statusColors[payout.status] || 'bg-gray-100 text-gray-700'}`}>
                                                 {payout.status}
                                             </span>
+                                        </td>
+                                        <td className="px-3 py-2 text-xs text-gray-600 whitespace-pre-wrap">
+                                            {payout.public_comment || '—'}
                                         </td>
                                     </tr>
                                 ))}
