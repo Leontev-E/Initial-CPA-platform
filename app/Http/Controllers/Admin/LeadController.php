@@ -153,17 +153,31 @@ class LeadController extends Controller
 
         foreach ($settings as $setting) {
             try {
-                Http::timeout(3)->asForm()->post($setting->url, [
-                    'lead_id' => $lead->id,
-                    'status' => $lead->status,
-                    'payout' => $lead->payout,
-                    'offer_id' => $lead->offer_id,
-                    'subid' => $lead->subid,
-                    'geo' => $lead->geo,
-                ]);
+                $url = $this->expandPostbackMacros($setting->url, $lead);
+                // Отправляем GET, чтобы макросы были прямо в строке
+                Http::timeout(5)->get($url);
             } catch (\Throwable $e) {
                 // ignore errors for now
             }
         }
+    }
+
+    protected function expandPostbackMacros(string $template, Lead $lead): string
+    {
+        $payload = [
+            '{lead_id}' => $lead->id,
+            '{status}' => $lead->status,
+            '{payout}' => $lead->payout,
+            '{offer_id}' => $lead->offer_id,
+            '{offer_name}' => $lead->offer?->name,
+            '{subid}' => $lead->subid,
+            '{geo}' => $lead->geo,
+            '{customer_name}' => $lead->customer_name,
+            '{customer_phone}' => $lead->customer_phone,
+            '{customer_email}' => $lead->customer_email,
+            '{webmaster_id}' => $lead->webmaster_id,
+        ];
+
+        return strtr($template, $payload);
     }
 }

@@ -14,7 +14,7 @@ export default function Index({ apiKey, postbacks }) {
         });
         defaultEvents.forEach((ev) => {
             if (!map[ev]) {
-                map[ev] = { event: ev, url: '', is_active: true };
+                map[ev] = { event: ev, url: '', is_active: ev === 'in_work' ? false : true };
             }
         });
         return Object.values(map);
