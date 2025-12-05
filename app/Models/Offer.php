@@ -16,6 +16,9 @@ class Offer extends Model
         'description',
         'notes',
         'image_path',
+        'materials_link',
+        'call_center_hours',
+        'call_center_timezone',
         'is_active',
     ];
 

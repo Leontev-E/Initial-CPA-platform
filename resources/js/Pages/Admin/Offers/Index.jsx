@@ -18,6 +18,9 @@ export default function Index({ offers, categories, filters }) {
         allowed_geos: [],
         description: '',
         notes: '',
+        materials_link: '',
+        call_center_hours: '',
+        call_center_timezone: 'local',
         is_active: true,
         image: null,
     });
@@ -58,6 +61,9 @@ export default function Index({ offers, categories, filters }) {
                     'allowed_geos',
                     'description',
                     'notes',
+                    'materials_link',
+                    'call_center_hours',
+                    'call_center_timezone',
                     'image',
                     'offer_category_id',
                     'is_active',
@@ -67,6 +73,7 @@ export default function Index({ offers, categories, filters }) {
                 setData('is_active', true);
                 setData('allowed_geos', []);
                 setGeoInput('');
+                setData('call_center_timezone', 'local');
             },
         });
     };
@@ -240,6 +247,28 @@ export default function Index({ offers, categories, filters }) {
                             value={data.notes}
                             onChange={(e) => setData('notes', e.target.value)}
                         />
+                        <input
+                            className="w-full rounded-lg border px-3 py-2"
+                            placeholder="Ссылка на материалы (Google/Яндекс диск)"
+                            value={data.materials_link}
+                            onChange={(e) => setData('materials_link', e.target.value)}
+                        />
+                        <div className="grid gap-2 md:grid-cols-2">
+                            <input
+                                className="w-full rounded-lg border px-3 py-2"
+                                placeholder="График работы КЦ (например 09:00-21:00)"
+                                value={data.call_center_hours}
+                                onChange={(e) => setData('call_center_hours', e.target.value)}
+                            />
+                            <select
+                                className="w-full rounded-lg border px-3 py-2 text-sm"
+                                value={data.call_center_timezone}
+                                onChange={(e) => setData('call_center_timezone', e.target.value)}
+                            >
+                                <option value="local">По местному времени</option>
+                                <option value="msk">По МСК</option>
+                            </select>
+                        </div>
                         <div>
                             <label className="text-sm text-gray-700">
                                 Фото оффера (jpg/png)
@@ -427,7 +456,7 @@ export default function Index({ offers, categories, filters }) {
                                                 )}
                                             </div>
                                             <div className="text-xs text-gray-500">
-                                                {(offer.categories || [offer.category]).filter(Boolean).map((c) => c.name).join(', ') || 'Без категории'}
+                                                ID: {offer.id} • {(offer.categories || [offer.category]).filter(Boolean).map((c) => c.name).join(', ') || 'Без категории'}
                                                 {' '}• GEO:{' '}
                                                 {(offer.allowed_geos || []).join(', ')}
                                             </div>

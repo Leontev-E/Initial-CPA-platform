@@ -15,6 +15,9 @@ export default function Show({ offer, categories }) {
         allowed_geos: offer.allowed_geos || [],
         description: offer.description || '',
         notes: offer.notes || '',
+        materials_link: offer.materials_link || '',
+        call_center_hours: offer.call_center_hours || '',
+        call_center_timezone: offer.call_center_timezone || 'local',
         is_active: offer.is_active,
         image: null,
         _method: 'patch',
@@ -86,6 +89,7 @@ export default function Show({ offer, categories }) {
 
             <div className="grid gap-4 lg:grid-cols-3">
                 <div className="rounded-xl bg-white p-4 shadow-sm lg:col-span-2">
+                    <div className="mb-2 text-xs text-gray-500">ID оффера: {offer.id}</div>
                     <h3 className="text-sm font-semibold text-gray-700">
                         Редактирование
                     </h3>
@@ -208,6 +212,28 @@ export default function Show({ offer, categories }) {
                             onChange={(e) => setData('notes', e.target.value)}
                             placeholder="Заметки для партнерской программы"
                         />
+                        <input
+                            className="w-full rounded-lg border px-3 py-2"
+                            value={data.materials_link}
+                            onChange={(e) => setData('materials_link', e.target.value)}
+                            placeholder="Ссылка на материалы (Google/Яндекс диск)"
+                        />
+                        <div className="grid gap-2 md:grid-cols-2">
+                            <input
+                                className="w-full rounded-lg border px-3 py-2"
+                                value={data.call_center_hours}
+                                onChange={(e) => setData('call_center_hours', e.target.value)}
+                                placeholder="График работы КЦ (например 09:00-21:00)"
+                            />
+                            <select
+                                className="w-full rounded-lg border px-3 py-2 text-sm"
+                                value={data.call_center_timezone}
+                                onChange={(e) => setData('call_center_timezone', e.target.value)}
+                            >
+                                <option value="local">По местному времени</option>
+                                <option value="msk">По МСК</option>
+                            </select>
+                        </div>
                         <div>
                             <label className="text-sm text-gray-700">
                                 Новое фото (опционально)
@@ -254,7 +280,17 @@ export default function Show({ offer, categories }) {
                                 key={rate.id}
                                 className="flex items-center justify-between rounded border px-3 py-2"
                             >
-                                <div>{rate.webmaster?.name}</div>
+                                <div className="space-y-0.5">
+                                    <Link
+                                        href={route('admin.webmasters.show', rate.webmaster?.id)}
+                                        className="font-semibold text-indigo-700 hover:underline"
+                                    >
+                                        {rate.webmaster?.name}
+                                    </Link>
+                                    <div className="text-xs text-gray-500">
+                                        {rate.webmaster?.email}
+                                    </div>
+                                </div>
                                 <div className="font-semibold">
                                     {rate.custom_payout} $
                                 </div>

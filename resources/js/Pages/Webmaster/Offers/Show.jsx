@@ -9,6 +9,7 @@ export default function Show({ offer }) {
             <Head title={offer.name} />
             <div className="grid gap-4 lg:grid-cols-3">
                 <div className="rounded-xl bg-white p-4 shadow-sm lg:col-span-2 space-y-3">
+                    <div className="text-xs text-gray-500">ID оффера: {offer.id}</div>
                     {offer.image_url && (
                         <img
                             src={offer.image_url}
@@ -37,6 +38,32 @@ export default function Show({ offer }) {
                     </div>
                     <div className="font-semibold text-indigo-700">
                         Ваша ставка: {offer.effective_payout} $
+                    </div>
+                    <div>
+                        <div className="text-xs uppercase text-gray-500">Материалы</div>
+                        {offer.materials_link ? (
+                            <a
+                                href={offer.materials_link}
+                                target="_blank"
+                                className="text-indigo-700 underline"
+                                rel="noreferrer"
+                            >
+                                Открыть материалы
+                            </a>
+                        ) : (
+                            <div className="text-gray-500">Не указаны</div>
+                        )}
+                    </div>
+                    <div>
+                        <div className="text-xs uppercase text-gray-500">График КЦ</div>
+                        <div className="text-gray-700">
+                            {offer.call_center_hours || 'Не указан'}{' '}
+                            {offer.call_center_hours && (
+                                <span className="text-xs text-gray-500">
+                                    ({offer.call_center_timezone === 'msk' ? 'МСК' : 'Местное время'})
+                                </span>
+                            )}
+                        </div>
                     </div>
                     <div className="pt-2">
                         <div className="text-xs uppercase text-gray-500">Лендинги</div>

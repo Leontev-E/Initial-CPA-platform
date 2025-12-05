@@ -26,6 +26,7 @@ export default function Index({ offers }) {
                                 <div className="text-lg font-semibold text-gray-900">
                                     {offer.name}
                                 </div>
+                                <div className="text-xs text-gray-500">ID: {offer.id}</div>
                                 <div className="text-sm text-gray-600">
                                     GEO: {(offer.allowed_geos || []).join(', ')}
                                 </div>

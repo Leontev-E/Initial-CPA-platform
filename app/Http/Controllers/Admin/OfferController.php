@@ -156,6 +156,9 @@ class OfferController extends Controller
             'allowed_geos' => ['nullable'],
             'description' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
+            'materials_link' => ['nullable', 'url', 'max:2048'],
+            'call_center_hours' => ['nullable', 'string', 'max:255'],
+            'call_center_timezone' => ['nullable', 'in:local,msk'],
             'is_active' => ['boolean'],
             'image' => ['nullable', 'image'],
         ]);
