@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 export default function Webmasters({ rows, filters, offers, geos }) {
     const filterForm = useForm({
         offer_id: filters?.offer_id ?? '',
-        geo: filters?.geo ?? [],
+        geo: Array.isArray(filters?.geo) ? filters.geo : (filters?.geo ? [filters.geo] : []),
         date_from: filters?.date_from ?? '',
         date_to: filters?.date_to ?? '',
         sort: filters?.sort ?? 'leads',
@@ -48,7 +48,7 @@ export default function Webmasters({ rows, filters, offers, geos }) {
                     </div>
                     <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                         <select
-                            className="rounded border px-3 py-2 text-sm"
+                            className="h-10 rounded border px-3 py-2 text-sm"
                             value={filterForm.data.offer_id}
                             onChange={(e) => {
                                 filterForm.setData('offer_id', e.target.value);
@@ -71,7 +71,7 @@ export default function Webmasters({ rows, filters, offers, geos }) {
                         />
                         <input
                             type="date"
-                            className="rounded border px-3 py-2 text-sm"
+                            className="h-10 rounded border px-3 py-2 text-sm"
                             value={filterForm.data.date_from}
                             onChange={(e) => {
                                 filterForm.setData('date_from', e.target.value);
@@ -80,7 +80,7 @@ export default function Webmasters({ rows, filters, offers, geos }) {
                         />
                         <input
                             type="date"
-                            className="rounded border px-3 py-2 text-sm"
+                            className="h-10 rounded border px-3 py-2 text-sm"
                             value={filterForm.data.date_to}
                             onChange={(e) => {
                                 filterForm.setData('date_to', e.target.value);
