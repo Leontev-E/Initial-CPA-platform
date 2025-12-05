@@ -106,6 +106,7 @@ export default function Show({ lead, statuses }) {
                                 label="Адрес доставки"
                                 value={form.data.shipping_address}
                                 onChange={(v) => form.setData('shipping_address', v)}
+                                multiline
                             />
                             <InfoRow label="GEO" value={lead.geo} />
                             <InfoRow label="Subid" value={lead.subid || '—'} />
@@ -198,15 +199,23 @@ function InfoRow({ label, value, multiline = false }) {
     );
 }
 
-function EditableRow({ label, value, onChange }) {
+function EditableRow({ label, value, onChange, multiline = false }) {
     return (
         <div className="flex flex-col">
             <span className="text-[11px] uppercase text-gray-400">{label}</span>
-            <input
-                className="mt-1 w-full rounded border px-3 py-2 text-sm"
-                value={value || ''}
-                onChange={(e) => onChange(e.target.value)}
-            />
+            {multiline ? (
+                <textarea
+                    className="mt-1 w-full min-h-[72px] rounded border px-3 py-2 text-sm resize-y"
+                    value={value || ''}
+                    onChange={(e) => onChange(e.target.value)}
+                />
+            ) : (
+                <input
+                    className="mt-1 w-full rounded border px-3 py-2 text-sm"
+                    value={value || ''}
+                    onChange={(e) => onChange(e.target.value)}
+                />
+            )}
         </div>
     );
 }
