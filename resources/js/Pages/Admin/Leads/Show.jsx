@@ -13,6 +13,10 @@ export default function Show({ lead, statuses }) {
     const form = useForm({
         status: lead.status,
         comment: lead.comment || '',
+        customer_name: lead.customer_name || '',
+        customer_phone: lead.customer_phone || '',
+        customer_email: lead.customer_email || '',
+        shipping_address: lead.shipping_address || '',
     });
 
     const submit = (e) => {
@@ -26,7 +30,9 @@ export default function Show({ lead, statuses }) {
 
             <div className="mb-4 flex items-center justify-between text-sm text-gray-600">
                 <div>{formatDate(lead.created_at)}</div>
-                <div className="rounded bg-slate-100 px-3 py-1 font-semibold text-slate-700">
+                <div
+                    className={`rounded px-3 py-1 text-xs font-semibold ${statusColor(lead.status)}`}
+                >
                     {statusLabels[lead.status] ?? lead.status}
                 </div>
             </div>
@@ -49,12 +55,6 @@ export default function Show({ lead, statuses }) {
                                     ))}
                                 </select>
                             </div>
-                            <div>
-                                <label className="text-xs font-semibold text-gray-600">Payout</label>
-                                <div className="mt-2 rounded border px-3 py-2 text-sm">
-                                    {lead.payout ?? '—'} $
-                                </div>
-                            </div>
                             <div className="md:col-span-2">
                                 <label className="text-xs font-semibold text-gray-600">
                                     Комментарий / адрес доставки
@@ -75,11 +75,10 @@ export default function Show({ lead, statuses }) {
                                 >
                                     Сохранить изменения
                                 </button>
-                                {form.errors.status && (
-                                    <div className="text-xs text-red-600">{form.errors.status}</div>
-                                )}
-                                {form.errors.comment && (
-                                    <div className="text-xs text-red-600">{form.errors.comment}</div>
+                                {(form.errors.status || form.errors.comment) && (
+                                    <div className="text-xs text-red-600">
+                                        {form.errors.status || form.errors.comment}
+                                    </div>
                                 )}
                             </div>
                         </form>
@@ -88,9 +87,26 @@ export default function Show({ lead, statuses }) {
                     <div className="rounded-xl bg-white p-4 shadow-sm">
                         <h3 className="text-sm font-semibold text-gray-800">Клиент и контакты</h3>
                         <div className="mt-2 grid gap-2 text-sm md:grid-cols-2">
-                            <InfoRow label="Имя" value={lead.customer_name} />
-                            <InfoRow label="Телефон" value={lead.customer_phone} />
-                            <InfoRow label="Email" value={lead.customer_email || '—'} />
+                            <EditableRow
+                                label="Имя"
+                                value={form.data.customer_name}
+                                onChange={(v) => form.setData('customer_name', v)}
+                            />
+                            <EditableRow
+                                label="Телефон"
+                                value={form.data.customer_phone}
+                                onChange={(v) => form.setData('customer_phone', v)}
+                            />
+                            <EditableRow
+                                label="Email"
+                                value={form.data.customer_email}
+                                onChange={(v) => form.setData('customer_email', v)}
+                            />
+                            <EditableRow
+                                label="Адрес доставки"
+                                value={form.data.shipping_address}
+                                onChange={(v) => form.setData('shipping_address', v)}
+                            />
                             <InfoRow label="GEO" value={lead.geo} />
                             <InfoRow label="Subid" value={lead.subid || '—'} />
                             <InfoRow label="IP" value={lead.ip || '—'} />
@@ -182,6 +198,19 @@ function InfoRow({ label, value, multiline = false }) {
     );
 }
 
+function EditableRow({ label, value, onChange }) {
+    return (
+        <div className="flex flex-col">
+            <span className="text-[11px] uppercase text-gray-400">{label}</span>
+            <input
+                className="mt-1 w-full rounded border px-3 py-2 text-sm"
+                value={value || ''}
+                onChange={(e) => onChange(e.target.value)}
+            />
+        </div>
+    );
+}
+
 function formatDate(value) {
     if (!value) return '–';
     const d = new Date(value);
@@ -191,5 +220,22 @@ function formatDate(value) {
     const yyyy = d.getFullYear();
     const hh = String(d.getHours()).padStart(2, '0');
     const min = String(d.getMinutes()).padStart(2, '0');
-    return `Дата: ${dd}.${mm}.${yyyy} · Время: ${hh}:${min}`;
+    return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
+}
+
+function statusColor(status) {
+    switch (status) {
+        case 'new':
+            return 'bg-blue-50 text-blue-700';
+        case 'in_work':
+            return 'bg-amber-50 text-amber-700';
+        case 'sale':
+            return 'bg-green-50 text-green-700';
+        case 'cancel':
+            return 'bg-red-50 text-red-700';
+        case 'trash':
+            return 'bg-gray-100 text-gray-600';
+        default:
+            return 'bg-slate-100 text-slate-700';
+    }
 }

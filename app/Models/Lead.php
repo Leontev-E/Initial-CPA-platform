@@ -18,6 +18,7 @@ class Lead extends Model
         'customer_name',
         'customer_phone',
         'customer_email',
+        'shipping_address',
         'extra_data',
         'subid',
         'ip',

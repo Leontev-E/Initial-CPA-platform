@@ -78,10 +78,27 @@ class LeadController extends Controller
         $validated = $request->validate([
             'status' => ['required', 'in:new,in_work,sale,cancel,trash'],
             'comment' => ['nullable', 'string', 'max:2000'],
+            'customer_name' => ['nullable', 'string', 'max:255'],
+            'customer_phone' => ['nullable', 'string', 'max:255'],
+            'customer_email' => ['nullable', 'string', 'max:255'],
+            'shipping_address' => ['nullable', 'string', 'max:500'],
         ]);
 
         $fromStatus = $lead->status;
         $lead->status = $validated['status'];
+
+        if ($request->filled('customer_name')) {
+            $lead->customer_name = $request->string('customer_name')->toString();
+        }
+        if ($request->filled('customer_phone')) {
+            $lead->customer_phone = $request->string('customer_phone')->toString();
+        }
+        if ($request->filled('customer_email')) {
+            $lead->customer_email = $request->string('customer_email')->toString();
+        }
+        if ($request->filled('shipping_address')) {
+            $lead->shipping_address = $request->string('shipping_address')->toString();
+        }
 
         if ($request->filled('comment')) {
             $lead->comment = $request->string('comment')->toString();

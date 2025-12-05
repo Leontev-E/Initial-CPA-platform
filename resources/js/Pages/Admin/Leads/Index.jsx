@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 
 const statuses = [
     { value: 'new', label: 'Новый' },
@@ -57,7 +57,6 @@ export default function Index({ leads, offers, webmasters, filters }) {
                             <th className="px-3 py-2">Payout</th>
                             <th className="px-3 py-2">ID лида</th>
                             <th className="px-3 py-2">Клиент</th>
-                            <th className="px-3 py-2 text-right">Действия</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -72,51 +71,23 @@ export default function Index({ leads, offers, webmasters, filters }) {
 }
 
 function LeadRow({ lead }) {
-    const { data, setData, patch, processing } = useForm({
-        status: lead.status,
-    });
-
-    const submit = (e) => {
-        e.preventDefault();
-        patch(route('admin.leads.updateStatus', lead.id));
-    };
-
     return (
-        <tr className="text-sm text-gray-700">
+        <tr
+            className="text-sm text-gray-700 cursor-pointer hover:bg-gray-50"
+            onClick={() => (window.location = route('admin.leads.show', lead.id))}
+        >
             <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">{formatDate(lead.created_at)}</td>
             <td className="px-3 py-2">{lead.webmaster?.name}</td>
             <td className="px-3 py-2">{lead.offer?.name}</td>
             <td className="px-3 py-2">{lead.geo}</td>
             <td className="px-3 py-2">
-                <form onSubmit={submit} className="flex items-center gap-2">
-                    <select
-                        value={data.status}
-                        onChange={(e) => setData('status', e.target.value)}
-                        className="rounded border px-2 py-1 text-xs"
-                    >
-                        {statuses.map((s) => (
-                            <option key={s.value} value={s.value}>
-                                {s.label}
-                            </option>
-                        ))}
-                    </select>
-                    <button
-                        type="submit"
-                        disabled={processing}
-                        className="rounded bg-indigo-600 px-2 py-1 text-xs font-semibold text-white"
-                    >
-                        OK
-                    </button>
-                </form>
+                <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${statusColor(lead.status)}`}>
+                    {statuses.find((s) => s.value === lead.status)?.label ?? lead.status}
+                </span>
             </td>
             <td className="px-3 py-2">{lead.payout ?? '–'}</td>
             <td className="px-3 py-2 font-semibold text-gray-900">{lead.id}</td>
             <td className="px-3 py-2">{lead.customer_name}</td>
-            <td className="px-3 py-2 text-right text-xs text-indigo-700">
-                <Link href={route('admin.leads.show', lead.id)} className="font-semibold hover:underline">
-                    Открыть
-                </Link>
-            </td>
         </tr>
     );
 }
@@ -130,7 +101,24 @@ function formatDate(value) {
     const yyyy = d.getFullYear();
     const hh = String(d.getHours()).padStart(2, '0');
     const min = String(d.getMinutes()).padStart(2, '0');
-    return `Дата: ${dd}.${mm}.${yyyy} · Время: ${hh}:${min}`;
+    return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
+}
+
+function statusColor(status) {
+    switch (status) {
+        case 'new':
+            return 'bg-blue-50 text-blue-700';
+        case 'in_work':
+            return 'bg-amber-50 text-amber-700';
+        case 'sale':
+            return 'bg-green-50 text-green-700';
+        case 'cancel':
+            return 'bg-red-50 text-red-700';
+        case 'trash':
+            return 'bg-gray-100 text-gray-600';
+        default:
+            return 'bg-slate-100 text-slate-700';
+    }
 }
 
 function FilterField({ name, defaultValue, placeholder, type = 'text' }) {
