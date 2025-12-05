@@ -39,6 +39,7 @@ Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix(
     Route::delete('offers/{offer}/landings/{landing}', [AdminOfferController::class, 'removeLanding'])->name('offers.landings.remove');
 
     Route::get('leads', [AdminLeadController::class, 'index'])->name('leads.index');
+    Route::get('leads/{lead}', [AdminLeadController::class, 'show'])->name('leads.show');
     Route::patch('leads/{lead}/status', [AdminLeadController::class, 'updateStatus'])->name('leads.updateStatus');
 
     Route::get('webmasters', [AdminWebmasterController::class, 'index'])->name('webmasters.index');

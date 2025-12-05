@@ -44,7 +44,7 @@ class LeadController extends Controller
         }
 
         if ($request->filled('category_id')) {
-            $query->whereHas('offer', fn ($q) => $q->where('offer_category_id', $request->integer('category_id')));
+            $query->whereHas('offer', fn($q) => $q->where('offer_category_id', $request->integer('category_id')));
         }
 
         $leads = $query->latest()->paginate(25)->withQueryString();
@@ -57,14 +57,35 @@ class LeadController extends Controller
         ]);
     }
 
+    public function show(Lead $lead)
+    {
+        $lead->load(['offer.categories', 'webmaster', 'statusLogs.user']);
+
+        return Inertia::render('Admin/Leads/Show', [
+            'lead' => $lead,
+            'statuses' => [
+                ['value' => 'new', 'label' => 'Новый'],
+                ['value' => 'in_work', 'label' => 'В работе'],
+                ['value' => 'sale', 'label' => 'Продажа'],
+                ['value' => 'cancel', 'label' => 'Отмена'],
+                ['value' => 'trash', 'label' => 'Треш'],
+            ],
+        ]);
+    }
+
     public function updateStatus(Request $request, Lead $lead)
     {
         $validated = $request->validate([
             'status' => ['required', 'in:new,in_work,sale,cancel,trash'],
+            'comment' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $fromStatus = $lead->status;
         $lead->status = $validated['status'];
+
+        if ($request->filled('comment')) {
+            $lead->comment = $request->string('comment')->toString();
+        }
 
         if ($lead->status === 'sale') {
             $lead->payout = $this->resolvePayout($lead);
@@ -81,11 +102,12 @@ class LeadController extends Controller
             'user_id' => $request->user()->id,
             'from_status' => $fromStatus,
             'to_status' => $lead->status,
+            'comment' => $request->string('comment')->toString(),
         ]);
 
         $this->triggerPostback($lead);
 
-        return back()->with('success', 'Статус лида обновлен');
+        return back()->with('success', 'Статус лида обновлён');
     }
 
     protected function resolvePayout(Lead $lead): float
@@ -123,7 +145,7 @@ class LeadController extends Controller
                     'geo' => $lead->geo,
                 ]);
             } catch (\Throwable $e) {
-                // swallow errors for MVP
+                // ignore errors for now
             }
         }
     }

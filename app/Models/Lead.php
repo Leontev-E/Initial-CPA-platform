@@ -29,6 +29,7 @@ class Lead extends Model
         'utm_term',
         'utm_content',
         'tags',
+        'comment',
     ];
 
     protected $casts = [

@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 
 const statuses = [
     { value: 'new', label: 'Новый' },
@@ -11,9 +11,7 @@ const statuses = [
 
 export default function Index({ leads, offers, webmasters, filters }) {
     return (
-        <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold text-gray-800">Лиды</h2>}
-        >
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800">Лиды</h2>}>
             <Head title="Лиды" />
 
             <form method="get" className="rounded-xl bg-white p-4 shadow-sm">
@@ -41,7 +39,7 @@ export default function Index({ leads, offers, webmasters, filters }) {
                     <FilterField name="date_to" defaultValue={filters.date_to} placeholder="Дата до" type="date" />
                     <div className="flex items-end">
                         <button className="w-full rounded bg-indigo-600 px-3 py-2 text-xs font-semibold text-white">
-                            Фильтр
+                            Показать
                         </button>
                     </div>
                 </div>
@@ -55,11 +53,11 @@ export default function Index({ leads, offers, webmasters, filters }) {
                             <th className="px-3 py-2">Вебмастер</th>
                             <th className="px-3 py-2">Оффер</th>
                             <th className="px-3 py-2">GEO</th>
-                            <th className="px-3 py-2">Status</th>
+                            <th className="px-3 py-2">Статус</th>
                             <th className="px-3 py-2">Payout</th>
-                            <th className="px-3 py-2">Subid</th>
-                            <th className="px-3 py-2">Имя</th>
-                            <th className="px-3 py-2"></th>
+                            <th className="px-3 py-2">ID лида</th>
+                            <th className="px-3 py-2">Клиент</th>
+                            <th className="px-3 py-2 text-right">Действия</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -85,7 +83,7 @@ function LeadRow({ lead }) {
 
     return (
         <tr className="text-sm text-gray-700">
-            <td className="px-3 py-2">{lead.created_at}</td>
+            <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">{formatDate(lead.created_at)}</td>
             <td className="px-3 py-2">{lead.webmaster?.name}</td>
             <td className="px-3 py-2">{lead.offer?.name}</td>
             <td className="px-3 py-2">{lead.geo}</td>
@@ -111,22 +109,34 @@ function LeadRow({ lead }) {
                     </button>
                 </form>
             </td>
-            <td className="px-3 py-2">{lead.payout ?? '—'}</td>
-            <td className="px-3 py-2">{lead.subid}</td>
+            <td className="px-3 py-2">{lead.payout ?? '–'}</td>
+            <td className="px-3 py-2 font-semibold text-gray-900">{lead.id}</td>
             <td className="px-3 py-2">{lead.customer_name}</td>
-            <td className="px-3 py-2 text-right text-xs text-gray-500">
-                {lead.utm_source}
+            <td className="px-3 py-2 text-right text-xs text-indigo-700">
+                <Link href={route('admin.leads.show', lead.id)} className="font-semibold hover:underline">
+                    Открыть
+                </Link>
             </td>
         </tr>
     );
 }
 
+function formatDate(value) {
+    if (!value) return '–';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return value;
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    return `Дата: ${dd}.${mm}.${yyyy} · Время: ${hh}:${min}`;
+}
+
 function FilterField({ name, defaultValue, placeholder, type = 'text' }) {
     return (
         <label className="flex flex-col">
-            <span className="text-[10px] uppercase text-gray-400">
-                {placeholder}
-            </span>
+            <span className="text-[10px] uppercase text-gray-400">{placeholder}</span>
             <input
                 type={type}
                 name={name}
@@ -140,9 +150,7 @@ function FilterField({ name, defaultValue, placeholder, type = 'text' }) {
 function FilterInput({ name, defaultValue, options, placeholder }) {
     return (
         <label className="flex flex-col">
-            <span className="text-[10px] uppercase text-gray-400">
-                {placeholder}
-            </span>
+            <span className="text-[10px] uppercase text-gray-400">{placeholder}</span>
             <select
                 name={name}
                 defaultValue={defaultValue || ''}
