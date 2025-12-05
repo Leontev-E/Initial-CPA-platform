@@ -1,11 +1,12 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import GeoMultiSelect from '@/Components/GeoMultiSelect';
 import { Head, useForm, router } from '@inertiajs/react';
 import { useEffect } from 'react';
 
 export default function Offers({ rows, filters, offers, geos }) {
     const filterForm = useForm({
         offer_id: filters?.offer_id ?? '',
-        geo: filters?.geo ?? '',
+        geo: filters?.geo ?? [],
         date_from: filters?.date_from ?? '',
         date_to: filters?.date_to ?? '',
         sort: filters?.sort ?? 'leads',
@@ -81,39 +82,47 @@ export default function Offers({ rows, filters, offers, geos }) {
                             className="rounded border px-3 py-2 text-sm"
                             placeholder="Поиск по вебмастеру/email/Telegram"
                             value={filterForm.data.search}
-                            onChange={(e) => filterForm.setData('search', e.target.value)}
+                            onChange={(e) => {
+                                filterForm.setData('search', e.target.value);
+                            }}
+                            onBlur={applyFilters}
                             onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
                         />
-                        <select
-                            className="rounded border px-3 py-2 text-sm"
+                        <GeoMultiSelect
                             value={filterForm.data.geo}
-                            onChange={(e) => {
-                                filterForm.setData('geo', e.target.value);
+                            onChange={(vals) => {
+                                filterForm.setData('geo', vals);
                                 applyFilters();
                             }}
-                        >
-                            <option value="">Все GEO</option>
-                            {geos.map((geo) => (
-                                <option key={geo} value={geo}>{geo}</option>
-                            ))}
-                        </select>
+                            placeholder="GEO"
+                            emptyLabel="Все GEO"
+                        />
                         <input
                             type="date"
                             className="rounded border px-3 py-2 text-sm"
                             value={filterForm.data.date_from}
-                            onChange={(e) => filterForm.setData('date_from', e.target.value)}
+                            onChange={(e) => {
+                                filterForm.setData('date_from', e.target.value);
+                                applyFilters();
+                            }}
                         />
                         <input
                             type="date"
                             className="rounded border px-3 py-2 text-sm"
                             value={filterForm.data.date_to}
-                            onChange={(e) => filterForm.setData('date_to', e.target.value)}
+                            onChange={(e) => {
+                                filterForm.setData('date_to', e.target.value);
+                                applyFilters();
+                            }}
                         />
                         <div className="grid grid-cols-2 gap-2">
                             <select
                                 className="rounded border px-3 py-2 text-sm"
                                 value={filterForm.data.sort}
-                                onChange={(e) => filterForm.setData('sort', e.target.value)}
+                                onChange={(e) => {
+                                    filterForm.setData('sort', e.target.value);
+                                    applyFilters();
+                                }}
                             >
                                 <option value="leads">По лидам</option>
                                 <option value="sale">По продажам</option>
@@ -124,7 +133,10 @@ export default function Offers({ rows, filters, offers, geos }) {
                             <select
                                 className="rounded border px-3 py-2 text-sm"
                                 value={filterForm.data.direction}
-                                onChange={(e) => filterForm.setData('direction', e.target.value)}
+                                onChange={(e) => {
+                                    filterForm.setData('direction', e.target.value);
+                                    applyFilters();
+                                }}
                             >
                                 <option value="desc">По убыванию</option>
                                 <option value="asc">По возрастанию</option>
@@ -132,23 +144,28 @@ export default function Offers({ rows, filters, offers, geos }) {
                         </div>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
-                        <button
-                            type="button"
-                            onClick={applyFilters}
-                            className="rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
-                        >
-                            Применить
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                filterForm.reset();
-                                applyFilters();
-                            }}
-                            className="rounded border px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
-                        >
-                            Сбросить
-                        </button>
+                        {(filterForm.data.offer_id || filterForm.data.search || (filterForm.data.geo || []).length > 0 || filterForm.data.date_from || filterForm.data.date_to || filterForm.data.sort !== 'leads' || filterForm.data.direction !== 'desc' || filterForm.data.per_page !== 10) && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    filterForm.reset();
+                                    filterForm.setData({
+                                        offer_id: '',
+                                        search: '',
+                                        geo: '',
+                                        date_from: '',
+                                        date_to: '',
+                                        sort: 'leads',
+                                        direction: 'desc',
+                                        per_page: 10,
+                                    });
+                                    applyFilters();
+                                }}
+                                className="rounded border px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+                            >
+                                Сбросить
+                            </button>
+                        )}
                     </div>
                 </div>
 

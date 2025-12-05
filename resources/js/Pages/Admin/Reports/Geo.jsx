@@ -24,7 +24,7 @@ export default function Geo({ rows, filters, offers, webmasters }) {
     useEffect(() => {
         applyFilters();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filterForm.data.sort, filterForm.data.direction, filterForm.data.per_page]);
+    }, [filterForm.data.sort, filterForm.data.direction, filterForm.data.per_page, filterForm.data.offer_id, filterForm.data.webmaster_id]);
 
     const exportUrl = route('admin.reports.geo', { ...filterForm.data, export: 1 });
 
@@ -75,7 +75,10 @@ export default function Geo({ rows, filters, offers, webmasters }) {
                             <select
                                 className="rounded border px-3 py-2 text-sm"
                                 value={filterForm.data.sort}
-                                onChange={(e) => filterForm.setData('sort', e.target.value)}
+                                onChange={(e) => {
+                                    filterForm.setData('sort', e.target.value);
+                                    applyFilters();
+                                }}
                             >
                                 <option value="geo">По GEO</option>
                                 <option value="leads">По лидам</option>
@@ -88,7 +91,10 @@ export default function Geo({ rows, filters, offers, webmasters }) {
                             <select
                                 className="rounded border px-3 py-2 text-sm"
                                 value={filterForm.data.direction}
-                                onChange={(e) => filterForm.setData('direction', e.target.value)}
+                                onChange={(e) => {
+                                    filterForm.setData('direction', e.target.value);
+                                    applyFilters();
+                                }}
                             >
                                 <option value="asc">По возрастанию</option>
                                 <option value="desc">По убыванию</option>
@@ -98,33 +104,43 @@ export default function Geo({ rows, filters, offers, webmasters }) {
                             type="date"
                             className="rounded border px-3 py-2 text-sm"
                             value={filterForm.data.date_from}
-                            onChange={(e) => filterForm.setData('date_from', e.target.value)}
+                            onChange={(e) => {
+                                filterForm.setData('date_from', e.target.value);
+                                applyFilters();
+                            }}
                         />
                         <input
                             type="date"
                             className="rounded border px-3 py-2 text-sm"
                             value={filterForm.data.date_to}
-                            onChange={(e) => filterForm.setData('date_to', e.target.value)}
+                            onChange={(e) => {
+                                filterForm.setData('date_to', e.target.value);
+                                applyFilters();
+                            }}
                         />
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
-                        <button
-                            type="button"
-                            onClick={applyFilters}
-                            className="rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
-                        >
-                            Применить
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                filterForm.reset();
-                                applyFilters();
-                            }}
-                            className="rounded border px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
-                        >
-                            Сбросить
-                        </button>
+                        {(filterForm.data.offer_id || filterForm.data.webmaster_id || filterForm.data.date_from || filterForm.data.date_to || filterForm.data.sort !== 'geo' || filterForm.data.direction !== 'asc' || filterForm.data.per_page !== 10) && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    filterForm.reset();
+                                    filterForm.setData({
+                                        offer_id: '',
+                                        webmaster_id: '',
+                                        date_from: '',
+                                        date_to: '',
+                                        sort: 'geo',
+                                        direction: 'asc',
+                                        per_page: 10,
+                                    });
+                                    applyFilters();
+                                }}
+                                className="rounded border px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+                            >
+                                Сбросить
+                            </button>
+                        )}
                     </div>
                 </div>
 

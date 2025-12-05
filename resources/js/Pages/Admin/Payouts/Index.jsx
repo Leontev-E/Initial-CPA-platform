@@ -45,7 +45,7 @@ export default function Index({ payouts, balances, webmasters, filters }) {
     useEffect(() => {
         applyFilters();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filterForm.data.sort, filterForm.data.direction, filterForm.data.per_page]);
+    }, [filterForm.data.sort, filterForm.data.direction, filterForm.data.per_page, filterForm.data.status, filterForm.data.webmaster_id]);
 
     const submit = (e) => {
         e.preventDefault();
@@ -127,7 +127,10 @@ export default function Index({ payouts, balances, webmasters, filters }) {
                                 className="rounded border px-3 py-2 text-sm"
                                 placeholder="Поиск (метод, детали, вебмастер)"
                                 value={filterForm.data.search}
-                                onChange={(e) => filterForm.setData('search', e.target.value)}
+                                onChange={(e) => {
+                                    filterForm.setData('search', e.target.value);
+                                }}
+                                onBlur={applyFilters}
                                 onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
                             />
                             <select
@@ -164,19 +167,28 @@ export default function Index({ payouts, balances, webmasters, filters }) {
                                 type="date"
                                 className="rounded border px-3 py-2 text-sm"
                                 value={filterForm.data.date_from}
-                                onChange={(e) => filterForm.setData('date_from', e.target.value)}
+                                onChange={(e) => {
+                                    filterForm.setData('date_from', e.target.value);
+                                    applyFilters();
+                                }}
                             />
                             <input
                                 type="date"
                                 className="rounded border px-3 py-2 text-sm"
                                 value={filterForm.data.date_to}
-                                onChange={(e) => filterForm.setData('date_to', e.target.value)}
+                                onChange={(e) => {
+                                    filterForm.setData('date_to', e.target.value);
+                                    applyFilters();
+                                }}
                             />
                             <div className="grid grid-cols-2 gap-2">
                                 <select
                                     className="rounded border px-3 py-2 text-sm"
                                     value={filterForm.data.sort}
-                                    onChange={(e) => filterForm.setData('sort', e.target.value)}
+                                    onChange={(e) => {
+                                        filterForm.setData('sort', e.target.value);
+                                        applyFilters();
+                                    }}
                                 >
                                     <option value="created_at">По дате</option>
                                     <option value="amount">По сумме</option>
@@ -186,7 +198,10 @@ export default function Index({ payouts, balances, webmasters, filters }) {
                                 <select
                                     className="rounded border px-3 py-2 text-sm"
                                     value={filterForm.data.direction}
-                                    onChange={(e) => filterForm.setData('direction', e.target.value)}
+                                    onChange={(e) => {
+                                        filterForm.setData('direction', e.target.value);
+                                        applyFilters();
+                                    }}
                                 >
                                     <option value="desc">По убыванию</option>
                                     <option value="asc">По возрастанию</option>
@@ -194,23 +209,28 @@ export default function Index({ payouts, balances, webmasters, filters }) {
                             </div>
                         </div>
                         <div className="mt-3 flex flex-wrap gap-2">
-                            <button
-                                type="button"
-                                onClick={applyFilters}
-                                className="rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
-                            >
-                                Применить
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    filterForm.reset();
-                                    applyFilters();
-                                }}
-                                className="rounded border px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
-                            >
-                                Сбросить
-                            </button>
+                            {(filterForm.data.search || filterForm.data.status || filterForm.data.webmaster_id || filterForm.data.date_from || filterForm.data.date_to || filterForm.data.sort !== 'created_at' || filterForm.data.direction !== 'desc' || filterForm.data.per_page !== 10) && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        filterForm.reset();
+                                        filterForm.setData({
+                                            sort: 'created_at',
+                                            direction: 'desc',
+                                            per_page: 10,
+                                            search: '',
+                                            status: '',
+                                            webmaster_id: '',
+                                            date_from: '',
+                                            date_to: '',
+                                        });
+                                        applyFilters();
+                                    }}
+                                    className="rounded border px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+                                >
+                                    Сбросить
+                                </button>
+                            )}
                         </div>
                     </div>
 

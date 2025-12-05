@@ -38,12 +38,12 @@ export default function Show({ category, offers, filters, attachOffers, attachFi
     useEffect(() => {
         applyListFilters();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [listForm.data.sort, listForm.data.direction, listForm.data.per_page]);
+    }, [listForm.data.sort, listForm.data.direction, listForm.data.per_page, listForm.data.status]);
 
     useEffect(() => {
         applyAttachFilters();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [attachForm.data.attach_per_page]);
+    }, [attachForm.data.attach_per_page, attachForm.data.attach_status]);
 
     return (
         <AuthenticatedLayout
@@ -73,7 +73,10 @@ export default function Show({ category, offers, filters, attachOffers, attachFi
                             className="rounded border px-3 py-2 text-sm"
                             placeholder="Поиск по названию"
                             value={listForm.data.search}
-                            onChange={(e) => listForm.setData('search', e.target.value)}
+                            onChange={(e) => {
+                                listForm.setData('search', e.target.value);
+                            }}
+                            onBlur={applyListFilters}
                             onKeyDown={(e) => e.key === 'Enter' && applyListFilters()}
                         />
                         <select
@@ -91,7 +94,10 @@ export default function Show({ category, offers, filters, attachOffers, attachFi
                         <select
                             className="rounded border px-3 py-2 text-sm"
                             value={listForm.data.sort}
-                            onChange={(e) => listForm.setData('sort', e.target.value)}
+                            onChange={(e) => {
+                                listForm.setData('sort', e.target.value);
+                                applyListFilters();
+                            }}
                         >
                             <option value="name">По алфавиту</option>
                             <option value="default_payout">По ставке</option>
@@ -100,7 +106,10 @@ export default function Show({ category, offers, filters, attachOffers, attachFi
                         <select
                             className="rounded border px-3 py-2 text-sm"
                             value={listForm.data.direction}
-                            onChange={(e) => listForm.setData('direction', e.target.value)}
+                            onChange={(e) => {
+                                listForm.setData('direction', e.target.value);
+                                applyListFilters();
+                            }}
                         >
                             <option value="asc">По возрастанию</option>
                             <option value="desc">По убыванию</option>
@@ -199,7 +208,10 @@ export default function Show({ category, offers, filters, attachOffers, attachFi
                             className="rounded border px-3 py-2 text-sm"
                             placeholder="Поиск офферов"
                             value={attachForm.data.attach_search}
-                            onChange={(e) => attachForm.setData('attach_search', e.target.value)}
+                            onChange={(e) => {
+                                attachForm.setData('attach_search', e.target.value);
+                            }}
+                            onBlur={applyAttachFilters}
                             onKeyDown={(e) => e.key === 'Enter' && applyAttachFilters()}
                         />
                         <select
