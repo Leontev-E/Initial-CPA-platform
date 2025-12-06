@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
+import GeoMultiSelect from '@/Components/GeoMultiSelect';
 
 const statuses = [
     { value: 'new', label: 'Новый' },
@@ -9,16 +10,35 @@ const statuses = [
     { value: 'trash', label: 'Треш' },
 ];
 
-export default function Index({ leads, offers, webmasters, filters }) {
+export default function Index({ leads, offers, webmasters, filters, geos }) {
+    // Форма фильтров для списка лидов
+    const filterForm = useForm({
+        webmaster_id: filters?.webmaster_id ?? '',
+        offer_id: filters?.offer_id ?? '',
+        status: filters?.status ?? '',
+        geo: filters?.geo ?? [],
+        date_from: filters?.date_from ?? '',
+        date_to: filters?.date_to ?? '',
+        category_id: filters?.category_id ?? '',
+    });
+
+    const applyFilters = () => {
+        router.get(route('admin.leads.index'), filterForm.data, {
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
+        });
+    };
+
     const exportParams = Object.fromEntries(
-        Object.entries(filters || {}).filter(([, v]) => v !== null && v !== undefined && v !== ''),
+        Object.entries(filterForm.data || {}).filter(([, v]) => !(Array.isArray(v) ? v.length === 0 : (v === null || v === undefined || v === ''))),
     );
 
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800">Лиды</h2>}>
             <Head title="Лиды" />
 
-            <form method="get" className="rounded-xl bg-white p-4 shadow-sm">
+            <div className="rounded-xl bg-white p-4 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-2">
                     <div className="text-sm font-semibold text-gray-800">Фильтры</div>
                     <a
@@ -28,35 +48,113 @@ export default function Index({ leads, offers, webmasters, filters }) {
                         Экспорт CSV
                     </a>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 md:grid-cols-7">
-                    <FilterInput
-                        name="webmaster_id"
-                        defaultValue={filters.webmaster_id}
-                        options={webmasters}
-                        placeholder="Вебмастер"
-                    />
-                    <FilterInput
-                        name="offer_id"
-                        defaultValue={filters.offer_id}
-                        options={offers}
-                        placeholder="Оффер"
-                    />
-                    <FilterInput
-                        name="status"
-                        defaultValue={filters.status}
-                        options={statuses}
-                        placeholder="Статус"
-                    />
-                    <FilterField name="geo" defaultValue={filters.geo} placeholder="GEO" />
-                    <FilterField name="date_from" defaultValue={filters.date_from} placeholder="Дата от" type="date" />
-                    <FilterField name="date_to" defaultValue={filters.date_to} placeholder="Дата до" type="date" />
-                    <div className="flex items-end">
-                        <button className="w-full rounded bg-indigo-600 px-3 py-2 text-xs font-semibold text-white">
-                            Показать
-                        </button>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-4">
+                    <div className="flex flex-col">
+                        <span className="text-[10px] uppercase text-gray-400">Вебмастер</span>
+                        <select
+                            className="rounded border px-2 py-2 text-sm"
+                            value={filterForm.data.webmaster_id}
+                            onChange={(e) => {
+                                filterForm.setData('webmaster_id', e.target.value);
+                                applyFilters();
+                            }}
+                        >
+                            <option value="">Все</option>
+                            {webmasters.map((o) => (
+                                <option key={o.id} value={o.id}>{o.name}</option>
+                            ))}
+                        </select>
                     </div>
+                    <div className="flex flex-col">
+                        <span className="text-[10px] uppercase text-gray-400">Оффер</span>
+                        <select
+                            className="rounded border px-2 py-2 text-sm"
+                            value={filterForm.data.offer_id}
+                            onChange={(e) => {
+                                filterForm.setData('offer_id', e.target.value);
+                                applyFilters();
+                            }}
+                        >
+                            <option value="">Все</option>
+                            {offers.map((o) => (
+                                <option key={o.id} value={o.id}>{o.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-[10px] uppercase text-gray-400">Статус</span>
+                        <select
+                            className="rounded border px-2 py-2 text-sm"
+                            value={filterForm.data.status}
+                            onChange={(e) => {
+                                filterForm.setData('status', e.target.value);
+                                applyFilters();
+                            }}
+                        >
+                            <option value="">Все</option>
+                            {statuses.map((s) => (
+                                <option key={s.value} value={s.value}>{s.label}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <GeoMultiSelect
+                        value={filterForm.data.geo}
+                        onChange={(vals) => {
+                            filterForm.setData('geo', vals);
+                            applyFilters();
+                        }}
+                        placeholder="GEO"
+                        emptyLabel="Все GEO"
+                    />
+                    <div className="flex flex-col">
+                        <span className="text-[10px] uppercase text-gray-400">Дата от</span>
+                        <input
+                            type="date"
+                            className="rounded border px-2 py-2 text-sm"
+                            value={filterForm.data.date_from}
+                            onChange={(e) => {
+                                filterForm.setData('date_from', e.target.value);
+                                applyFilters();
+                            }}
+                        />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-[10px] uppercase text-gray-400">Дата до</span>
+                        <input
+                            type="date"
+                            className="rounded border px-2 py-2 text-sm"
+                            value={filterForm.data.date_to}
+                            onChange={(e) => {
+                                filterForm.setData('date_to', e.target.value);
+                                applyFilters();
+                            }}
+                        />
+                    </div>
+                    {(filterForm.data.webmaster_id || filterForm.data.offer_id || filterForm.data.status || (filterForm.data.geo || []).length > 0 || filterForm.data.date_from || filterForm.data.date_to) && (
+                        <div className="flex items-end">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    filterForm.reset();
+                                    filterForm.setData({
+                                        webmaster_id: '',
+                                        offer_id: '',
+                                        status: '',
+                                        geo: [],
+                                        date_from: '',
+                                        date_to: '',
+                                        category_id: '',
+                                    });
+                                    applyFilters();
+                                }}
+                                className="w-full rounded border px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                            >
+                                Сбросить
+                            </button>
+                        </div>
+                    )}
                 </div>
-            </form>
+            </div>
 
             <div className="mt-4 overflow-x-auto rounded-xl bg-white shadow-sm hidden md:block">
                 <table className="min-w-full divide-y divide-gray-200">

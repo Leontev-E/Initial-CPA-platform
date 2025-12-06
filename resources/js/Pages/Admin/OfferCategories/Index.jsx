@@ -41,12 +41,12 @@ export default function Index({ categories, filters, attachOffers, attachFilters
     useEffect(() => {
         applyAttachFilters();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [attachFilterForm.data.offer_per_page]);
+    }, [attachFilterForm.data.offer_per_page, attachFilterForm.data.offer_status]);
 
     useEffect(() => {
         applyFilters();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filterForm.data.sort, filterForm.data.direction, filterForm.data.per_page]);
+    }, [filterForm.data.sort, filterForm.data.direction, filterForm.data.per_page, filterForm.data.status]);
 
     const submit = (e) => {
         e.preventDefault();
@@ -110,7 +110,10 @@ export default function Index({ categories, filters, attachOffers, attachFilters
                                     className="rounded border px-3 py-2 text-sm"
                                     placeholder="Поиск по названию"
                                     value={filterForm.data.search}
-                                    onChange={(e) => filterForm.setData('search', e.target.value)}
+                                    onChange={(e) => {
+                                        filterForm.setData('search', e.target.value);
+                                    }}
+                                    onBlur={applyFilters}
                                     onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
                                 />
                                 <select
@@ -128,7 +131,10 @@ export default function Index({ categories, filters, attachOffers, attachFilters
                                 <select
                                     className="rounded border px-3 py-2 text-sm"
                                     value={filterForm.data.sort}
-                                    onChange={(e) => filterForm.setData('sort', e.target.value)}
+                                    onChange={(e) => {
+                                        filterForm.setData('sort', e.target.value);
+                                        applyFilters();
+                                    }}
                                 >
                                     <option value="name">По алфавиту</option>
                                     <option value="created_at">По дате создания</option>
@@ -136,18 +142,26 @@ export default function Index({ categories, filters, attachOffers, attachFilters
                                 <select
                                     className="rounded border px-3 py-2 text-sm"
                                     value={filterForm.data.direction}
-                                    onChange={(e) => filterForm.setData('direction', e.target.value)}
+                                    onChange={(e) => {
+                                        filterForm.setData('direction', e.target.value);
+                                        applyFilters();
+                                    }}
                                 >
                                     <option value="asc">По возрастанию</option>
                                     <option value="desc">По убыванию</option>
                                 </select>
-                                <button
-                                    type="button"
-                                    onClick={applyFilters}
-                                    className="rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
-                                >
-                                    Применить
-                                </button>
+                                {(filterForm.data.search || filterForm.data.status || filterForm.data.sort !== 'name' || filterForm.data.direction !== 'asc' || filterForm.data.per_page !== 10) && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            filterForm.reset('search', 'status', 'sort', 'direction', 'per_page');
+                                            applyFilters();
+                                        }}
+                                        className="rounded border px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+                                    >
+                                        Сбросить
+                                    </button>
+                                )}
                             </div>
                         </div>
                         <div className="mt-3 divide-y">

@@ -24,7 +24,16 @@ class LeadController extends Controller
             'leads' => $leads,
             'offers' => Offer::orderBy('name')->get(['id', 'name']),
             'webmasters' => User::where('role', User::ROLE_WEBMASTER)->orderBy('name')->get(['id', 'name', 'email']),
-            'filters' => $request->only(['webmaster_id', 'offer_id', 'geo', 'status', 'date_from', 'date_to', 'category_id']),
+            'filters' => [
+                'webmaster_id' => $request->input('webmaster_id'),
+                'offer_id' => $request->input('offer_id'),
+                'geo' => array_values(array_filter((array) $request->input('geo'))),
+                'status' => $request->input('status'),
+                'date_from' => $request->input('date_from'),
+                'date_to' => $request->input('date_to'),
+                'category_id' => $request->input('category_id'),
+            ],
+            'geos' => Lead::select('geo')->whereNotNull('geo')->distinct()->orderBy('geo')->pluck('geo'),
         ]);
     }
 
@@ -163,8 +172,14 @@ class LeadController extends Controller
             $query->where('offer_id', $request->integer('offer_id'));
         }
 
-        if ($request->filled('geo')) {
-            $query->where('geo', strtoupper($request->string('geo')->toString()));
+        $geos = collect((array) $request->input('geo'))
+            ->filter()
+            ->map(fn ($g) => strtoupper($g))
+            ->unique()
+            ->values()
+            ->all();
+        if (! empty($geos)) {
+            $query->whereIn('geo', $geos);
         }
 
         if ($request->filled('status')) {

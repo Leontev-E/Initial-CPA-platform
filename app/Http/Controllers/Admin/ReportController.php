@@ -23,7 +23,7 @@ class ReportController extends Controller
         $base = Lead::query()
             ->whereBetween('created_at', [$from, $to])
             ->when($request->filled('offer_id'), fn ($q) => $q->where('offer_id', $request->integer('offer_id')))
-            ->when($request->filled('geo'), fn ($q) => $q->where('geo', strtoupper($request->string('geo')->toString())));
+            ->when($this->geos($request), fn ($q, $geos) => $q->whereIn('geo', $geos));
 
         if ($request->filled('search')) {
             $term = $request->string('search')->toString();
@@ -84,7 +84,10 @@ class ReportController extends Controller
 
         return inertia('Admin/Reports/Offers', [
             'rows' => $this->paginateCollection($this->sortRows($rows, $sort, $direction), $perPage, $request),
-            'filters' => $request->only(['offer_id', 'geo', 'date_from', 'date_to', 'sort', 'direction', 'per_page', 'search']),
+            'filters' => array_merge(
+                $request->only(['offer_id', 'date_from', 'date_to', 'sort', 'direction', 'per_page', 'search']),
+                ['geo' => $this->geos($request)]
+            ),
             'offers' => Offer::orderBy('name')->get(['id', 'name']),
             'geos' => $this->geoOptions(),
         ]);
@@ -100,7 +103,7 @@ class ReportController extends Controller
             ->where('webmaster_id', $webmaster->id)
             ->whereBetween('created_at', [$from, $to])
             ->when($request->filled('offer_id'), fn ($q) => $q->where('offer_id', $request->integer('offer_id')))
-            ->when($request->filled('geo'), fn ($q) => $q->where('geo', strtoupper($request->string('geo')->toString())))
+            ->when($this->geos($request), fn ($q, $geos) => $q->whereIn('geo', $geos))
             ->select(
                 'offer_id',
                 DB::raw('count(*) as leads'),
@@ -143,7 +146,10 @@ class ReportController extends Controller
 
         return inertia('Admin/Reports/OffersByWebmaster', [
             'rows' => $this->paginateCollection($this->sortRows($rows, $sort, $direction), $perPage, $request),
-            'filters' => $request->only(['offer_id', 'geo', 'date_from', 'date_to', 'sort', 'direction', 'per_page']),
+            'filters' => array_merge(
+                $request->only(['offer_id', 'date_from', 'date_to', 'sort', 'direction', 'per_page']),
+                ['geo' => $this->geos($request)]
+            ),
             'offers' => Offer::orderBy('name')->get(['id', 'name']),
             'geos' => $this->geoOptions(),
             'webmaster' => $webmaster->only(['id', 'name', 'email', 'telegram']),
@@ -165,7 +171,7 @@ class ReportController extends Controller
             )
             ->whereBetween('created_at', [$from, $to])
             ->when($request->filled('offer_id'), fn ($q) => $q->where('offer_id', $request->integer('offer_id')))
-            ->when($request->filled('geo'), fn ($q) => $q->where('geo', strtoupper($request->string('geo')->toString())))
+            ->when($this->geos($request), fn ($q, $geos) => $q->whereIn('geo', $geos))
             ->groupBy('webmaster_id')
             ->with('webmaster:id,name')
             ->get()
@@ -195,7 +201,10 @@ class ReportController extends Controller
 
             return inertia('Admin/Reports/Webmasters', [
             'rows' => $this->paginateCollection($this->sortRows($rows, $sort, $direction), $perPage, $request),
-            'filters' => $request->only(['offer_id', 'geo', 'date_from', 'date_to', 'sort', 'direction', 'per_page']),
+            'filters' => array_merge(
+                $request->only(['offer_id', 'date_from', 'date_to', 'sort', 'direction', 'per_page']),
+                ['geo' => $this->geos($request)]
+            ),
             'offers' => Offer::orderBy('name')->get(['id', 'name']),
             'webmasters' => User::where('role', User::ROLE_WEBMASTER)->orderBy('name')->get(['id', 'name']),
             'geos' => $this->geoOptions(),
@@ -302,6 +311,16 @@ class ReportController extends Controller
         return Cache::remember('report_geo_options', 300, function () {
             return Lead::select('geo')->whereNotNull('geo')->distinct()->orderBy('geo')->pluck('geo');
         });
+    }
+
+    private function geos(Request $request): array
+    {
+        return collect((array) $request->input('geo'))
+            ->filter()
+            ->map(fn ($g) => strtoupper($g))
+            ->unique()
+            ->values()
+            ->all();
     }
 
     protected function csvResponse(string $filename, $rows, array $headers)

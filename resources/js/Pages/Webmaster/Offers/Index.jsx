@@ -18,6 +18,13 @@ export default function Index({ offers, filters, categories, geos }) {
         });
     };
 
+    const hasActiveFilters = Boolean(
+        filterForm.data.search ||
+        filterForm.data.category_id ||
+        (filterForm.data.geos && filterForm.data.geos.length > 0) ||
+        filterForm.data.per_page !== 12
+    );
+
     return (
         <AuthenticatedLayout
             header={<h2 className="text-xl font-semibold text-gray-800">Офферы</h2>}
@@ -30,7 +37,10 @@ export default function Index({ offers, filters, categories, geos }) {
                         className="rounded border px-3 py-2 text-sm"
                         placeholder="Поиск по ID или названию"
                         value={filterForm.data.search}
-                        onChange={(e) => filterForm.setData('search', e.target.value)}
+                        onChange={(e) => {
+                            filterForm.setData('search', e.target.value);
+                        }}
+                        onBlur={applyFilters}
                         onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
                     />
                     <select
@@ -77,23 +87,24 @@ export default function Index({ offers, filters, categories, geos }) {
                     </select>
                 </div>
                 <div className="mt-3 flex gap-2">
-                    <button
-                        type="button"
-                        onClick={applyFilters}
-                        className="rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
-                    >
-                        Применить
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            filterForm.reset();
-                            applyFilters();
-                        }}
-                        className="rounded border px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                    >
-                        Сбросить
-                    </button>
+                    {hasActiveFilters && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                filterForm.reset();
+                                filterForm.setData({
+                                    search: '',
+                                    category_id: '',
+                                    geos: [],
+                                    per_page: 12,
+                                });
+                                applyFilters();
+                            }}
+                            className="rounded border px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                        >
+                            Сбросить
+                        </button>
+                    )}
                 </div>
             </div>
 
