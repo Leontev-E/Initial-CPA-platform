@@ -39,7 +39,7 @@ export default function Index({ leads, offers, filters, summary }) {
                 </div>
             </form>
 
-            <div className="mt-4 overflow-x-auto rounded-xl bg-white shadow-sm">
+            <div className="mt-4 overflow-x-auto rounded-xl bg-white shadow-sm hidden md:block">
                 <div className="flex justify-end px-3 py-3">
                     <a
                         href={route('webmaster.leads.export', filters)}
@@ -74,6 +74,20 @@ export default function Index({ leads, offers, filters, summary }) {
                         ))}
                     </tbody>
                 </table>
+            </div>
+            <div className="mt-4 space-y-3 md:hidden">
+                {leads.data.map((lead) => (
+                    <div key={lead.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span>{lead.created_at}</span>
+                            <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-gray-700">{lead.status}</span>
+                        </div>
+                        <div className="mt-2 text-sm font-semibold text-gray-900">{lead.offer?.name}</div>
+                        <div className="text-xs text-gray-500">GEO: {lead.geo} · Subid: {lead.subid || '—'}</div>
+                        <div className="mt-1 text-xs text-gray-600">Payout: {lead.payout ?? '–'}</div>
+                        <div className="mt-1 text-sm text-gray-800">{lead.customer_name}</div>
+                    </div>
+                ))}
             </div>
         </AuthenticatedLayout>
     );

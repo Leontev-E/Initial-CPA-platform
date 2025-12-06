@@ -170,27 +170,38 @@ export default function Index({ offers, categories, filters }) {
                                 ))}
                             </div>
                         </div>
-                        <input
-                            className="w-full rounded-lg border px-3 py-2"
-                            placeholder="Название"
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                        />
-                        <input
-                            className="w-full rounded-lg border px-3 py-2"
-                            placeholder="Ставка (default)"
-                            value={data.default_payout}
-                            onChange={(e) =>
-                                setData('default_payout', e.target.value)
-                            }
-                        />
-                        <div>
-                            <div className="text-xs font-semibold text-gray-600">Разрешенные GEO</div>
-                            <div className="mt-1 flex flex-col gap-2">
+                        <div className="rounded-lg border border-slate-200 p-3 space-y-2">
+                            <div className="text-xs font-semibold text-gray-600">Общее</div>
+                            <input
+                                className="w-full rounded-lg border px-3 py-2"
+                                placeholder="Название оффера"
+                                value={data.name}
+                                onChange={(e) => setData('name', e.target.value)}
+                            />
+                            <div className="text-xs text-gray-500">Так оффер будет отображаться в кабинетах</div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 p-3 space-y-2">
+                            <div className="text-xs font-semibold text-gray-600">Выплаты</div>
+                            <input
+                                className="w-full rounded-lg border px-3 py-2"
+                                placeholder="Ставка (default), например 10.00"
+                                value={data.default_payout}
+                                onChange={(e) =>
+                                    setData('default_payout', e.target.value)
+                                }
+                            />
+                            <div className="text-xs text-gray-500">Базовый payout, может переопределяться индивидуальными ставками</div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 p-3 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <div className="text-xs font-semibold text-gray-600">Разрешенные GEO</div>
+                                <div className="text-[11px] text-gray-500">Начните вводить код GEO</div>
+                            </div>
+                            <div className="flex flex-col gap-2">
                                 <div className="relative">
                                     <input
                                         className="w-full rounded-lg border px-3 py-2 text-sm"
-                                        placeholder="Начните вводить GEO"
+                                        placeholder="Например, RU, KZ, UZ"
                                         value={geoInput}
                                         onChange={(e) => setGeoInput(e.target.value)}
                                         onKeyDown={(e) => {
@@ -244,56 +255,71 @@ export default function Index({ offers, categories, filters }) {
                                 </div>
                             </div>
                         </div>
-                        <textarea
-                            className="w-full rounded-lg border px-3 py-2"
-                            placeholder="Описание"
-                            value={data.description}
-                            onChange={(e) =>
-                                setData('description', e.target.value)
-                            }
-                        />
-                        <textarea
-                            className="w-full rounded-lg border px-3 py-2"
-                            placeholder="Примечание для партнерской программы"
-                            value={data.notes}
-                            onChange={(e) => setData('notes', e.target.value)}
-                        />
-                        <input
-                            className="w-full rounded-lg border px-3 py-2"
-                            placeholder="Ссылка на материалы (Google/Яндекс диск)"
-                            value={data.materials_link}
-                            onChange={(e) => setData('materials_link', e.target.value)}
-                        />
-                        <div className="grid gap-2 md:grid-cols-2">
-                            <div className="flex gap-2">
-                                <div className="w-full">
-                                    <div className="text-xs text-gray-600">Начало</div>
-                                    <input
-                                        type="time"
-                                        className="w-full rounded-lg border px-3 py-2"
-                                        value={startTime}
-                                        onChange={(e) => setStartTime(e.target.value)}
-                                    />
+                        <div className="rounded-lg border border-slate-200 p-3 space-y-2">
+                            <div className="text-xs font-semibold text-gray-600">Описание</div>
+                            <textarea
+                                className="w-full rounded-lg border px-3 py-2"
+                                placeholder="Краткое описание оффера, правила, важные детали"
+                                value={data.description}
+                                onChange={(e) =>
+                                    setData('description', e.target.value)
+                                }
+                            />
+                        </div>
+                        <div className="rounded-lg border border-slate-200 p-3 space-y-2">
+                            <div className="text-xs font-semibold text-gray-600">Заметки для ПП</div>
+                            <textarea
+                                className="w-full rounded-lg border px-3 py-2"
+                                placeholder="Примечание для партнерской программы"
+                                value={data.notes}
+                                onChange={(e) => setData('notes', e.target.value)}
+                            />
+                        </div>
+                        <div className="rounded-lg border border-slate-200 p-3 space-y-2">
+                            <div className="text-xs font-semibold text-gray-600">Материалы</div>
+                            <input
+                                className="w-full rounded-lg border px-3 py-2"
+                                placeholder="Ссылка на материалы (Google/Яндекс диск)"
+                                value={data.materials_link}
+                                onChange={(e) => setData('materials_link', e.target.value)}
+                            />
+                            <div className="text-xs text-gray-500">Добавьте ссылку на презентации, креативы или инструкции</div>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <div className="text-sm font-semibold text-gray-800">График работы колл-центра</div>
+                                    <div className="text-xs text-gray-500">Укажите время, когда КЦ звонит лидам</div>
                                 </div>
-                                <div className="w-full">
-                                    <div className="text-xs text-gray-600">Окончание</div>
-                                    <input
-                                        type="time"
-                                        className="w-full rounded-lg border px-3 py-2"
-                                        value={endTime}
-                                        onChange={(e) => setEndTime(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            <div className="w-full">
                                 <select
-                                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                                    className="h-10 rounded-lg border px-3 py-2 text-sm"
                                     value={data.call_center_timezone}
                                     onChange={(e) => setData('call_center_timezone', e.target.value)}
                                 >
-                                    <option value="local">По местному времени</option>
+                                    <option value="local">По местному времени лида</option>
                                     <option value="msk">По МСК</option>
                                 </select>
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2">
+                                <label className="flex flex-col gap-1">
+                                    <span className="text-[11px] uppercase text-gray-500">Начало работы</span>
+                                    <input
+                                        type="time"
+                                        className="h-10 rounded-lg border px-3 py-2"
+                                        value={startTime}
+                                        onChange={(e) => setStartTime(e.target.value)}
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1">
+                                    <span className="text-[11px] uppercase text-gray-500">Окончание работы</span>
+                                    <input
+                                        type="time"
+                                        className="h-10 rounded-lg border px-3 py-2"
+                                        value={endTime}
+                                        onChange={(e) => setEndTime(e.target.value)}
+                                    />
+                                </label>
                             </div>
                         </div>
                         <div>

@@ -264,7 +264,7 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                                     </button>
                                 </div>
                             </form>
-                            <div className="mt-3 overflow-x-auto rounded border">
+                            <div className="mt-3 overflow-x-auto rounded border hidden md:block">
                                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                                     <thead className="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-600">
                                         <tr>
@@ -302,6 +302,26 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                                         )}
                                     </tbody>
                                 </table>
+                            </div>
+                            <div className="mt-3 space-y-2 md:hidden">
+                                {logs?.data?.map((log) => (
+                                    <div key={log.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm text-sm text-gray-700">
+                                        <div className="flex items-center justify-between text-xs text-gray-500">
+                                            <span>{formatDate(log.created_at)}</span>
+                                            <span className="rounded bg-slate-100 px-2 py-1 text-[11px] font-semibold text-gray-700">{log.status_code ?? '—'}</span>
+                                        </div>
+        -                                <div className="mt-1 text-xs text-gray-500">{log.event} • Lead ID: {log.lead_id ?? '—'}</div>
+                                        <div className="mt-1 break-all text-xs text-gray-700">{log.url}</div>
+                                        <div className="mt-2">
+                                            {log.error_message
+                                                ? <span className="rounded bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-700">Ошибка</span>
+                                                : <span className="rounded bg-green-50 px-2 py-1 text-[11px] font-semibold text-green-700">OK</span>}
+                                        </div>
+                                    </div>
+                                ))}
+                                {(logs?.data?.length ?? 0) === 0 && (
+                                    <div className="rounded-lg border bg-white p-3 text-center text-xs text-gray-500">Нет записей</div>
+                                )}
                             </div>
                             <div className="mt-2 flex flex-wrap gap-2 text-xs">
                                 {logs?.links?.map((link, idx) => (

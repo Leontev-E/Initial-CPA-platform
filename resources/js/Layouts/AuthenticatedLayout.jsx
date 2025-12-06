@@ -1,12 +1,13 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Link, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
     const { auth, impersonating } = usePage().props;
     const user = auth.user;
     const wmMeta = auth.webmasterMeta;
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [installEvent, setInstallEvent] = useState(null);
 
     const allowedSections = user.invited_by ? (user.permissions?.sections || []) : null;
 
@@ -35,6 +36,15 @@ export default function AuthenticatedLayout({ header, children }) {
 
     const isActive = (name) =>
         route().current(name) || route().current(`${name}.*`);
+
+    useEffect(() => {
+        const handler = (e) => {
+            e.preventDefault();
+            setInstallEvent(e);
+        };
+        window.addEventListener('beforeinstallprompt', handler);
+        return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
 
     const formatLastLogin = (value) => {
         if (!value) return '—';
@@ -121,7 +131,7 @@ export default function AuthenticatedLayout({ header, children }) {
         <div className="flex min-h-screen bg-slate-50">
             <aside className="hidden w-64 flex-col border-r bg-white/90 p-4 pb-16 shadow-sm lg:flex">
                 <div className="flex items-center gap-2 px-2 pb-6">
-                    <ApplicationLogo className="h-10 w-10 text-indigo-600" />
+                    <ApplicationLogo className="h-10 w-10" />
                     <div>
                         <div className="text-sm font-semibold text-gray-900">
                             BoostClicks CPA Platform
@@ -186,6 +196,18 @@ export default function AuthenticatedLayout({ header, children }) {
                                 Личный кабинет
                             </Link>
                             <div className="text-right">{formatLastLogin(user.last_login_at)}</div>
+                            {user.role === 'webmaster' && installEvent && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        installEvent.prompt();
+                                        installEvent.userChoice.finally(() => setInstallEvent(null));
+                                    }}
+                                    className="rounded-full border border-emerald-200 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-50"
+                                >
+                                    Установить приложение
+                                </button>
+                            )}
                         </div>
                     </div>
 

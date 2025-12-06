@@ -18,6 +18,12 @@ createInertiaApp({
         const root = createRoot(el);
 
         root.render(<App {...props} />);
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
     },
     progress: {
         color: '#4B5563',

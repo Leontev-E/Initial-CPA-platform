@@ -58,7 +58,7 @@ export default function Index({ leads, offers, webmasters, filters }) {
                 </div>
             </form>
 
-            <div className="mt-4 overflow-x-auto rounded-xl bg-white shadow-sm">
+            <div className="mt-4 overflow-x-auto rounded-xl bg-white shadow-sm hidden md:block">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
@@ -78,6 +78,28 @@ export default function Index({ leads, offers, webmasters, filters }) {
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            <div className="mt-4 space-y-3 md:hidden">
+                {leads.data.map((lead) => (
+                    <div
+                        key={lead.id}
+                        className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+                        onClick={() => (window.location = route('admin.leads.show', lead.id))}
+                    >
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span>{formatDate(lead.created_at)}</span>
+                            <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${statusColor(lead.status)}`}>
+                                {statuses.find((s) => s.value === lead.status)?.label ?? lead.status}
+                            </span>
+                        </div>
+                        <div className="mt-2 text-sm font-semibold text-gray-900">{lead.offer?.name}</div>
+                        <div className="text-xs text-gray-500">Вебмастер: {lead.webmaster?.name ?? '—'} · GEO: {lead.geo}</div>
+                        <div className="mt-1 text-xs text-gray-600">Payout: {lead.payout ?? '–'} · ID: {lead.id}</div>
+                        <div className="mt-1 text-sm text-gray-800">{lead.customer_name}</div>
+                        <div className="mt-1 text-xs text-indigo-600">subid: {lead.subid || '—'}</div>
+                    </div>
+                ))}
             </div>
         </AuthenticatedLayout>
     );
