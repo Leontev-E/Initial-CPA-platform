@@ -1,9 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
-export default function Show({ offer }) {
+export default function Show({ offer, apiKey }) {
     const [copied, setCopied] = useState(false);
+    const [selectedGeo, setSelectedGeo] = useState(() => (offer.allowed_geos && offer.allowed_geos.length ? offer.allowed_geos[0] : ''));
 
     const copyId = async () => {
         try {
@@ -16,6 +17,14 @@ export default function Show({ offer }) {
     };
 
     const formatText = (text) => (text || '').trim();
+
+    const hasManyGeos = useMemo(() => (offer.allowed_geos || []).length > 1, [offer.allowed_geos]);
+
+    const downloadApi = () => {
+        const params = hasManyGeos && selectedGeo ? { geo: selectedGeo } : {};
+        const url = route('webmaster.offers.apiScript', { offer: offer.id, ...params });
+        window.location.href = url;
+    };
 
     return (
         <AuthenticatedLayout
@@ -54,6 +63,39 @@ export default function Show({ offer }) {
                     )}
                 </div>
                 <div className="rounded-xl bg-white p-4 shadow-sm space-y-3 text-sm text-gray-700">
+                    <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-3 text-sm text-indigo-900">
+                        <div className="text-sm font-semibold text-indigo-900">Скачать api.php</div>
+                        <div className="mt-1 text-xs text-indigo-800">
+                            Файл для отправки лидов в пару кликов. Внутри уже подставлены ваш API-ключ и ID оффера.
+                        </div>
+                        <div className="mt-2 space-y-2">
+                            <div>
+                                <div className="text-[11px] uppercase text-gray-600">API ключ</div>
+                                <div className="font-mono break-all text-xs text-gray-900">{apiKey?.key}</div>
+                            </div>
+                            {hasManyGeos && (
+                                <div>
+                                    <div className="text-[11px] uppercase text-gray-600">GEO для файла</div>
+                                    <select
+                                        className="h-10 w-full rounded border px-3 text-sm"
+                                        value={selectedGeo}
+                                        onChange={(e) => setSelectedGeo(e.target.value)}
+                                    >
+                                        {(offer.allowed_geos || []).map((geo) => (
+                                            <option key={geo} value={geo}>{geo}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+                            <button
+                                type="button"
+                                onClick={downloadApi}
+                                className="w-full rounded bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                            >
+                                Скачать api.php
+                            </button>
+                        </div>
+                    </div>
                     <div>
                         <div className="text-xs uppercase text-gray-500">GEO</div>
                         <div>{(offer.allowed_geos || []).join(', ') || '—'}</div>

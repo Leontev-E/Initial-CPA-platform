@@ -81,6 +81,7 @@ Route::middleware(['auth', 'verified', 'role:webmaster'])->prefix('webmaster')->
     Route::get('/dashboard', [WebmasterDashboardController::class, 'index'])->name('dashboard');
     Route::get('/offers', [WebmasterOfferController::class, 'index'])->name('offers.index');
     Route::get('/offers/{offer}', [WebmasterOfferController::class, 'show'])->name('offers.show');
+    Route::get('/offers/{offer}/api-script', [WebmasterOfferController::class, 'downloadApiScript'])->name('offers.apiScript');
     Route::get('/leads', [WebmasterLeadController::class, 'index'])->name('leads.index');
     Route::get('/leads/export', [WebmasterLeadController::class, 'export'])->name('leads.export');
     Route::get('/tools', [WebmasterToolController::class, 'index'])->name('tools.index');
