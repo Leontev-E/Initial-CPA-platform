@@ -368,14 +368,14 @@ export default function Index({ offers, categories, filters }) {
                             <h3 className="text-sm font-semibold text-gray-700">Список офферов</h3>
                             <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                                 <input
-                                    className="rounded border px-3 py-2 text-sm"
+                                    className="h-10 rounded border px-3 py-2 text-sm"
                                     placeholder="Поиск по названию"
                                     value={filterForm.data.search}
                                     onChange={(e) => filterForm.setData('search', e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
                                 />
                                 <select
-                                    className="rounded border px-3 py-2 text-sm"
+                                    className="h-10 rounded border px-3 py-2 text-sm"
                                     value={filterForm.data.category_id}
                                     onChange={(e) => {
                                         filterForm.setData('category_id', e.target.value);
@@ -390,7 +390,7 @@ export default function Index({ offers, categories, filters }) {
                                 <div className="flex flex-col gap-1">
                                     <div className="relative">
                                         <input
-                                            className="w-full rounded border px-3 py-2 text-sm"
+                                            className="h-10 w-full rounded border px-3 py-2 text-sm"
                                             placeholder="Добавить GEO в фильтр"
                                             value={filterGeoInput}
                                             onChange={(e) => setFilterGeoInput(e.target.value)}

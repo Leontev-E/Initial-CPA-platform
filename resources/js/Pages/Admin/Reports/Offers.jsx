@@ -64,7 +64,7 @@ export default function Offers({ rows, filters, offers, geos }) {
                             Выгрузить CSV
                         </a>
                     </div>
-                    <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3 items-start">
                         <select
                             className="h-10 rounded border px-3 py-2 text-sm"
                             value={filterForm.data.offer_id}
@@ -94,9 +94,9 @@ export default function Offers({ rows, filters, offers, geos }) {
                                 filterForm.setData('geo', vals);
                                 applyFilters();
                             }}
-                            placeholder="GEO"
+                            placeholder=""
                             emptyLabel="Все GEO"
-                            className="h-full"
+                            className="h-10"
                         />
                         <input
                             type="date"
