@@ -104,7 +104,7 @@ export default function Index({ apiKey, postbacks, logs, filters, eventOptions =
                         </div>
                         <div className="space-y-2 text-sm text-gray-700">
                             <div className="text-xs uppercase text-gray-500">Эндпоинт</div>
-                            <div className="font-mono break-all">POST https://openai-book.store/api/leads</div>
+                            <div className="font-mono break-all">POST https://cpa.boostclicks.ru/api/leads</div>
                             <div className="text-xs uppercase text-gray-500">Заголовок</div>
                             <div className="font-mono break-all">X-API-KEY: {apiKey.key}</div>
                             <div className="text-xs uppercase text-gray-500">Тело запроса</div>

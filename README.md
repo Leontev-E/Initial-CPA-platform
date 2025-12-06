@@ -1,16 +1,16 @@
-# CPA Platform (openai-book.store)
+# CPA Platform (cpa.boostclicks.ru)
 
 ## 📌 О проекте (RU)
 Единый монолит (Laravel + React/Inertia + Tailwind) для CPA-платформы с двумя кабинетами:
 - **Админ ПП**: дашборд KPI, CRUD категорий/офферов, управление лидами/ставками, вебмастерами, выплатами, отчёты (офферы/вебмастера/GEO, CSV).
 - **Вебмастер**: дашборд с балансом, список офферов с индивидуальными ставками, статистика лидов, инструменты (API-ключ, постбеки), заявки на выплаты.
-- **API вебмастера**: `POST https://openai-book.store/api/leads` с заголовком `X-API-KEY`.
+- **API вебмастера**: `POST https://cpa.boostclicks.ru/api/leads` с заголовком `X-API-KEY`.
 
 ## 🛠️ Стек
 - PHP 8.2, Laravel 12, Inertia, Sanctum
 - PostgreSQL 14+ (основная БД)
 - React + Tailwind + Vite (сборка в `public/build`)
-- Nginx + PHP-FPM, HTTPS `https://openai-book.store`
+- Nginx + PHP-FPM, HTTPS `https://cpa.boostclicks.ru`
 
 ## 🚀 Функционал
 - **Роли и безопасность**: `admin`, `webmaster`, блокировка `is_active`, трекинг `last_login_at/last_activity_at`.
@@ -23,7 +23,7 @@
 
 ## 📡 API (приём лида)
 ```
-POST https://openai-book.store/api/leads
+POST https://cpa.boostclicks.ru/api/leads
 Headers: X-API-KEY: <ключ вебмастера>
 Body (JSON): {
   "offer_id": 1,
@@ -67,7 +67,7 @@ cp .env.example .env
 php artisan key:generate --show   # подставить в APP_KEY
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://openai-book.store
+APP_URL=https://cpa.boostclicks.ru
 DB_DATABASE=<db>
 DB_USERNAME=<user>
 DB_PASSWORD=<pass>
@@ -77,7 +77,7 @@ DB_PORT=5432
 DB_SCHEMA=public
 SESSION_DRIVER=database
 QUEUE_CONNECTION=database
-SANCTUM_STATEFUL_DOMAINS=openai-book.store
+SANCTUM_STATEFUL_DOMAINS=cpa.boostclicks.ru
 ```
 4) Миграции/сиды, оптимизация  
 ```
@@ -91,16 +91,16 @@ chown -R www-data:www-data storage bootstrap/cache
 ```
 server {
   listen 80;
-  server_name openai-book.store;
+  server_name cpa.boostclicks.ru;
   return 301 https://$host$request_uri;
 }
 server {
   listen 443 ssl;
-  server_name openai-book.store;
+  server_name cpa.boostclicks.ru;
   root /var/www/openai-book.store/public;
   index index.php;
-  ssl_certificate /etc/letsencrypt/live/openai-book.store/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/openai-book.store/privkey.pem;
+  ssl_certificate /etc/letsencrypt/live/cpa.boostclicks.ru/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/cpa.boostclicks.ru/privkey.pem;
   location / { try_files $uri $uri/ /index.php?$query_string; }
   location ~ \.php$ {
     include snippets/fastcgi-php.conf;
@@ -114,7 +114,7 @@ server {
 Смените пароли сразу.
 
 ## 📘 English (short)
-Monolith CPA platform on Laravel + React (Inertia) + Tailwind. Roles: admin/webmaster. Features: offers/categories CRUD, leads with statuses, per-webmaster payouts, balances & payout requests, reports (offers/webmasters/GEO), API intake `POST https://openai-book.store/api/leads` with `X-API-KEY`. Stack: PHP 8.2, Laravel 12, PostgreSQL 14+, Nginx + PHP-FPM, React/Tailwind build via Vite. Install: clone, `composer install --no-dev`, `npm ci && npm run build`, set `.env` (production, DB creds, APP_URL=https://openai-book.store, DB_CONNECTION=pgsql, DB_HOST/PORT/DB/USER/PASSWORD/SCHEMA), `php artisan migrate --seed`, cache config/routes/views, configure Nginx as above. Default seeded logins: admin `admin@cpa.test` / `password`, webmaster `webmaster@cpa.test` / `password`.
+Monolith CPA platform on Laravel + React (Inertia) + Tailwind. Roles: admin/webmaster. Features: offers/categories CRUD, leads with statuses, per-webmaster payouts, balances & payout requests, reports (offers/webmasters/GEO), API intake `POST https://cpa.boostclicks.ru/api/leads` with `X-API-KEY`. Stack: PHP 8.2, Laravel 12, PostgreSQL 14+, Nginx + PHP-FPM, React/Tailwind build via Vite. Install: clone, `composer install --no-dev`, `npm ci && npm run build`, set `.env` (production, DB creds, APP_URL=https://cpa.boostclicks.ru, DB_CONNECTION=pgsql, DB_HOST/PORT/DB/USER/PASSWORD/SCHEMA), `php artisan migrate --seed`, cache config/routes/views, configure Nginx as above. Default seeded logins: admin `admin@cpa.test` / `password`, webmaster `webmaster@cpa.test` / `password`.
 
 ## Автор
 BoostClicks — Евгений Леонтьев — https://t.me/boostclicks  

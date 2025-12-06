@@ -267,13 +267,17 @@ export default function Index({ offers, categories, filters }) {
                             />
                         </div>
                         <div className="rounded-lg border border-slate-200 p-3 space-y-2">
-                            <div className="text-xs font-semibold text-gray-600">Заметки для ПП</div>
+                            <div className="flex items-center justify-between text-xs font-semibold text-gray-600">
+                                <span>Заметки для ПП</span>
+                                <span className="rounded-full bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700">видит вебмастер</span>
+                            </div>
                             <textarea
                                 className="w-full rounded-lg border px-3 py-2"
-                                placeholder="Примечание для партнерской программы"
+                                placeholder="Ключевая инфа, которую увидит вебмастер при просмотре оффера"
                                 value={data.notes}
                                 onChange={(e) => setData('notes', e.target.value)}
                             />
+                            <div className="text-xs text-gray-500">Используйте для акцентов: дедлайны, нюансы трафика, что важно знать вебмастеру.</div>
                         </div>
                         <div className="rounded-lg border border-slate-200 p-3 space-y-2">
                             <div className="text-xs font-semibold text-gray-600">Материалы</div>

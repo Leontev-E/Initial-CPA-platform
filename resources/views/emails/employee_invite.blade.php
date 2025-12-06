@@ -30,7 +30,7 @@
             <div class="text"><strong>Логин (email):</strong> <span class="mono">{{ $employee->email }}</span></div>
             <div class="text"><strong>Пароль:</strong> <span class="mono">{{ $password }}</span></div>
         </div>
-        <p class="text">Перейдите на <a href="https://openai-book.store">https://openai-book.store</a> и войдите, используя данные выше.</p>
+        <p class="text">Перейдите на <a href="https://cpa.boostclicks.ru">https://cpa.boostclicks.ru</a> и войдите, используя данные выше.</p>
         <div class="footer">
             BoostClicks — <a href="https://boostclicks.ru">https://boostclicks.ru</a> — <a href="https://t.me/boostclicks">https://t.me/boostclicks</a>
         </div>

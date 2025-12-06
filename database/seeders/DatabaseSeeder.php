@@ -129,7 +129,7 @@ class DatabaseSeeder extends Seeder
         PostbackSetting::create([
             'webmaster_id' => $webmaster->id,
             'event' => 'lead',
-            'url' => 'https://openai-book.store/postback/lead',
+            'url' => 'https://cpa.boostclicks.ru/postback/lead',
         ]);
 
         PayoutRequest::create([
