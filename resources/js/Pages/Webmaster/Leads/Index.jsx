@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import GeoMultiSelect from '@/Components/GeoMultiSelect';
+import { Head, router, useForm } from '@inertiajs/react';
 
 const statuses = [
     { value: 'new', label: 'Новый' },
@@ -10,6 +11,39 @@ const statuses = [
 ];
 
 export default function Index({ leads, offers, filters, summary }) {
+    const filterForm = useForm({
+        status: filters.status || '',
+        offer_id: filters.offer_id || '',
+        geos: filters.geos || (filters.geo ? [filters.geo] : []),
+        subid: filters.subid || '',
+        utm_source: filters.utm_source || '',
+        utm_campaign: filters.utm_campaign || '',
+        date_from: filters.date_from || '',
+        date_to: filters.date_to || '',
+    });
+
+    const applyFilters = () => {
+        router.get(route('webmaster.leads.index'), filterForm.data, {
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
+        });
+    };
+
+    const resetFilters = () => {
+        filterForm.setData({
+            status: '',
+            offer_id: '',
+            geos: [],
+            subid: '',
+            utm_source: '',
+            utm_campaign: '',
+            date_from: '',
+            date_to: '',
+        });
+        router.get(route('webmaster.leads.index'), {}, { preserveScroll: true, preserveState: true, replace: true });
+    };
+
     return (
         <AuthenticatedLayout
             header={<h2 className="text-xl font-semibold text-gray-800">Статистика</h2>}
@@ -23,26 +57,83 @@ export default function Index({ leads, offers, filters, summary }) {
                 <Stat title="Payout" value={`${summary.payout} $`} />
             </div>
 
-            <form method="get" className="mt-4 rounded-xl bg-white p-4 shadow-sm">
-                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 md:grid-cols-7">
-                    <FilterSelect name="status" options={statuses} placeholder="Статус" defaultValue={filters.status} labelKey="label" valueKey="value" />
-                    <FilterSelect name="offer_id" options={offers} placeholder="Оффер" defaultValue={filters.offer_id} labelKey="name" valueKey="id" />
-                    <FilterField name="geo" placeholder="GEO" defaultValue={filters.geo} />
-                    <FilterField name="subid" placeholder="Subid" defaultValue={filters.subid} />
-                    <FilterField name="utm_source" placeholder="UTM Source" defaultValue={filters.utm_source} />
-                    <FilterField name="utm_campaign" placeholder="UTM Campaign" defaultValue={filters.utm_campaign} />
-                    <div className="flex items-end">
-                        <button className="w-full rounded bg-indigo-600 px-3 py-2 text-xs font-semibold text-white">
-                            Фильтр
+            <div className="mt-4 rounded-xl bg-white p-4 shadow-sm">
+                <div className="flex flex-wrap items-end gap-3 text-sm">
+                    <FilterSelect
+                        label="Статус"
+                        value={filterForm.data.status}
+                        onChange={(val) => filterForm.setData('status', val)}
+                        options={statuses}
+                        placeholder="Все"
+                    />
+                    <FilterSelect
+                        label="Оффер"
+                        value={filterForm.data.offer_id}
+                        onChange={(val) => filterForm.setData('offer_id', val)}
+                        options={offers}
+                        labelKey="name"
+                        valueKey="id"
+                        placeholder="Все"
+                    />
+                    <div className="min-w-[220px] flex-1">
+                        <GeoMultiSelect
+                            value={filterForm.data.geos}
+                            onChange={(vals) => filterForm.setData('geos', vals)}
+                            placeholder="GEO"
+                            emptyLabel="Все GEO"
+                            className="h-10"
+                        />
+                    </div>
+                    <FilterField
+                        label="Subid"
+                        value={filterForm.data.subid}
+                        onChange={(e) => filterForm.setData('subid', e.target.value)}
+                    />
+                    <FilterField
+                        label="UTM Source"
+                        value={filterForm.data.utm_source}
+                        onChange={(e) => filterForm.setData('utm_source', e.target.value)}
+                    />
+                    <FilterField
+                        label="UTM Campaign"
+                        value={filterForm.data.utm_campaign}
+                        onChange={(e) => filterForm.setData('utm_campaign', e.target.value)}
+                    />
+                    <FilterField
+                        label="Дата от"
+                        type="date"
+                        value={filterForm.data.date_from}
+                        onChange={(e) => filterForm.setData('date_from', e.target.value)}
+                    />
+                    <FilterField
+                        label="Дата до"
+                        type="date"
+                        value={filterForm.data.date_to}
+                        onChange={(e) => filterForm.setData('date_to', e.target.value)}
+                    />
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={applyFilters}
+                            className="h-10 rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                        >
+                            Применить
+                        </button>
+                        <button
+                            type="button"
+                            onClick={resetFilters}
+                            className="h-10 rounded border px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                        >
+                            Сбросить
                         </button>
                     </div>
                 </div>
-            </form>
+            </div>
 
             <div className="mt-4 overflow-x-auto rounded-xl bg-white shadow-sm hidden md:block">
                 <div className="flex justify-end px-3 py-3">
                     <a
-                        href={route('webmaster.leads.export', filters)}
+                        href={route('webmaster.leads.export', filterForm.data)}
                         className="rounded bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
                     >
                         Выгрузить CSV
@@ -104,40 +195,38 @@ function Stat({ title, value }) {
     );
 }
 
-function FilterField({ name, defaultValue, placeholder }) {
+function FilterField({ label, value, onChange, type = 'text' }) {
     return (
-        <label className="flex flex-col">
-            <span className="text-[10px] uppercase text-gray-400">
-                {placeholder}
-            </span>
+        <label className="flex flex-col min-w-[160px]">
+            <span className="text-[11px] uppercase text-gray-500">{label}</span>
             <input
-                name={name}
-                defaultValue={defaultValue}
-                className="rounded border px-2 py-1 text-sm"
+                type={type}
+                value={value}
+                onChange={onChange}
+                className="h-10 rounded border px-3 text-sm"
             />
         </label>
     );
 }
 
 function FilterSelect({
-    name,
+    label,
+    value,
+    onChange,
     options,
-    placeholder,
-    defaultValue,
     labelKey = 'label',
     valueKey = 'value',
+    placeholder = 'Все',
 }) {
     return (
-        <label className="flex flex-col">
-            <span className="text-[10px] uppercase text-gray-400">
-                {placeholder}
-            </span>
+        <label className="flex flex-col min-w-[180px]">
+            <span className="text-[11px] uppercase text-gray-500">{label}</span>
             <select
-                name={name}
-                defaultValue={defaultValue || ''}
-                className="rounded border px-2 py-1 text-sm"
+                value={value || ''}
+                onChange={(e) => onChange(e.target.value)}
+                className="h-10 rounded border px-3 text-sm"
             >
-                <option value="">Все</option>
+                <option value="">{placeholder}</option>
                 {options.map((o) => (
                     <option key={o[valueKey] || o} value={o[valueKey] || o}>
                         {o[labelKey] || o}

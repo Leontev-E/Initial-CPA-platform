@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import geosOptions from '@/data/geos.json';
+import GeoMultiSelect from '@/Components/GeoMultiSelect';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useEffect } from 'react';
 
@@ -36,8 +36,7 @@ export default function Index({ offers, filters, categories, geos }) {
     const hasActiveFilters = Boolean(
         filterForm.data.search ||
         filterForm.data.category_id ||
-        (filterForm.data.geos && filterForm.data.geos.length > 0) ||
-        filterForm.data.per_page !== 12
+        (filterForm.data.geos && filterForm.data.geos.length > 0)
     );
 
     return (
@@ -76,40 +75,16 @@ export default function Index({ offers, filters, categories, geos }) {
                         </select>
                     </div>
                     <div className="flex-1 min-w-[220px]">
-                        <div className="text-[11px] uppercase text-gray-500">GEO</div>
-                        <select
-                            multiple
-                            className="h-10 w-full rounded border px-3 text-sm"
+                        <GeoMultiSelect
                             value={filterForm.data.geos}
-                            onChange={(e) =>
-                                filterForm.setData(
-                                    'geos',
-                                    Array.from(e.target.selectedOptions).map((o) => o.value),
-                                )
-                            }
-                            onBlur={applyFilters}
-                        >
-                            {geosOptions.map((geo) => (
-                                <option key={geo.value} value={geo.value}>
-                                    {geo.value} — {geo.text}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="min-w-[120px]">
-                        <div className="text-[11px] uppercase text-gray-500">На странице</div>
-                        <select
-                            className="h-10 w-full rounded border px-3 text-sm"
-                            value={filterForm.data.per_page}
-                            onChange={(e) => {
-                                filterForm.setData('per_page', Number(e.target.value));
+                            onChange={(vals) => {
+                                filterForm.setData('geos', vals);
                                 applyFilters();
                             }}
-                        >
-                            <option value={12}>12</option>
-                            <option value={24}>24</option>
-                            <option value={48}>48</option>
-                        </select>
+                            placeholder="GEO"
+                            emptyLabel="Все GEO"
+                            className="h-10"
+                        />
                     </div>
                     {hasActiveFilters && (
                         <button
@@ -119,7 +94,6 @@ export default function Index({ offers, filters, categories, geos }) {
                                     search: '',
                                     category_id: '',
                                     geos: [],
-                                    per_page: 12,
                                 });
                                 applyFilters();
                             }}
@@ -170,8 +144,25 @@ export default function Index({ offers, filters, categories, geos }) {
                 )}
             </div>
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">
-                <div>
-                    Показано {offers.from}–{offers.to} из {offers.total}
+                <div className="flex items-center gap-3">
+                    <div>
+                        Показано {offers.from}–{offers.to} из {offers.total}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[12px] text-gray-500">На странице</span>
+                        <select
+                            className="h-9 rounded border px-2 text-sm"
+                            value={filterForm.data.per_page}
+                            onChange={(e) => {
+                                filterForm.setData('per_page', Number(e.target.value));
+                                applyFilters();
+                            }}
+                        >
+                            <option value={12}>12</option>
+                            <option value={24}>24</option>
+                            <option value={48}>48</option>
+                        </select>
+                    </div>
                 </div>
                 <div className="flex flex-wrap gap-1">
                     {offers.links?.map((link, idx) => {

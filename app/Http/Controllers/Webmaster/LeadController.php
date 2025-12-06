@@ -15,10 +15,16 @@ class LeadController extends Controller
         $user = $request->user();
         $query = Lead::where('webmaster_id', $user->id)->with('offer');
 
-        foreach (['status', 'offer_id', 'geo', 'subid', 'utm_source', 'utm_campaign'] as $filter) {
+        $geoFilters = array_filter(array_map('trim', (array) $request->input('geos', $request->input('geo'))));
+
+        foreach (['status', 'offer_id', 'subid', 'utm_source', 'utm_campaign'] as $filter) {
             if ($request->filled($filter)) {
                 $query->where($filter, $request->string($filter));
             }
+        }
+
+        if (! empty($geoFilters)) {
+            $query->whereIn('geo', $geoFilters);
         }
 
         if ($request->filled('date_from')) {
@@ -43,7 +49,7 @@ class LeadController extends Controller
         return Inertia::render('Webmaster/Leads/Index', [
             'leads' => $leads,
             'offers' => Offer::where('is_active', true)->orderBy('name')->get(['id', 'name']),
-            'filters' => $request->only(['status', 'offer_id', 'geo', 'subid', 'utm_source', 'utm_campaign', 'date_from', 'date_to']),
+            'filters' => $request->only(['status', 'offer_id', 'geos', 'subid', 'utm_source', 'utm_campaign', 'date_from', 'date_to']),
             'summary' => $summary,
         ]);
     }
@@ -53,10 +59,16 @@ class LeadController extends Controller
         $user = $request->user();
         $query = Lead::where('webmaster_id', $user->id);
 
-        foreach (['status', 'offer_id', 'geo', 'subid', 'utm_source', 'utm_campaign'] as $filter) {
+        $geoFilters = array_filter(array_map('trim', (array) $request->input('geos', $request->input('geo'))));
+
+        foreach (['status', 'offer_id', 'subid', 'utm_source', 'utm_campaign'] as $filter) {
             if ($request->filled($filter)) {
                 $query->where($filter, $request->string($filter));
             }
+        }
+
+        if (! empty($geoFilters)) {
+            $query->whereIn('geo', $geoFilters);
         }
 
         if ($request->filled('date_from')) {
