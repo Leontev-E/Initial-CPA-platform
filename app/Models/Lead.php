@@ -7,6 +7,8 @@ use App\Jobs\SendLeadWebhooksJob;
 
 class Lead extends Model
 {
+    public ?string $fromStatusForWebhook = null;
+
     protected $fillable = [
         'offer_id',
         'webmaster_id',

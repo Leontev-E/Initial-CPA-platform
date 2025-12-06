@@ -17,6 +17,16 @@ class LeadWebhookLog extends Model
         'status_code',
         'response_body',
         'error_message',
+        'direction',
+        'status_before',
+        'status_after',
+        'payload',
+        'ip',
+        'user_agent',
+    ];
+
+    protected $casts = [
+        'payload' => 'array',
     ];
 
     public function webhook()

@@ -21,7 +21,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 { label: 'Вебмастера', name: 'admin.webmasters.index', section: 'webmasters' },
                 { label: 'Аналитика', name: 'admin.reports.offers', section: 'reports' },
                 { label: 'Выплаты', name: 'admin.payouts.index', section: 'payouts', badge: auth.pendingPayouts },
-                { label: 'Вебхуки лидов', name: 'admin.webhooks.index', section: 'webhooks' },
+                { label: 'Вебхуки', name: 'admin.webhooks.index', section: 'webhooks' },
             ];
         }
 

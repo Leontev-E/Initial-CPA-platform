@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, router } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 
 const statuses = [
     { value: 'new', label: 'Новый' },
@@ -27,7 +28,7 @@ const fieldOptions = [
     { value: 'shipping_address', label: 'Адрес доставки' },
 ];
 
-export default function Index({ webhooks, logs = null, webhookOptions = [], filters = {} }) {
+export default function Index({ webhooks, logs = null, webhookOptions = [], filters = {}, incoming = {} }) {
     const createForm = useForm({
         name: '',
         url: '',
@@ -43,6 +44,30 @@ export default function Index({ webhooks, logs = null, webhookOptions = [], filt
         result: filters?.result ?? '',
         webhook_id: filters?.webhook_id ?? '',
     });
+
+    const incomingFilterForm = useForm({
+        incoming_search: incoming?.filters?.search ?? '',
+        incoming_result: incoming?.filters?.result ?? '',
+        incoming_lead_id: incoming?.filters?.lead_id ?? '',
+    });
+
+    const initialTab = useMemo(() => {
+        if (typeof window === 'undefined') return 'outgoing';
+        const urlTab = new URL(window.location.href).searchParams.get('tab');
+        return urlTab === 'incoming' ? 'incoming' : 'outgoing';
+    }, []);
+
+    const [activeTab, setActiveTab] = useState(initialTab);
+    const [showToken, setShowToken] = useState(false);
+
+    const setTab = (tab) => {
+        setActiveTab(tab);
+        if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', tab);
+            window.history.replaceState({}, '', url);
+        }
+    };
 
     const submit = (e) => {
         e.preventDefault();
@@ -60,6 +85,7 @@ export default function Index({ webhooks, logs = null, webhookOptions = [], filt
                 event: filterForm.data.event,
                 result: filterForm.data.result,
                 webhook_id: filterForm.data.webhook_id,
+                tab: 'outgoing',
             },
             { preserveScroll: true, preserveState: true },
         );
@@ -69,9 +95,43 @@ export default function Index({ webhooks, logs = null, webhookOptions = [], filt
         filterForm.setData({ search: '', event: '', result: '', webhook_id: '' });
         router.get(
             route('admin.webhooks.index'),
-            { search: '', event: '', result: '', webhook_id: '' },
+            { search: '', event: '', result: '', webhook_id: '', tab: 'outgoing' },
             { preserveScroll: true, preserveState: true },
         );
+    };
+
+    const submitIncomingFilters = (e) => {
+        e.preventDefault();
+        router.get(
+            route('admin.webhooks.index'),
+            {
+                incoming_search: incomingFilterForm.data.incoming_search,
+                incoming_result: incomingFilterForm.data.incoming_result,
+                incoming_lead_id: incomingFilterForm.data.incoming_lead_id,
+                tab: 'incoming',
+            },
+            { preserveScroll: true, preserveState: true },
+        );
+    };
+
+    const resetIncomingFilters = () => {
+        incomingFilterForm.setData({ incoming_search: '', incoming_result: '', incoming_lead_id: '' });
+        router.get(
+            route('admin.webhooks.index'),
+            {
+                incoming_search: '',
+                incoming_result: '',
+                incoming_lead_id: '',
+                tab: 'incoming',
+            },
+            { preserveScroll: true, preserveState: true },
+        );
+    };
+
+    const copyToClipboard = (text) => {
+        if (navigator?.clipboard?.writeText) {
+            navigator.clipboard.writeText(text);
+        }
     };
 
     const formatDate = (value) => {
@@ -87,10 +147,78 @@ export default function Index({ webhooks, logs = null, webhookOptions = [], filt
     };
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800">Вебхуки лидов</h2>}>
-            <Head title="Вебхуки лидов" />
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800">Вебхуки</h2>}>
+            <Head title="Вебхуки" />
+
+            <div className="mb-4 flex flex-wrap gap-2 rounded-xl bg-white p-2 shadow-sm">
+                <button
+                    type="button"
+                    onClick={() => setTab('outgoing')}
+                    className={`rounded-lg px-4 py-2 text-sm font-semibold ${
+                        activeTab === 'outgoing' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 border'
+                    }`}
+                >
+                    Исходящие вебхуки
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setTab('incoming')}
+                    className={`rounded-lg px-4 py-2 text-sm font-semibold ${
+                        activeTab === 'incoming' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 border'
+                    }`}
+                >
+                    Входящие вебхуки
+                </button>
+            </div>
+
+            {activeTab === 'outgoing' && (
+                <OutgoingSection
+                    createForm={createForm}
+                    submit={submit}
+                    webhooks={webhooks}
+                    filterForm={filterForm}
+                    submitFilters={submitFilters}
+                    resetFilters={resetFilters}
+                    webhookOptions={webhookOptions}
+                    logs={logs}
+                    router={router}
+                    formatDate={formatDate}
+                />
+            )}
+
+            {activeTab === 'incoming' && (
+                <IncomingSection
+                    incoming={incoming}
+                    incomingFilterForm={incomingFilterForm}
+                    submitIncomingFilters={submitIncomingFilters}
+                    resetIncomingFilters={resetIncomingFilters}
+                    router={router}
+                    formatDate={formatDate}
+                    showToken={showToken}
+                    setShowToken={setShowToken}
+                    copyToClipboard={copyToClipboard}
+                />
+            )}
+        </AuthenticatedLayout>
+    );
+}
+
+function OutgoingSection({
+    createForm,
+    submit,
+    webhooks,
+    filterForm,
+    submitFilters,
+    resetFilters,
+    webhookOptions,
+    logs,
+    router,
+    formatDate,
+}) {
+    return (
+        <>
             <div className="mb-4 rounded-xl bg-white p-4 shadow-sm text-sm text-gray-700">
-                <div className="text-sm font-semibold text-gray-800">Документация</div>
+                <div className="text-sm font-semibold text-gray-800">Документация по исходящим вебхукам</div>
                 <ul className="mt-2 list-disc space-y-1 pl-4">
                     <li>Отправляем вебхук после создания лида и при смене статуса.</li>
                     <li>Метод: выберите GET (макросы в URL + query) или POST (form-data).</li>
@@ -206,7 +334,7 @@ export default function Index({ webhooks, logs = null, webhookOptions = [], filt
 
             <div className="mt-6 rounded-xl bg-white p-4 shadow-sm">
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <h3 className="text-sm font-semibold text-gray-700">Лог вебхуков (последние 10 дней)</h3>
+                    <h3 className="text-sm font-semibold text-gray-700">Лог исходящих вебхуков (последние 10 дней)</h3>
                 </div>
                 <form onSubmit={submitFilters} className="mt-3 grid gap-2 text-sm md:grid-cols-5">
                     <div className="md:col-span-2">
@@ -329,7 +457,236 @@ export default function Index({ webhooks, logs = null, webhookOptions = [], filt
                     ))}
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </>
+    );
+}
+
+function IncomingSection({
+    incoming,
+    incomingFilterForm,
+    submitIncomingFilters,
+    resetIncomingFilters,
+    router,
+    formatDate,
+    showToken,
+    setShowToken,
+    copyToClipboard,
+}) {
+    const incomingUrl = incoming?.url || '';
+    const incomingToken = incoming?.token || '';
+
+    const augmentUrl = (url) => {
+        if (!url) return null;
+        const u = new URL(url, window.location.origin);
+        u.searchParams.set('tab', 'incoming');
+        return u.toString();
+    };
+
+    return (
+        <>
+            <div className="mb-4 rounded-xl bg-white p-4 shadow-sm text-sm text-gray-700">
+                <div className="text-sm font-semibold text-gray-800">Входящие вебхуки</div>
+                <div className="mt-2 space-y-2 text-gray-700">
+                    <p>Через эту секцию можно обновлять статусы лидов из внешних CRM и колл-центров.</p>
+                    <ul className="list-disc space-y-1 pl-4">
+                        <li>Метод: POST, формат: JSON.</li>
+                        <li>Обязательные поля: <code>lead_id</code>, <code>status</code> (new, in_work, sale, cancel, trash).</li>
+                        <li>Опционально: <code>comment</code> — комментарий оператора, <code>source</code> — источник события.</li>
+                        <li>Авторизация: заголовок <code>X-Webhook-Token</code> или параметр <code>token</code>.</li>
+                    </ul>
+                    <div className="rounded border border-indigo-100 bg-indigo-50 p-3 text-xs text-indigo-800">
+                        <div className="font-semibold">Пример запроса (curl)</div>
+                        <pre className="mt-2 whitespace-pre-wrap break-all">
+{`curl -X POST "${incomingUrl || 'https://cpa.boostclicks.ru/api/webhooks/leads/status'}" \\
+  -H "Content-Type: application/json" \\
+  -H "X-Webhook-Token: ${incomingToken || '<ВАШ_ТОКЕН>'}" \\
+  -d '{
+    "lead_id": 123,
+    "status": "sale",
+    "comment": "Подтверждён колл-центром"
+  }'`}
+                        </pre>
+                        <div className="mt-2 text-gray-700">Успешный ответ: {"{ success: true, lead_id, old_status, new_status }"}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="rounded-xl bg-white p-4 shadow-sm">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <div className="text-sm font-semibold text-gray-800">Настройки входящего вебхука</div>
+                        <div className="text-xs text-gray-500">URL и токен для вашей CRM</div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => router.post(route('admin.webhooks.incoming.token'), { tab: 'incoming' }, { preserveScroll: true, preserveState: true })}
+                        className="rounded bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                    >
+                        Сгенерировать новый токен
+                    </button>
+                </div>
+
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <div className="space-y-1">
+                        <div className="text-[11px] uppercase text-gray-500">URL</div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                className="w-full rounded border px-3 py-2 text-sm"
+                                value={incomingUrl}
+                                readOnly
+                            />
+                            <button
+                                type="button"
+                                onClick={() => incomingUrl && copyToClipboard(incomingUrl)}
+                                className="rounded border px-2 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                            >
+                                Копировать
+                            </button>
+                        </div>
+                    </div>
+                    <div className="space-y-1">
+                        <div className="text-[11px] uppercase text-gray-500">Секретный токен</div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                className="w-full rounded border px-3 py-2 text-sm"
+                                type={showToken ? 'text' : 'password'}
+                                value={incomingToken}
+                                readOnly
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowToken(!showToken)}
+                                className="rounded border px-2 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                            >
+                                {showToken ? 'Скрыть' : 'Показать'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => incomingToken && copyToClipboard(incomingToken)}
+                                className="rounded border px-2 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                            >
+                                Копировать
+                            </button>
+                        </div>
+                        {!incomingToken && (
+                            <div className="text-xs text-amber-600">Токен пока не создан. Нажмите «Сгенерировать новый токен».</div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-6 rounded-xl bg-white p-4 shadow-sm">
+                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <h3 className="text-sm font-semibold text-gray-700">Лог входящих вебхуков (последние 10 дней)</h3>
+                </div>
+
+                <form onSubmit={submitIncomingFilters} className="mt-3 grid gap-2 text-sm md:grid-cols-5">
+                    <div className="md:col-span-2">
+                        <input
+                            className="w-full rounded border px-3 py-2"
+                            placeholder="Поиск по URL, payload или статусу"
+                            value={incomingFilterForm.data.incoming_search}
+                            onChange={(e) => incomingFilterForm.setData('incoming_search', e.target.value)}
+                        />
+                    </div>
+                    <input
+                        className="rounded border px-3 py-2"
+                        placeholder="Lead ID"
+                        value={incomingFilterForm.data.incoming_lead_id}
+                        onChange={(e) => incomingFilterForm.setData('incoming_lead_id', e.target.value)}
+                    />
+                    <select
+                        className="rounded border px-3 py-2"
+                        value={incomingFilterForm.data.incoming_result}
+                        onChange={(e) => incomingFilterForm.setData('incoming_result', e.target.value)}
+                    >
+                        <option value="">Любой результат</option>
+                        <option value="ok">Успешно</option>
+                        <option value="error">С ошибкой</option>
+                    </select>
+                    <div className="flex gap-2 md:col-span-5">
+                        <button
+                            type="submit"
+                            className="rounded bg-indigo-600 px-3 py-2 font-semibold text-white hover:bg-indigo-700"
+                        >
+                            Применить
+                        </button>
+                        <button
+                            type="button"
+                            onClick={resetIncomingFilters}
+                            className="rounded border px-3 py-2 font-semibold text-gray-700 hover:bg-gray-50"
+                        >
+                            Сбросить
+                        </button>
+                    </div>
+                </form>
+
+                <div className="mt-3 overflow-x-auto rounded border">
+                    <table className="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead className="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-600">
+                            <tr>
+                                <th className="px-3 py-2">Дата</th>
+                                <th className="px-3 py-2">Lead ID</th>
+                                <th className="px-3 py-2">Статус до</th>
+                                <th className="px-3 py-2">Статус после</th>
+                                <th className="px-3 py-2">IP</th>
+                                <th className="px-3 py-2">Результат</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                            {incoming?.logs?.data?.map((log) => (
+                                <tr key={log.id} className="text-gray-700">
+                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-600">
+                                        {formatDate(log.created_at)}
+                                    </td>
+                                    <td className="px-3 py-2">{log.lead_id ?? '—'}</td>
+                                    <td className="px-3 py-2">{log.status_before ?? '—'}</td>
+                                    <td className="px-3 py-2">{log.status_after ?? '—'}</td>
+                                    <td className="px-3 py-2">{log.ip ?? '—'}</td>
+                                    <td className="px-3 py-2">
+                                        {log.error_message ? (
+                                            <span className="rounded bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
+                                                Ошибка
+                                            </span>
+                                        ) : (
+                                            <span className="rounded bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">
+                                                OK
+                                            </span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                            {(incoming?.logs?.data?.length ?? 0) === 0 && (
+                                <tr>
+                                    <td className="px-3 py-4 text-center text-xs text-gray-500" colSpan={6}>
+                                        Нет записей
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                    {incoming?.logs?.links?.map((link, idx) => (
+                        <button
+                            key={idx}
+                            disabled={!link.url}
+                            onClick={() => {
+                                const url = augmentUrl(link.url);
+                                if (url) {
+                                    router.visit(url, { preserveScroll: true, preserveState: true });
+                                }
+                            }}
+                            className={`rounded px-3 py-1 font-semibold ${
+                                link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 border'
+                            } ${!link.url ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-50'}`}
+                        >
+                            {link.label?.replace(/&laquo;|&raquo;/g, '').trim() || idx + 1}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </>
     );
 }
 

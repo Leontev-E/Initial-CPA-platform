@@ -50,11 +50,14 @@ class LeadWebhookDispatcher
                 'lead_id' => $lead->id,
                 'offer_id' => $lead->offer_id,
                 'event' => $lead->status,
+                'status_before' => $fromStatus,
+                'status_after' => $lead->status,
                 'method' => $method,
                 'url' => $expandedUrl,
                 'status_code' => $statusCode,
                 'response_body' => $responseBody,
                 'error_message' => $error,
+                'direction' => 'outgoing',
             ]);
         }
     }

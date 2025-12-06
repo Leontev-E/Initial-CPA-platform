@@ -35,6 +35,7 @@ class User extends Authenticatable
         'permissions',
         'invited_by',
         'min_payout',
+        'incoming_webhook_token',
     ];
 
     /**

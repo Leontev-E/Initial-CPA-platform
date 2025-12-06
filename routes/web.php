@@ -70,6 +70,7 @@ Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix(
     Route::post('webhooks', [AdminLeadWebhookController::class, 'store'])->name('webhooks.store');
     Route::patch('webhooks/{webhook}', [AdminLeadWebhookController::class, 'update'])->name('webhooks.update');
     Route::delete('webhooks/{webhook}', [AdminLeadWebhookController::class, 'destroy'])->name('webhooks.destroy');
+    Route::post('webhooks/incoming/token', [AdminLeadWebhookController::class, 'regenerateIncomingToken'])->name('webhooks.incoming.token');
 });
 
 Route::post('webmasters/stop-impersonate', [AdminWebmasterController::class, 'stopImpersonate'])

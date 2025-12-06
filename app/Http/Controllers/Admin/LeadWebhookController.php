@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\LeadWebhook;
 use App\Models\LeadWebhookLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class LeadWebhookController extends Controller
@@ -17,6 +19,7 @@ class LeadWebhookController extends Controller
             ->get();
 
         $logs = LeadWebhookLog::with('webhook:id,name')
+            ->where('direction', 'outgoing')
             ->where('user_id', $request->user()->id)
             ->where('created_at', '>=', now()->subDays(10))
             ->when($request->filled('search'), function ($query) use ($request) {
@@ -42,6 +45,40 @@ class LeadWebhookController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $incomingFilters = [
+            'search' => $request->query('incoming_search'),
+            'result' => $request->query('incoming_result'),
+            'lead_id' => $request->query('incoming_lead_id'),
+        ];
+
+        $incomingLogs = LeadWebhookLog::query()
+            ->where('direction', 'incoming')
+            ->where('user_id', $request->user()->id)
+            ->where('created_at', '>=', now()->subDays(10))
+            ->when($incomingFilters['search'], function ($query) use ($incomingFilters) {
+                $term = (string) $incomingFilters['search'];
+                $driver = DB::connection()->getDriverName();
+                $payloadColumn = $driver === 'pgsql' ? 'payload::text' : 'payload';
+                $like = $driver === 'pgsql' ? 'ILIKE' : 'LIKE';
+                $query->where(function ($q) use ($term, $payloadColumn, $like) {
+                    $q->where('url', 'like', "%{$term}%")
+                        ->orWhere('status_before', 'like', "%{$term}%")
+                        ->orWhere('status_after', 'like', "%{$term}%")
+                        ->orWhereRaw("CAST({$payloadColumn} AS TEXT) {$like} ?", ["%{$term}%"]);
+                });
+            })
+            ->when($incomingFilters['lead_id'], fn($q) => $q->where('lead_id', $incomingFilters['lead_id']))
+            ->when($incomingFilters['result'], function ($q) use ($incomingFilters) {
+                if ($incomingFilters['result'] === 'ok') {
+                    $q->whereNull('error_message');
+                } elseif ($incomingFilters['result'] === 'error') {
+                    $q->whereNotNull('error_message');
+                }
+            })
+            ->orderByDesc('created_at')
+            ->paginate(20, ['*'], 'incoming_page')
+            ->withQueryString();
+
         return Inertia::render('Admin/Webhooks/Index', [
             'webhooks' => $webhooks,
             'logs' => $logs,
@@ -51,6 +88,12 @@ class LeadWebhookController extends Controller
                 'event' => $request->query('event'),
                 'result' => $request->query('result'),
                 'webhook_id' => $request->query('webhook_id'),
+            ],
+            'incoming' => [
+                'url' => route('api.webhooks.leads.status'),
+                'token' => $request->user()->incoming_webhook_token,
+                'logs' => $incomingLogs,
+                'filters' => $incomingFilters,
             ],
         ]);
     }
@@ -110,5 +153,14 @@ class LeadWebhookController extends Controller
         if ($webhook->user_id !== $request->user()->id) {
             abort(403);
         }
+    }
+
+    public function regenerateIncomingToken(Request $request)
+    {
+        $request->user()->update([
+            'incoming_webhook_token' => Str::random(48),
+        ]);
+
+        return back()->with('success', 'Токен обновлен');
     }
 }
