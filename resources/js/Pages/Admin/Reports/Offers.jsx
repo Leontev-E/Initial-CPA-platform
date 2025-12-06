@@ -66,7 +66,7 @@ export default function Offers({ rows, filters, offers, geos }) {
                     </div>
                     <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                         <select
-                            className="rounded border px-3 py-2 text-sm"
+                            className="h-10 rounded border px-3 py-2 text-sm"
                             value={filterForm.data.offer_id}
                             onChange={(e) => {
                                 filterForm.setData('offer_id', e.target.value);
@@ -79,7 +79,7 @@ export default function Offers({ rows, filters, offers, geos }) {
                             ))}
                         </select>
                         <input
-                            className="rounded border px-3 py-2 text-sm"
+                            className="h-10 rounded border px-3 py-2 text-sm"
                             placeholder="Поиск по вебмастеру/email/Telegram"
                             value={filterForm.data.search}
                             onChange={(e) => {
@@ -96,10 +96,11 @@ export default function Offers({ rows, filters, offers, geos }) {
                             }}
                             placeholder="GEO"
                             emptyLabel="Все GEO"
+                            className="h-full"
                         />
                         <input
                             type="date"
-                            className="rounded border px-3 py-2 text-sm"
+                            className="h-10 rounded border px-3 py-2 text-sm"
                             value={filterForm.data.date_from}
                             onChange={(e) => {
                                 filterForm.setData('date_from', e.target.value);
@@ -108,7 +109,7 @@ export default function Offers({ rows, filters, offers, geos }) {
                         />
                         <input
                             type="date"
-                            className="rounded border px-3 py-2 text-sm"
+                            className="h-10 rounded border px-3 py-2 text-sm"
                             value={filterForm.data.date_to}
                             onChange={(e) => {
                                 filterForm.setData('date_to', e.target.value);
@@ -117,7 +118,7 @@ export default function Offers({ rows, filters, offers, geos }) {
                         />
                         <div className="grid grid-cols-2 gap-2">
                             <select
-                                className="rounded border px-3 py-2 text-sm"
+                                className="h-10 rounded border px-3 py-2 text-sm"
                                 value={filterForm.data.sort}
                                 onChange={(e) => {
                                     filterForm.setData('sort', e.target.value);
@@ -131,7 +132,7 @@ export default function Offers({ rows, filters, offers, geos }) {
                                 <option value="webmaster">По имени</option>
                             </select>
                             <select
-                                className="rounded border px-3 py-2 text-sm"
+                                className="h-10 rounded border px-3 py-2 text-sm"
                                 value={filterForm.data.direction}
                                 onChange={(e) => {
                                     filterForm.setData('direction', e.target.value);

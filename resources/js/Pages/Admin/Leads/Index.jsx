@@ -262,7 +262,7 @@ function FilterField({ name, defaultValue, placeholder, type = 'text' }) {
                 type={type}
                 name={name}
                 defaultValue={defaultValue}
-                className="rounded border px-2 py-1 text-sm"
+                className="h-10 rounded border px-2 py-2 text-sm"
             />
         </label>
     );
@@ -275,7 +275,7 @@ function FilterInput({ name, defaultValue, options, placeholder }) {
             <select
                 name={name}
                 defaultValue={defaultValue || ''}
-                className="rounded border px-2 py-1 text-sm"
+                className="h-10 rounded border px-2 py-2 text-sm"
             >
                 <option value="">Все</option>
                 {options.map((o) => (
