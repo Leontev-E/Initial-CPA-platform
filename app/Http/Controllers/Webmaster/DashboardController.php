@@ -50,8 +50,10 @@ class DashboardController extends Controller
             ->get();
 
         $paid = PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
+        $locked = PayoutRequest::where('webmaster_id', $user->id)->whereIn('status', ['pending', 'in_process'])->sum('amount');
+        $manual = \App\Models\BalanceAdjustment::where('webmaster_id', $user->id)->sum('amount');
         $totalEarned = Lead::where('webmaster_id', $user->id)->where('status', 'sale')->sum('payout');
-        $balance = $totalEarned - $paid;
+        $balance = $totalEarned + $manual - $paid - $locked;
 
         return Inertia::render('Webmaster/Dashboard', [
             'leadsCount' => $leadsCount,
