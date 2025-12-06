@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import geosOptions from '@/data/geos.json';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import { useEffect } from 'react';
 
 export default function Index({ offers, filters, categories, geos }) {
     const filterForm = useForm({
@@ -9,6 +10,20 @@ export default function Index({ offers, filters, categories, geos }) {
         geos: filters?.geos ?? [],
         per_page: filters?.per_page ?? 12,
     });
+
+    useEffect(() => {
+        const url = new URL(window.location.href);
+        ['search', 'category_id', 'geos', 'per_page'].forEach((key) => {
+            const val = url.searchParams.get(key);
+            if (val !== null && key !== 'geos') {
+                filterForm.setData(key, key === 'per_page' ? Number(val) : val);
+            }
+            if (key === 'geos' && url.searchParams.getAll('geos[]').length) {
+                filterForm.setData('geos', url.searchParams.getAll('geos[]'));
+            }
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const applyFilters = () => {
         filterForm.get(route('webmaster.offers.index'), {
@@ -32,66 +47,74 @@ export default function Index({ offers, filters, categories, geos }) {
             <Head title="Офферы" />
 
             <div className="mb-4 rounded-xl bg-white p-4 shadow-sm">
-                <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
-                    <input
-                        className="rounded border px-3 py-2 text-sm"
-                        placeholder="Поиск по ID или названию"
-                        value={filterForm.data.search}
-                        onChange={(e) => {
-                            filterForm.setData('search', e.target.value);
-                        }}
-                        onBlur={applyFilters}
-                        onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
-                    />
-                    <select
-                        className="rounded border px-3 py-2 text-sm"
-                        value={filterForm.data.category_id}
-                        onChange={(e) => {
-                            filterForm.setData('category_id', e.target.value);
-                            applyFilters();
-                        }}
-                    >
-                        <option value="">Все категории</option>
-                        {categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                        ))}
-                    </select>
-                    <select
-                        multiple
-                        className="rounded border px-3 py-2 text-sm h-20"
-                        value={filterForm.data.geos}
-                        onChange={(e) =>
-                            filterForm.setData(
-                                'geos',
-                                Array.from(e.target.selectedOptions).map((o) => o.value),
-                            )
-                        }
-                    >
-                        {geosOptions.map((geo) => (
-                            <option key={geo.value} value={geo.value}>
-                                {geo.value} — {geo.text}
-                            </option>
-                        ))}
-                    </select>
-                    <select
-                        className="rounded border px-3 py-2 text-sm"
-                        value={filterForm.data.per_page}
-                        onChange={(e) => {
-                            filterForm.setData('per_page', e.target.value);
-                            applyFilters();
-                        }}
-                    >
-                        <option value={12}>12</option>
-                        <option value={24}>24</option>
-                        <option value={48}>48</option>
-                    </select>
-                </div>
-                <div className="mt-3 flex gap-2">
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="min-w-[220px] flex-1">
+                        <div className="text-[11px] uppercase text-gray-500">Поиск</div>
+                        <input
+                            className="h-10 w-full rounded border px-3 text-sm"
+                            placeholder="ID или название"
+                            value={filterForm.data.search}
+                            onChange={(e) => filterForm.setData('search', e.target.value)}
+                            onBlur={applyFilters}
+                            onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
+                        />
+                    </div>
+                    <div className="min-w-[180px]">
+                        <div className="text-[11px] uppercase text-gray-500">Категория</div>
+                        <select
+                            className="h-10 w-full rounded border px-3 text-sm"
+                            value={filterForm.data.category_id}
+                            onChange={(e) => {
+                                filterForm.setData('category_id', e.target.value);
+                                applyFilters();
+                            }}
+                        >
+                            <option value="">Все категории</option>
+                            {categories.map((cat) => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex-1 min-w-[220px]">
+                        <div className="text-[11px] uppercase text-gray-500">GEO</div>
+                        <select
+                            multiple
+                            className="h-10 w-full rounded border px-3 text-sm"
+                            value={filterForm.data.geos}
+                            onChange={(e) =>
+                                filterForm.setData(
+                                    'geos',
+                                    Array.from(e.target.selectedOptions).map((o) => o.value),
+                                )
+                            }
+                            onBlur={applyFilters}
+                        >
+                            {geosOptions.map((geo) => (
+                                <option key={geo.value} value={geo.value}>
+                                    {geo.value} — {geo.text}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="min-w-[120px]">
+                        <div className="text-[11px] uppercase text-gray-500">На странице</div>
+                        <select
+                            className="h-10 w-full rounded border px-3 text-sm"
+                            value={filterForm.data.per_page}
+                            onChange={(e) => {
+                                filterForm.setData('per_page', Number(e.target.value));
+                                applyFilters();
+                            }}
+                        >
+                            <option value={12}>12</option>
+                            <option value={24}>24</option>
+                            <option value={48}>48</option>
+                        </select>
+                    </div>
                     {hasActiveFilters && (
                         <button
                             type="button"
                             onClick={() => {
-                                filterForm.reset();
                                 filterForm.setData({
                                     search: '',
                                     category_id: '',
@@ -100,7 +123,7 @@ export default function Index({ offers, filters, categories, geos }) {
                                 });
                                 applyFilters();
                             }}
-                            className="rounded border px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                            className="h-10 rounded border px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                         >
                             Сбросить
                         </button>
