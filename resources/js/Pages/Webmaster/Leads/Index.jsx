@@ -44,6 +44,27 @@ export default function Index({ leads, offers, filters, summary }) {
         router.get(route('webmaster.leads.index'), {}, { preserveScroll: true, preserveState: true, replace: true });
     };
 
+    const formatDate = (value) => {
+        if (!value) return '—';
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return value;
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        const hh = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
+    };
+
+    const maskPhone = (phone) => {
+        if (!phone) return '—';
+        const digits = phone.replace(/\D/g, '');
+        if (digits.length < 6) return phone;
+        const start = phone.slice(0, 4);
+        const end = phone.slice(-2);
+        return `${start}***${end}`;
+    };
+
     return (
         <AuthenticatedLayout
             header={<h2 className="text-xl font-semibold text-gray-800">Статистика</h2>}
@@ -79,7 +100,7 @@ export default function Index({ leads, offers, filters, summary }) {
                         <GeoMultiSelect
                             value={filterForm.data.geos}
                             onChange={(vals) => filterForm.setData('geos', vals)}
-                            placeholder="GEO"
+                            placeholder=""
                             emptyLabel="Все GEO"
                             className="h-10"
                         />
@@ -147,20 +168,24 @@ export default function Index({ leads, offers, filters, summary }) {
                             <th className="px-3 py-2">GEO</th>
                             <th className="px-3 py-2">Статус</th>
                             <th className="px-3 py-2">Payout</th>
+                            <th className="px-3 py-2">Телефон</th>
                             <th className="px-3 py-2">Subid</th>
-                            <th className="px-3 py-2">Имя</th>
+                            <th className="px-3 py-2">UTM Source</th>
+                            <th className="px-3 py-2">UTM Campaign</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y text-sm text-gray-700">
                         {leads.data.map((lead) => (
                             <tr key={lead.id}>
-                                <td className="px-3 py-2">{lead.created_at}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-600">{formatDate(lead.created_at)}</td>
                                 <td className="px-3 py-2">{lead.offer?.name}</td>
-                                <td className="px-3 py-2">{lead.geo}</td>
+                                <td className="px-3 py-2 text-xs text-gray-600">{lead.geo}</td>
                                 <td className="px-3 py-2">{lead.status}</td>
-                                <td className="px-3 py-2">{lead.payout ?? '—'}</td>
-                                <td className="px-3 py-2">{lead.subid}</td>
-                                <td className="px-3 py-2">{lead.customer_name}</td>
+                                <td className="px-3 py-2 whitespace-nowrap">{lead.payout ?? '—'}</td>
+                                <td className="px-3 py-2 text-xs text-gray-700">{maskPhone(lead.customer_phone)}</td>
+                                <td className="px-3 py-2 text-xs text-gray-700">{lead.subid || '—'}</td>
+                                <td className="px-3 py-2 text-xs text-gray-700">{lead.utm_source || '—'}</td>
+                                <td className="px-3 py-2 text-xs text-gray-700">{lead.utm_campaign || '—'}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -170,15 +195,39 @@ export default function Index({ leads, offers, filters, summary }) {
                 {leads.data.map((lead) => (
                     <div key={lead.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
                         <div className="flex items-center justify-between text-xs text-gray-500">
-                            <span>{lead.created_at}</span>
+                            <span>{formatDate(lead.created_at)}</span>
                             <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-gray-700">{lead.status}</span>
                         </div>
                         <div className="mt-2 text-sm font-semibold text-gray-900">{lead.offer?.name}</div>
                         <div className="text-xs text-gray-500">GEO: {lead.geo} · Subid: {lead.subid || '—'}</div>
+                        <div className="text-xs text-gray-500">UTM: {lead.utm_source || '—'} · {lead.utm_campaign || '—'}</div>
                         <div className="mt-1 text-xs text-gray-600">Payout: {lead.payout ?? '–'}</div>
+                        <div className="mt-1 text-xs text-gray-600">Телефон: {maskPhone(lead.customer_phone)}</div>
                         <div className="mt-1 text-sm text-gray-800">{lead.customer_name}</div>
                     </div>
                 ))}
+            </div>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">
+                <div>
+                    Показано {leads.from}–{leads.to} из {leads.total}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                    {leads.links?.map((link, idx) => {
+                        let label = link.label;
+                        if (label.includes('Previous')) label = 'Предыдущая';
+                        if (label.includes('Next')) label = 'Следующая';
+                        return (
+                            <button
+                                key={idx}
+                                disabled={!link.url}
+                                onClick={() => link.url && router.visit(link.url, { preserveState: true, preserveScroll: true })}
+                                className={`rounded px-3 py-1 text-xs font-semibold ${link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 border'} ${!link.url ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-50'}`}
+                            >
+                                {label}
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
         </AuthenticatedLayout>
     );

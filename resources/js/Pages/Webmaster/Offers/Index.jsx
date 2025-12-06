@@ -81,7 +81,7 @@ export default function Index({ offers, filters, categories, geos }) {
                                 filterForm.setData('geos', vals);
                                 applyFilters();
                             }}
-                            placeholder="GEO"
+                            placeholder=""
                             emptyLabel="Все GEO"
                             className="h-10"
                         />
