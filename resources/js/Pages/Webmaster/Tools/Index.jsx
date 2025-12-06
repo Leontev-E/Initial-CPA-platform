@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 export default function Index({ apiKey, postbacks, logs, filters, eventOptions = [] }) {
     const [tab, setTab] = useState('api');
+    const [showKey, setShowKey] = useState(false);
     const { post } = useForm({});
     const defaultEvents = eventOptions?.length ? eventOptions : ['lead', 'in_work', 'sale', 'cancel', 'trash'];
 
@@ -37,6 +38,13 @@ export default function Index({ apiKey, postbacks, logs, filters, eventOptions =
     const savePostbacks = (e) => {
         e.preventDefault();
         pbForm.post(route('webmaster.tools.postbacks'));
+    };
+
+    const copyToClipboard = (text) => {
+        if (!text) return;
+        if (navigator?.clipboard?.writeText) {
+            navigator.clipboard.writeText(text);
+        }
     };
 
     const submitSearch = (e) => {
@@ -89,26 +97,89 @@ export default function Index({ apiKey, postbacks, logs, filters, eventOptions =
                 </div>
 
                 {tab === 'api' && (
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between rounded border px-3 py-2 text-sm text-gray-700">
-                            <div>
-                                <div className="text-xs uppercase text-gray-500">API ключ</div>
-                                <span className="font-mono break-all">{apiKey.key}</span>
-                            </div>
-                            <button
-                                onClick={regenerate}
-                                className="rounded bg-indigo-600 px-3 py-1 text-xs font-semibold text-white"
-                            >
-                                Пересоздать
-                            </button>
+                    <div className="space-y-4 text-sm text-gray-800">
+                        <div className="rounded-lg bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+                            <div className="font-semibold text-indigo-900">Как работать с API</div>
+                            <ul className="mt-2 list-disc space-y-1 pl-4">
+                                <li>Отправляйте лиды на эндпоинт ниже в формате JSON.</li>
+                                <li>Используйте заголовок <code className="font-mono">X-API-KEY</code> со своим ключом.</li>
+                                <li>Обязательные поля: <code className="font-mono">offer_id</code>, <code className="font-mono">geo</code>, <code className="font-mono">customer_name</code>, <code className="font-mono">customer_phone</code>.</li>
+                                <li>Можно передавать UTM-метки, subid, landing_url и произвольные теги.</li>
+                            </ul>
                         </div>
-                        <div className="space-y-2 text-sm text-gray-700">
-                            <div className="text-xs uppercase text-gray-500">Эндпоинт</div>
-                            <div className="font-mono break-all">POST https://cpa.boostclicks.ru/api/leads</div>
-                            <div className="text-xs uppercase text-gray-500">Заголовок</div>
-                            <div className="font-mono break-all">X-API-KEY: {apiKey.key}</div>
-                            <div className="text-xs uppercase text-gray-500">Тело запроса</div>
-                            <pre className="whitespace-pre-wrap rounded bg-slate-50 p-3 text-xs text-gray-800">
+
+                        <div className="grid gap-3 lg:grid-cols-2">
+                            <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="text-[11px] uppercase text-gray-500">API ключ</div>
+                                        <div className="font-mono break-all text-sm">
+                                            {showKey ? apiKey.key : `${apiKey.key.slice(0, 8)}••••••${apiKey.key.slice(-4)}`}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowKey(!showKey)}
+                                            className="rounded border px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                        >
+                                            {showKey ? 'Скрыть' : 'Показать'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => copyToClipboard(apiKey.key)}
+                                            className="rounded border px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                        >
+                                            Копировать
+                                        </button>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={regenerate}
+                                    type="button"
+                                    className="w-full rounded bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+                                >
+                                    Пересоздать ключ
+                                </button>
+                            </div>
+
+                            <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+                                <div className="text-[11px] uppercase text-gray-500">Эндпоинт</div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        className="w-full rounded border px-3 py-2 font-mono text-xs"
+                                        value="POST https://cpa.boostclicks.ru/api/leads"
+                                        readOnly
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => copyToClipboard('https://cpa.boostclicks.ru/api/leads')}
+                                        className="rounded border px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                    >
+                                        Копировать
+                                    </button>
+                                </div>
+                                <div className="text-[11px] uppercase text-gray-500">Заголовок</div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        className="w-full rounded border px-3 py-2 font-mono text-xs"
+                                        value={`X-API-KEY: ${apiKey.key}`}
+                                        readOnly
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => copyToClipboard(`X-API-KEY: ${apiKey.key}`)}
+                                        className="rounded border px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                                    >
+                                        Копировать
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                            <div className="text-[11px] uppercase text-gray-500">Тело запроса (JSON)</div>
+                            <pre className="whitespace-pre-wrap break-all rounded bg-white p-3 text-xs text-gray-800">
 {`{
   "offer_id": 1,
   "geo": "RU",
@@ -125,8 +196,11 @@ export default function Index({ apiKey, postbacks, logs, filters, eventOptions =
   "tags": {"adset_id": "123", "ad_id": "456"}
 }`}
                             </pre>
-                            <div className="text-xs uppercase text-gray-500">PHP пример (api.php)</div>
-                            <pre className="whitespace-pre-wrap rounded bg-slate-50 p-3 text-xs text-gray-800">
+                        </div>
+
+                        <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                            <div className="text-[11px] uppercase text-gray-500">PHP пример (api.php)</div>
+                            <pre className="whitespace-pre-wrap break-all rounded bg-white p-3 text-xs text-gray-800">
 {`<?php
 // api.php
 $data = json_decode(file_get_contents('php://input'), true);
@@ -147,29 +221,43 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
 
                 {tab === 'postbacks' && (
                     <div className="space-y-4">
-                        <div className="rounded bg-slate-50 p-3 text-sm text-gray-700">
-                            <div className="font-semibold">Основное</div>
-                            <p className="mt-1">
-                                Постбек — это запрос после смены статуса лида. Поддерживаемые события: <strong>{defaultEvents.join(', ')}</strong>.
-                            </p>
-                            <p className="mt-1">
-                                Макросы: <code>{'{lead_id}'}</code>, <code>{'{status}'}</code>, <code>{'{from}'}</code>, <code>{'{payout}'}</code>, <code>{'{subid}'}</code>, <code>{'{geo}'}</code>, <code>{'{offer_id}'}</code>, <code>{'{offer_name}'}</code>, <code>{'{landing_url}'}</code>.
-                            </p>
-                            <p className="mt-1">
-                                Пример URL: <code>https://tracker.com/postback?subid={'{subid}'}&status={'{status}'}&payout={'{payout}'}&lead={'{lead_id}'}</code>
-                            </p>
+                        <div className="rounded-lg bg-indigo-50 p-4 text-sm text-indigo-900">
+                            <div className="font-semibold text-indigo-900">Как работают постбеки</div>
+                            <ul className="mt-2 list-disc space-y-1 pl-4">
+                                <li>Отправляем запрос после создания лида и при каждой смене статуса.</li>
+                                <li>События: <strong>{defaultEvents.join(', ')}</strong>.</li>
+                                <li>Используйте макросы: <code>{'{lead_id}'}</code>, <code>{'{status}'}</code>, <code>{'{from}'}</code>, <code>{'{payout}'}</code>, <code>{'{subid}'}</code>, <code>{'{geo}'}</code>, <code>{'{offer_id}'}</code>, <code>{'{offer_name}'}</code>, <code>{'{landing_url}'}</code>.</li>
+                                <li>Пример: <code>https://tracker.com/postback?subid={'{subid}'}&status={'{status}'}&payout={'{payout}'}&lead={'{lead_id}'}</code></li>
+                            </ul>
                         </div>
+
                         <form onSubmit={savePostbacks} className="space-y-3">
                             {pbForm.data.postbacks.map((pb, idx) => (
                                 <div
                                     key={pb.event}
-                                    className="rounded border px-3 py-2 text-sm text-gray-700"
+                                    className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-gray-700 shadow-sm"
                                 >
-                                    <div className="font-semibold uppercase text-gray-600">
-                                        {pb.event}
+                                    <div className="flex items-center justify-between">
+                                        <div className="font-semibold uppercase text-gray-600">
+                                            {pb.event}
+                                        </div>
+                                        <label className="inline-flex items-center gap-2 text-xs text-gray-600">
+                                            <input
+                                                type="checkbox"
+                                                checked={pb.is_active}
+                                                onChange={(e) =>
+                                                    pbForm.setData('postbacks', [
+                                                        ...pbForm.data.postbacks.slice(0, idx),
+                                                        { ...pb, is_active: e.target.checked },
+                                                        ...pbForm.data.postbacks.slice(idx + 1),
+                                                    ])
+                                                }
+                                            />
+                                            Активен
+                                        </label>
                                     </div>
                                     <input
-                                        className="mt-2 w-full rounded border px-2 py-1"
+                                        className="mt-2 w-full rounded border px-2 py-2"
                                         value={pb.url}
                                         onChange={(e) =>
                                             pbForm.setData('postbacks', [
@@ -180,20 +268,6 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                                         }
                                         placeholder="https://tracker.com/postback"
                                     />
-                                    <label className="mt-2 inline-flex items-center gap-2 text-xs text-gray-600">
-                                        <input
-                                            type="checkbox"
-                                            checked={pb.is_active}
-                                            onChange={(e) =>
-                                                pbForm.setData('postbacks', [
-                                                    ...pbForm.data.postbacks.slice(0, idx),
-                                                    { ...pb, is_active: e.target.checked },
-                                                    ...pbForm.data.postbacks.slice(idx + 1),
-                                                ])
-                                            }
-                                        />
-                                        Активен
-                                    </label>
                                 </div>
                             ))}
                             <button
@@ -203,10 +277,10 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                                 Сохранить постбеки
                             </button>
                         </form>
-                        <div className="rounded bg-slate-50 p-3 text-xs text-gray-700">
-                            <div className="font-semibold">Пример отправки:</div>
-                            <div>POST {`<Ваш URL>`} с form-data:</div>
-                            <ul className="list-disc pl-4">
+                        <div className="rounded-lg bg-slate-50 p-3 text-xs text-gray-700">
+                            <div className="font-semibold">Пример отправки</div>
+                            <div className="mt-1">GET или POST {`<ваш URL>`} (form-data):</div>
+                            <ul className="mt-1 list-disc pl-4">
                                 <li>lead_id</li>
                                 <li>status</li>
                                 <li>payout</li>
@@ -310,7 +384,7 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                                             <span>{formatDate(log.created_at)}</span>
                                             <span className="rounded bg-slate-100 px-2 py-1 text-[11px] font-semibold text-gray-700">{log.status_code ?? '—'}</span>
                                         </div>
-        -                                <div className="mt-1 text-xs text-gray-500">{log.event} • Lead ID: {log.lead_id ?? '—'}</div>
+                                        <div className="mt-1 text-xs text-gray-500">{log.event} • Lead ID: {log.lead_id ?? '—'}</div>
                                         <div className="mt-1 break-all text-xs text-gray-700">{log.url}</div>
                                         <div className="mt-2">
                                             {log.error_message
