@@ -96,7 +96,7 @@ export default function Offers({ rows, filters, offers, geos }) {
                             }}
                             placeholder=""
                             emptyLabel="Все GEO"
-                            className="h-full md:h-10"
+                            className="h-10"
                         />
                         <input
                             type="date"

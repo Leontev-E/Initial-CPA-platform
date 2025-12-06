@@ -1,7 +1,7 @@
 import geosOptions from '@/data/geos.json';
 import { useMemo, useState } from 'react';
 
-export default function GeoMultiSelect({ value = [], onChange, placeholder = 'GEO', emptyLabel = 'Все GEO' }) {
+export default function GeoMultiSelect({ value = [], onChange, placeholder = 'GEO', emptyLabel = 'Все GEO', className = '' }) {
     const [input, setInput] = useState('');
     const [open, setOpen] = useState(false);
 
@@ -26,7 +26,7 @@ export default function GeoMultiSelect({ value = [], onChange, placeholder = 'GE
     };
 
     return (
-        <div className="flex flex-col gap-1">
+        <div className={`flex flex-col gap-1 ${className}`}>
             <div className="text-[10px] uppercase text-gray-400">{placeholder}</div>
             <div className="relative">
                 <input
