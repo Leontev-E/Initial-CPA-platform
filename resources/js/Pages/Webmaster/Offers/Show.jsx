@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 export default function Show({ offer, apiKey }) {
     const [copied, setCopied] = useState(false);
     const [selectedGeo, setSelectedGeo] = useState(() => (offer.allowed_geos && offer.allowed_geos.length ? offer.allowed_geos[0] : ''));
+    const [showApiKey, setShowApiKey] = useState(false);
 
     const copyId = async () => {
         try {
@@ -71,7 +72,18 @@ export default function Show({ offer, apiKey }) {
                         <div className="mt-2 space-y-2">
                             <div>
                                 <div className="text-[11px] uppercase text-gray-600">API ключ</div>
-                                <div className="font-mono break-all text-xs text-gray-900">{apiKey?.key}</div>
+                                <div className="flex items-center gap-2">
+                                    <div className={`font-mono break-all text-xs text-gray-900 ${showApiKey ? '' : 'filter blur-sm select-none'}`}>
+                                        {apiKey?.key}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowApiKey(!showApiKey)}
+                                        className="rounded border px-2 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-50"
+                                    >
+                                        {showApiKey ? 'Скрыть' : 'Показать'}
+                                    </button>
+                                </div>
                             </div>
                             {hasManyGeos && (
                                 <div>
