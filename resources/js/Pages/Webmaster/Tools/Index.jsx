@@ -221,63 +221,72 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
 
                 {tab === 'postbacks' && (
                     <div className="space-y-4">
-                        <div className="rounded-lg bg-indigo-50 p-4 text-sm text-indigo-900">
+                        <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-900">
                             <div className="font-semibold text-indigo-900">Как работают постбеки</div>
-                            <ul className="mt-2 list-disc space-y-1 pl-4">
-                                <li>Отправляем запрос после создания лида и при каждой смене статуса.</li>
-                                <li>События: <strong>{defaultEvents.join(', ')}</strong>.</li>
-                                <li>Используйте макросы: <code>{'{lead_id}'}</code>, <code>{'{status}'}</code>, <code>{'{from}'}</code>, <code>{'{payout}'}</code>, <code>{'{subid}'}</code>, <code>{'{geo}'}</code>, <code>{'{offer_id}'}</code>, <code>{'{offer_name}'}</code>, <code>{'{landing_url}'}</code>.</li>
-                                <li>Пример: <code>https://tracker.com/postback?subid={'{subid}'}&status={'{status}'}&payout={'{payout}'}&lead={'{lead_id}'}</code></li>
-                            </ul>
+                            <div className="mt-2 grid gap-2 md:grid-cols-2">
+                                <ul className="list-disc space-y-1 pl-4">
+                                    <li>Отправляем запрос после создания лида и при смене статуса.</li>
+                                    <li>События: <strong>{defaultEvents.join(', ')}</strong>.</li>
+                                    <li>Включите только нужные статусы и URL.</li>
+                                </ul>
+                                <ul className="list-disc space-y-1 pl-4">
+                                    <li>Макросы: <code>{'{lead_id}'}</code>, <code>{'{status}'}</code>, <code>{'{from}'}</code>, <code>{'{payout}'}</code>, <code>{'{subid}'}</code>, <code>{'{geo}'}</code>, <code>{'{offer_id}'}</code>, <code>{'{offer_name}'}</code>, <code>{'{landing_url}'}</code>.</li>
+                                    <li>Пример: <code>https://tracker.com/postback?subid={'{subid}'}&status={'{status}'}&payout={'{payout}'}&lead={'{lead_id}'}</code></li>
+                                </ul>
+                            </div>
                         </div>
 
-                        <form onSubmit={savePostbacks} className="space-y-3">
-                            {pbForm.data.postbacks.map((pb, idx) => (
-                                <div
-                                    key={pb.event}
-                                    className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-gray-700 shadow-sm"
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div className="font-semibold uppercase text-gray-600">
-                                            {pb.event}
+                        <form onSubmit={savePostbacks} className="space-y-2">
+                            <div className="grid gap-2 md:grid-cols-2">
+                                {pbForm.data.postbacks.map((pb, idx) => (
+                                    <div
+                                        key={pb.event}
+                                        className="rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-gray-700 shadow-sm"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="font-semibold uppercase text-gray-600">{pb.event}</div>
+                                            <label className="inline-flex items-center gap-2 text-xs text-gray-600">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={pb.is_active}
+                                                    onChange={(e) =>
+                                                        pbForm.setData('postbacks', [
+                                                            ...pbForm.data.postbacks.slice(0, idx),
+                                                            { ...pb, is_active: e.target.checked },
+                                                            ...pbForm.data.postbacks.slice(idx + 1),
+                                                        ])
+                                                    }
+                                                />
+                                                Активен
+                                            </label>
                                         </div>
-                                        <label className="inline-flex items-center gap-2 text-xs text-gray-600">
-                                            <input
-                                                type="checkbox"
-                                                checked={pb.is_active}
-                                                onChange={(e) =>
-                                                    pbForm.setData('postbacks', [
-                                                        ...pbForm.data.postbacks.slice(0, idx),
-                                                        { ...pb, is_active: e.target.checked },
-                                                        ...pbForm.data.postbacks.slice(idx + 1),
-                                                    ])
-                                                }
-                                            />
-                                            Активен
-                                        </label>
+                                        <input
+                                            className="mt-2 h-10 w-full rounded border px-3 text-sm"
+                                            value={pb.url}
+                                            onChange={(e) =>
+                                                pbForm.setData('postbacks', [
+                                                    ...pbForm.data.postbacks.slice(0, idx),
+                                                    { ...pb, url: e.target.value },
+                                                    ...pbForm.data.postbacks.slice(idx + 1),
+                                                ])
+                                            }
+                                            placeholder="https://tracker.com/postback"
+                                        />
                                     </div>
-                                    <input
-                                        className="mt-2 w-full rounded border px-2 py-2"
-                                        value={pb.url}
-                                        onChange={(e) =>
-                                            pbForm.setData('postbacks', [
-                                                ...pbForm.data.postbacks.slice(0, idx),
-                                                { ...pb, url: e.target.value },
-                                                ...pbForm.data.postbacks.slice(idx + 1),
-                                            ])
-                                        }
-                                        placeholder="https://tracker.com/postback"
-                                    />
-                                </div>
-                            ))}
-                            <button
-                                type="submit"
-                                className="rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-                            >
-                                Сохранить постбеки
-                            </button>
+                                ))}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                    type="submit"
+                                    className="rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                                >
+                                    Сохранить постбеки
+                                </button>
+                                <span className="text-xs text-gray-500">Изменения применяются ко всем событиям выше.</span>
+                            </div>
                         </form>
-                        <div className="rounded-lg bg-slate-50 p-3 text-xs text-gray-700">
+
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-gray-700">
                             <div className="font-semibold">Пример отправки</div>
                             <div className="mt-1">GET или POST {`<ваш URL>`} (form-data):</div>
                             <ul className="mt-1 list-disc pl-4">
