@@ -38,7 +38,7 @@ export default function UpdateProfileInformation({
 
             <form onSubmit={submit} className="mt-6 space-y-6">
                 <div>
-                    <InputLabel htmlFor="name" value="Название" />
+                    <InputLabel htmlFor="name" value="Название партнерской программы" />
 
                     <TextInput
                         id="name"

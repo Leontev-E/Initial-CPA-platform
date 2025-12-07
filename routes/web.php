@@ -18,7 +18,6 @@ use App\Http\Controllers\Webmaster\OfferController as WebmasterOfferController;
 use App\Http\Controllers\Webmaster\PayoutController as WebmasterPayoutController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Webmaster\ToolController as WebmasterToolController;
-use App\Http\Controllers\Admin\PartnerProgramSettingsController as AdminPartnerProgramSettingsController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 
@@ -36,8 +35,6 @@ Route::middleware(['auth', 'verified', 'role:super_admin'])->prefix('super-admin
 
 Route::middleware(['auth', 'verified', 'role:admin', 'section.access', 'partner_program.access'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-    Route::patch('/partner-program', [AdminPartnerProgramSettingsController::class, 'update'])->name('partner-program.update');
-
     Route::resource('offer-categories', AdminOfferCategoryController::class)->except(['create', 'edit']);
     Route::patch('offer-categories/{offer_category}/toggle', [AdminOfferCategoryController::class, 'toggle'])->name('offer-categories.toggle');
     Route::post('offer-categories/{offer_category}/attach-offer', [AdminOfferCategoryController::class, 'attachOffer'])->name('offer-categories.attach');

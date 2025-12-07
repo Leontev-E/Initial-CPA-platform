@@ -5,7 +5,7 @@ import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 import { useEffect, useState } from 'react';
 
-export default function Edit({ mustVerifyEmail, status, employees = [], partnerProgram = null }) {
+export default function Edit({ mustVerifyEmail, status, employees = [] }) {
     const { flash, auth } = usePage().props;
     const isAdmin = auth?.user?.role === 'admin';
 
