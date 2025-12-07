@@ -96,13 +96,6 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
         });
     };
 
-    const submitPartnerProgram = (e) => {
-        e.preventDefault();
-        partnerProgramForm.patch(route('admin.partner-program.update'), {
-            preserveScroll: true,
-        });
-    };
-
     useEffect(() => {
         const roleDefaults = defaultByRole[inviteForm.data.employee_role] || defaultByRole.admin;
         inviteForm.setData((prev) => ({
@@ -136,11 +129,6 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
         accounting: 'Бухгалтерия',
         operator: 'Оператор',
     };
-
-    const partnerProgramForm = useForm({
-        name: partnerProgram?.name || '',
-        slug: partnerProgram?.slug || '',
-    });
 
     const formatDate = (value) => {
         if (!value) return '–';
@@ -193,55 +181,7 @@ export default function Edit({ mustVerifyEmail, status, employees = [] }) {
                         <UpdatePasswordForm className="max-w-xl" />
                     </div>
 
-                    {isAdmin && partnerProgram && (
-                        <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                            <h3 className="text-lg font-semibold text-gray-800">Партнерская программа</h3>
-                            {flash?.success && (
-                                <div className="mt-2 flex items-center gap-2 rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-                                    <span className="text-lg">✔</span>
-                                    <span>{flash.success}</span>
-                                </div>
-                            )}
-                            <form onSubmit={submitPartnerProgram} className="mt-3 grid gap-3 md:grid-cols-2">
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-semibold text-gray-700" htmlFor="pp-name">Название</label>
-                                    <input
-                                        id="pp-name"
-                                        className="mt-1 w-full rounded border px-3 py-2"
-                                        value={partnerProgramForm.data.name}
-                                        onChange={(e) => partnerProgramForm.setData('name', e.target.value)}
-                                        required
-                                    />
-                                    {partnerProgramForm.errors.name && (
-                                        <div className="text-xs text-red-600">{partnerProgramForm.errors.name}</div>
-                                    )}
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-semibold text-gray-700" htmlFor="pp-slug">Slug (URL)</label>
-                                    <input
-                                        id="pp-slug"
-                                        className="mt-1 w-full rounded border px-3 py-2"
-                                        value={partnerProgramForm.data.slug}
-                                        onChange={(e) => partnerProgramForm.setData('slug', e.target.value)}
-                                        placeholder="my-program"
-                                    />
-                                    {partnerProgramForm.errors.slug && (
-                                        <div className="text-xs text-red-600">{partnerProgramForm.errors.slug}</div>
-                                    )}
-                                </div>
-                                <div className="md:col-span-2">
-                                    <button
-                                        type="submit"
-                                        disabled={partnerProgramForm.processing}
-                                        className="rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                                    >
-                                        Сохранить
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    )}
-
+                    
                     {isAdmin && (
                         <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
                             <h3 className="text-lg font-semibold text-gray-800">
