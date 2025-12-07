@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Concerns\HasPartnerProgram;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -67,6 +68,17 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'permissions' => 'array',
         ];
+    }
+
+    /**
+     * Normalize legacy role values on read/write (e.g. partner_admin -> admin).
+     */
+    protected function role(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value === 'partner_admin' ? self::ROLE_ADMIN : $value,
+            set: fn ($value) => $value === 'partner_admin' ? self::ROLE_ADMIN : $value,
+        );
     }
 
     public function leads()
