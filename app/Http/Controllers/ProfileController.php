@@ -50,6 +50,18 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
+        // Если владелец ПП меняет данные профиля, синхронизируем название/контактный email программы.
+        $user = $request->user();
+        if ($user->isPartnerAdmin() && $user->invited_by === null && $user->partner_program_id) {
+            $partnerProgram = PartnerProgram::withoutGlobalScopes()->find($user->partner_program_id);
+            if ($partnerProgram) {
+                $partnerProgram->update([
+                    'name' => $request->validated('name'),
+                    'contact_email' => $request->validated('email'),
+                ]);
+            }
+        }
+
         return Redirect::route('profile.edit');
     }
 
