@@ -21,10 +21,12 @@ class EnsureUserHasRole
             abort(403, __('Доступ запрещен'));
         }
 
+        // супер-админ всегда проходит
         if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
             return $next($request);
         }
 
+        // ВАЖНО: нормализуем старый формат partner_admin → admin
         $normalizedRole = $user->role === 'partner_admin' ? 'admin' : $user->role;
 
         if (empty($roles) || !in_array($normalizedRole, $roles, true)) {
