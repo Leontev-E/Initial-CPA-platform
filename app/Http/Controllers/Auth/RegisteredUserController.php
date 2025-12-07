@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
@@ -62,43 +63,32 @@ class RegisteredUserController extends Controller
             'telegram.unique' => 'Telegram уже используется, выберите другой.',
         ]);
 
-        $partnerProgram = PartnerProgram::create([
-            'name' => $validated['program_name'],
-            'slug' => $this->uniqueSlug($validated['program_name']),
-            'contact_email' => $validated['contact_email'],
-            'status' => 'active',
-        ]);
-
-        $user = User::create([
-            'name' => $validated['program_name'],
-            'email' => $validated['contact_email'],
-            'telegram' => $validated['telegram'],
-            'password' => $validated['password'],
-            'role' => User::ROLE_ADMIN,
-            'partner_program_id' => $partnerProgram->id,
-            'email_verified_at' => null,
-        ]);
-
-        event(new Registered($user));
-        Auth::login($user);
-
+        $slug = $this->uniqueSlug($validated['program_name']);
         $code = random_int(100000, 999999);
-        Cache::put('verify_code_'.$user->id, $code, now()->addMinutes(15));
+
+        // Cache pending registration (15 minutes); nothing persisted until verification
+        Cache::put('pending_registration_'.$validated['contact_email'], [
+            'data' => [
+                'program_name' => $validated['program_name'],
+                'program_slug' => $slug,
+                'contact_email' => $validated['contact_email'],
+                'telegram' => $validated['telegram'],
+                'password_hash' => Hash::make($validated['password']),
+            ],
+            'code' => $code,
+        ], now()->addMinutes(15));
 
         try {
-            Mail::send('emails.verify_code', ['code' => $code, 'user' => $user], function ($message) use ($user) {
-                $message->to($user->email)->subject('Код подтверждения BoostClicks');
+            Mail::send('emails.verify_code', ['code' => $code, 'user' => (object) ['name' => $validated['program_name'], 'email' => $validated['contact_email']]], function ($message) use ($validated) {
+                $message->to($validated['contact_email'])->subject('Код подтверждения BoostClicks');
             });
         } catch (\Throwable $e) {
-            $user->delete();
-            $partnerProgram->delete();
-
             throw ValidationException::withMessages([
                 'email' => 'Не удалось отправить код. Проверьте почту или повторите позже.',
             ]);
         }
 
-        return redirect()->to(route('dashboard', [], false));
+        return redirect()->route('verify.code.show', ['email' => $validated['contact_email']]);
     }
 
     protected function uniqueSlug(string $name): string
@@ -115,4 +105,3 @@ class RegisteredUserController extends Controller
         return $slug;
     }
 }
-

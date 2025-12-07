@@ -118,6 +118,6 @@ class ToolController extends Controller
             ->whereNotIn('event', $savedEvents)
             ->delete();
 
-        return back()->with('success', 'Постбеки сохранены');
+        return back()->with('success', 'Вебхуки сохранены');
     }
 }

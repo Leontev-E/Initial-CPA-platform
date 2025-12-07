@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Illuminate\Http\RedirectResponse;
 
 class PartnerProgramController extends Controller
 {
@@ -91,6 +92,21 @@ class PartnerProgramController extends Controller
         app(PartnerProgramContext::class)->clear();
 
         return redirect()->route('super-admin.partner-programs.index')->with('success', 'Контекст сброшен');
+    }
+
+    public function destroy(PartnerProgram $partnerProgram): RedirectResponse
+    {
+        $program = $this->baseQuery()->findOrFail($partnerProgram->id);
+        $programId = $program->id;
+        $program->delete();
+
+        if (session('partner_program_id') === $programId) {
+            session()->forget('partner_program_id');
+            app(PartnerProgramContext::class)->clear();
+        }
+
+        return redirect()->route('super-admin.partner-programs.index')
+            ->with('success', 'Партнерская программа удалена');
     }
 
     protected function validatedData(Request $request, ?int $id = null): array

@@ -92,7 +92,7 @@ export default function Index({ apiKey, postbacks, logs, filters, eventOptions =
                         onClick={() => setTab('postbacks')}
                         className={`rounded-lg px-4 py-2 text-sm font-semibold ${tab === 'postbacks' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-gray-700'}`}
                     >
-                        Постбеки
+                        Вебхуки
                     </button>
                 </div>
 
@@ -222,7 +222,7 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                 {tab === 'postbacks' && (
                     <div className="space-y-4">
                         <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-900">
-                            <div className="font-semibold text-indigo-900">Как работают постбеки</div>
+                            <div className="font-semibold text-indigo-900">Как работают вебхуки</div>
                             <div className="mt-2 grid gap-2 md:grid-cols-2">
                                 <ul className="list-disc space-y-1 pl-4">
                                     <li>Отправляем запрос после создания лида и при смене статуса.</li>
@@ -280,7 +280,7 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                                     type="submit"
                                     className="rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
                                 >
-                                    Сохранить постбеки
+                                    Сохранить вебхуки
                                 </button>
                                 <span className="text-xs text-gray-500">Изменения применяются ко всем событиям выше.</span>
                             </div>
@@ -300,7 +300,7 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                         </div>
 
                         <div className="mt-6">
-                            <h3 className="text-sm font-semibold text-gray-800">Лог постбеков (последние 10 дней)</h3>
+                            <h3 className="text-sm font-semibold text-gray-800">Лог вебхуков (последние 10 дней)</h3>
                             <form onSubmit={submitSearch} className="mt-2 grid gap-2 text-sm md:grid-cols-4">
                                 <div className="md:col-span-2">
                                     <input

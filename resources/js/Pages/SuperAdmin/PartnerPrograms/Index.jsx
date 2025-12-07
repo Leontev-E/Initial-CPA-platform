@@ -105,6 +105,19 @@ export default function Index({ auth, programs, currentPartnerProgramId }) {
                                         >
                                             Редактировать
                                         </Link>
+                                        <Link
+                                            as="button"
+                                            method="delete"
+                                            href={route('super-admin.partner-programs.destroy', program.id)}
+                                            className="rounded-lg border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50"
+                                            onClick={(e) => {
+                                                if (!confirm('Удалить партнёрскую программу?')) {
+                                                    e.preventDefault();
+                                                }
+                                            }}
+                                        >
+                                            Удалить
+                                        </Link>
                                         <button
                                             type="button"
                                             onClick={() => switchContext(program.id)}

@@ -4,9 +4,9 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, useForm } from '@inertiajs/react';
 
-export default function VerifyCode({ userId, email }) {
+export default function VerifyCode({ email }) {
     const { data, setData, post, processing, errors } = useForm({
-        user_id: userId,
+        email: email || '',
         code: '',
     });
 
@@ -22,6 +22,7 @@ export default function VerifyCode({ userId, email }) {
                 Мы отправили код на почту {email}. Введите его ниже для завершения регистрации.
             </div>
             <form onSubmit={submit} className="space-y-3">
+                <input type="hidden" name="email" value={data.email} />
                 <TextInput
                     type="text"
                     name="code"

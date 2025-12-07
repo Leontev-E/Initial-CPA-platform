@@ -8,6 +8,10 @@ export default function AuthenticatedLayout({ header, children }) {
     const wmMeta = auth.webmasterMeta;
     const [mobileOpen, setMobileOpen] = useState(false);
     const [installEvent, setInstallEvent] = useState(null);
+    const isMobile = useMemo(() => {
+        if (typeof navigator === 'undefined') return false;
+        return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+    }, []);
 
     const allowedSections = user.invited_by ? (user.permissions?.sections || []) : null;
 
@@ -30,7 +34,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 { label: 'Вебмастера', name: 'admin.webmasters.index', section: 'webmasters' },
                 { label: 'Отчеты', name: 'admin.reports.offers', section: 'reports' },
                 { label: 'Выплаты', name: 'admin.payouts.index', section: 'payouts', badge: auth.pendingPayouts },
-                { label: 'Постбеки', name: 'admin.webhooks.index', section: 'webhooks' },
+                { label: 'Вебхуки', name: 'admin.webhooks.index', section: 'webhooks' },
             ];
         }
 
@@ -48,12 +52,15 @@ export default function AuthenticatedLayout({ header, children }) {
 
     useEffect(() => {
         const handler = (e) => {
+            if (!isMobile) {
+                return;
+            }
             e.preventDefault();
             setInstallEvent(e);
         };
         window.addEventListener('beforeinstallprompt', handler);
         return () => window.removeEventListener('beforeinstallprompt', handler);
-    }, []);
+    }, [isMobile]);
 
     const formatLastLogin = (value) => {
         if (!value) return '—';

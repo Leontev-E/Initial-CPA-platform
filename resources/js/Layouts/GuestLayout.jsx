@@ -7,7 +7,7 @@ export default function GuestLayout({ children }) {
         <div className="flex min-h-screen flex-col items-center bg-slate-50 pt-6 sm:justify-center sm:pt-0">
             <LanguageToggle />
             <div className="flex items-center gap-3">
-                <Link href="/">
+                <Link href={route('login')}>
                     <ApplicationLogo className="h-16 w-auto" />
                 </Link>
             </div>

@@ -20,7 +20,6 @@ class SendPostbacksJob implements ShouldQueue
         public int $leadId,
         public ?string $fromStatus = null
     ) {
-        $this->queue = 'postbacks';
     }
 
     public function handle(PostbackDispatcher $dispatcher): void

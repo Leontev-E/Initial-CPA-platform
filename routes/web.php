@@ -27,7 +27,7 @@ Route::get('/', function () {
         return redirect()->route('dashboard');
     }
 
-    return Inertia::render('Welcome');
+    return redirect()->route('login');
 });
 
 Route::get('/dashboard', DashboardController::class)

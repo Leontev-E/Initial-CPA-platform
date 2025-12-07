@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Lead;
 use App\Models\PostbackLog;
 use App\Models\PostbackSetting;
+use App\Support\PartnerProgramContext;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -14,42 +15,51 @@ class PostbackDispatcher
 
     public function dispatch(Lead $lead, ?string $fromStatus = null): void
     {
+        $context = app(PartnerProgramContext::class);
+        $previousContextId = $context->getPartnerProgramId();
+        $context->setPartnerProgramId($lead->partner_program_id);
+
         $lead->loadMissing('offer');
         $event = $this->eventForStatus($lead->status);
         if (! in_array($event, self::ALLOWED_EVENTS, true)) {
+            $context->setPartnerProgramId($previousContextId);
             return;
         }
 
-        $settings = PostbackSetting::where('webmaster_id', $lead->webmaster_id)
-            ->where('event', $event)
-            ->where('is_active', true)
-            ->get();
+        try {
+            $settings = PostbackSetting::where('webmaster_id', $lead->webmaster_id)
+                ->where('event', $event)
+                ->where('is_active', true)
+                ->get();
 
-        foreach ($settings as $setting) {
-            $statusCode = null;
-            $responseBody = null;
-            $error = null;
-            $finalUrl = $this->expandPostbackMacros($setting->url, $lead, $event, $fromStatus);
+            foreach ($settings as $setting) {
+                $statusCode = null;
+                $responseBody = null;
+                $error = null;
+                $finalUrl = $this->expandPostbackMacros($setting->url, $lead, $event, $fromStatus);
 
-            try {
-                $response = Http::timeout(5)->get($finalUrl);
-                $statusCode = $response->status();
-                $responseBody = Str::limit($response->body(), 4000);
-            } catch (\Throwable $e) {
-                $error = $e->getMessage();
+                try {
+                    $response = Http::timeout(5)->get($finalUrl);
+                    $statusCode = $response->status();
+                    $responseBody = Str::limit($response->body(), 4000);
+                } catch (\Throwable $e) {
+                    $error = $e->getMessage();
+                }
+
+                PostbackLog::create([
+                    'partner_program_id' => $lead->partner_program_id,
+                    'webmaster_id' => $lead->webmaster_id,
+                    'lead_id' => $lead->id,
+                    'offer_id' => $lead->offer_id,
+                    'event' => $event,
+                    'url' => $finalUrl,
+                    'status_code' => $statusCode,
+                    'response_body' => $responseBody,
+                    'error_message' => $error,
+                ]);
             }
-
-            PostbackLog::create([
-                'partner_program_id' => $lead->partner_program_id,
-                'webmaster_id' => $lead->webmaster_id,
-                'lead_id' => $lead->id,
-                'offer_id' => $lead->offer_id,
-                'event' => $event,
-                'url' => $finalUrl,
-                'status_code' => $statusCode,
-                'response_body' => $responseBody,
-                'error_message' => $error,
-            ]);
+        } finally {
+            $context->setPartnerProgramId($previousContextId);
         }
     }
 
