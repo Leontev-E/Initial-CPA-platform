@@ -19,6 +19,11 @@ class WebmasterController extends Controller
 {
     public function index(Request $request)
     {
+        $partnerProgram = app(\App\Support\PartnerProgramContext::class)->getPartnerProgram();
+        $webmasterCount = User::where('role', User::ROLE_WEBMASTER)->count();
+        $webmasterLimit = $partnerProgram?->webmaster_limit;
+        $webmasterLimitReached = $partnerProgram && ! $partnerProgram->is_unlimited && $webmasterLimit !== null && $webmasterCount >= $webmasterLimit;
+
         $perPage = (int) $request->integer('per_page', 10);
         $perPage = in_array($perPage, [10, 25, 50], true) ? $perPage : 10;
         $sort = $request->input('sort', 'name');
@@ -75,11 +80,26 @@ class WebmasterController extends Controller
         return Inertia::render('Admin/Webmasters/Index', [
             'webmasters' => $webmasters,
             'filters' => $request->only(['status', 'search', 'sort', 'direction', 'per_page']),
+            'webmasterLimit' => [
+                'count' => $webmasterCount,
+                'limit' => $webmasterLimit,
+                'is_unlimited' => (bool) ($partnerProgram?->is_unlimited),
+                'reached' => $webmasterLimitReached,
+            ],
         ]);
     }
 
     public function store(Request $request)
     {
+        $partnerProgram = app(\App\Support\PartnerProgramContext::class)->getPartnerProgram();
+        $webmasterCount = User::where('role', User::ROLE_WEBMASTER)->count();
+        if ($partnerProgram && ! $partnerProgram->is_unlimited) {
+            $limit = $partnerProgram->webmaster_limit ?? 0;
+            if ($limit !== null && $webmasterCount >= $limit) {
+                return back()->withErrors(['limit' => 'Вы достигли лимита по количеству вебмастеров.'])->withInput();
+            }
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
@@ -98,7 +118,7 @@ class WebmasterController extends Controller
             'password' => Hash::make($password),
             'role' => User::ROLE_WEBMASTER,
             'min_payout' => $validated['min_payout'] ?? 0,
-            'partner_program_id' => app(\App\Support\PartnerProgramContext::class)->getPartnerProgramId() ?? $request->user()->partner_program_id,
+            'partner_program_id' => $partnerProgram?->id ?? $request->user()->partner_program_id,
         ]);
 
         $this->sendCredentialsEmail($user, $password, $request->user());

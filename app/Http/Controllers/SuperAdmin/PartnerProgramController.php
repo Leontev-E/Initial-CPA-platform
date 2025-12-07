@@ -4,6 +4,7 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PartnerProgram;
+use App\Models\User;
 use App\Support\PartnerProgramContext;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -14,7 +15,10 @@ class PartnerProgramController extends Controller
 {
     public function index(Request $request)
     {
-        $programs = PartnerProgram::orderByDesc('created_at')->paginate(20)->withQueryString();
+        $programs = PartnerProgram::withCount([
+            'offers as offers_count' => fn($q) => $q->withoutGlobalScopes(),
+            'webmasters as webmasters_count' => fn($q) => $q->withoutGlobalScopes()->where('role', User::ROLE_WEBMASTER),
+        ])->orderByDesc('created_at')->paginate(20)->withQueryString();
 
         return Inertia::render('SuperAdmin/PartnerPrograms/Index', [
             'programs' => $programs,
@@ -82,6 +86,10 @@ class PartnerProgramController extends Controller
             'contact_email' => ['nullable', 'email', 'max:255'],
             'status' => ['required', 'in:active,inactive'],
             'domain' => ['nullable', 'string', 'max:255'],
+            'offer_limit' => ['nullable', 'integer', 'min:0'],
+            'webmaster_limit' => ['nullable', 'integer', 'min:0'],
+            'is_unlimited' => ['boolean'],
+            'is_blocked' => ['boolean'],
         ]);
 
         $data['slug'] = $data['slug'] ?? Str::slug($data['name']);

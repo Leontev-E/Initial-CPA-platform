@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { useEffect } from 'react';
 
-export default function Index({ webmasters, filters }) {
+export default function Index({ webmasters, filters, webmasterLimit }) {
     const { data, setData, post, processing, reset } = useForm({
         name: '',
         email: '',
@@ -10,6 +10,8 @@ export default function Index({ webmasters, filters }) {
         note: '',
         min_payout: '',
     });
+    const limitInfo = webmasterLimit ?? usePage().props.webmasterLimit;
+    const limitReached = limitInfo?.reached;
 
     const filterForm = useForm({
         search: filters?.search ?? '',

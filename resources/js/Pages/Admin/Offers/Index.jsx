@@ -3,7 +3,7 @@ import geos from '@/data/geos.json';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
-export default function Index({ offers, categories, filters }) {
+export default function Index({ offers, categories, filters, offerLimit }) {
     const [geoInput, setGeoInput] = useState('');
     const [geoOpen, setGeoOpen] = useState(false);
     const [filterGeoInput, setFilterGeoInput] = useState('');
@@ -11,6 +11,8 @@ export default function Index({ offers, categories, filters }) {
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
     const geoMap = useMemo(() => Object.fromEntries(geos.map((g) => [g.value, g.text])), []);
+    const limitInfo = offerLimit ?? usePage().props.offerLimit;
+    const limitReached = limitInfo?.reached;
 
     const { data, setData, post, processing, reset, errors } = useForm({
         offer_category_id: categories[0]?.id ?? '',
@@ -144,8 +146,13 @@ export default function Index({ offers, categories, filters }) {
             <div className="grid gap-4 lg:grid-cols-3">
                 <div className="rounded-xl bg-white p-4 shadow-sm">
                     <h3 className="text-sm font-semibold text-gray-700">
-                        Новый оффер
+                        Создать оффер
                     </h3>
+                    {limitReached && (
+                        <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                            Вы достигли лимита по количеству офферов. Свяжитесь с поддержкой, чтобы увеличить лимит.
+                        </div>
+                    )}
                     <form onSubmit={submit} className="mt-3 space-y-3" encType="multipart/form-data">
                         <div className="rounded border px-3 py-2">
                             <div className="text-xs font-semibold text-gray-600">Категории</div>
@@ -354,7 +361,7 @@ export default function Index({ offers, categories, filters }) {
                         </label>
                         <button
                             type="submit"
-                            disabled={processing}
+                            disabled={processing || limitReached}
                             className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
                         >
                             Создать

@@ -48,6 +48,9 @@ export default function Index({ auth, programs, currentPartnerProgramId }) {
                         <tr>
                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Название</th>
                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Статус</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Офферы</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Вебмастера</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Лимиты</th>
                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Домен</th>
                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Email</th>
                             <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Действия</th>
@@ -69,6 +72,26 @@ export default function Index({ auth, programs, currentPartnerProgramId }) {
                                             Текущий контекст
                                         </span>
                                     )}
+                                    {program.is_blocked && (
+                                        <span className="ml-2 inline-flex rounded-full bg-rose-100 px-2 py-1 text-[10px] font-semibold uppercase text-rose-700">
+                                            Заблокирована
+                                        </span>
+                                    )}
+                                    {program.is_unlimited && (
+                                        <span className="ml-2 inline-flex rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold uppercase text-emerald-700">
+                                            Без лимитов
+                                        </span>
+                                    )}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-700">
+                                    {program.offers_count}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-700">
+                                    {program.webmasters_count}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-700">
+                                    <div>Офферы: {program.offer_limit ?? '—'}</div>
+                                    <div>Вебмастера: {program.webmaster_limit ?? '—'}</div>
                                 </td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{program.domain || '—'}</td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{program.contact_email || '—'}</td>

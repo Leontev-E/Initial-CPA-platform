@@ -13,6 +13,10 @@ export default function Form({ auth, program }) {
         contact_email: program?.contact_email ?? '',
         status: program?.status ?? 'active',
         domain: program?.domain ?? '',
+        offer_limit: program?.offer_limit ?? 15,
+        webmaster_limit: program?.webmaster_limit ?? 40,
+        is_unlimited: program?.is_unlimited ?? false,
+        is_blocked: program?.is_blocked ?? false,
     });
 
     const submit = (e) => {
@@ -108,6 +112,54 @@ export default function Form({ auth, program }) {
                         </select>
                         <InputError message={errors.status} className="mt-2" />
                     </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                        <InputLabel htmlFor="offer_limit" value="Лимит офферов" />
+                        <TextInput
+                            id="offer_limit"
+                            type="number"
+                            min="0"
+                            value={data.offer_limit ?? ''}
+                            className="mt-1 block w-full"
+                            onChange={(e) => setData('offer_limit', e.target.value === '' ? null : Number(e.target.value))}
+                            disabled={data.is_unlimited}
+                        />
+                        <InputError message={errors.offer_limit} className="mt-2" />
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="webmaster_limit" value="Лимит вебмастеров" />
+                        <TextInput
+                            id="webmaster_limit"
+                            type="number"
+                            min="0"
+                            value={data.webmaster_limit ?? ''}
+                            className="mt-1 block w-full"
+                            onChange={(e) => setData('webmaster_limit', e.target.value === '' ? null : Number(e.target.value))}
+                            disabled={data.is_unlimited}
+                        />
+                        <InputError message={errors.webmaster_limit} className="mt-2" />
+                    </div>
+                </div>
+
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
+                    <label className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700">
+                        <input
+                            type="checkbox"
+                            checked={data.is_unlimited}
+                            onChange={(e) => setData('is_unlimited', e.target.checked)}
+                        />
+                        Без лимитов
+                    </label>
+                    <label className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 text-rose-700">
+                        <input
+                            type="checkbox"
+                            checked={data.is_blocked}
+                            onChange={(e) => setData('is_blocked', e.target.checked)}
+                        />
+                        Заблокировать программу
+                    </label>
                 </div>
 
                 <PrimaryButton disabled={processing}>

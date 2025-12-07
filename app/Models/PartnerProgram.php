@@ -15,10 +15,16 @@ class PartnerProgram extends Model
         'status',
         'domain',
         'settings',
+        'offer_limit',
+        'webmaster_limit',
+        'is_unlimited',
+        'is_blocked',
     ];
 
     protected $casts = [
         'settings' => 'array',
+        'is_unlimited' => 'boolean',
+        'is_blocked' => 'boolean',
     ];
 
     public function scopeActive(Builder $builder): Builder
@@ -29,5 +35,15 @@ class PartnerProgram extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    public function offers(): HasMany
+    {
+        return $this->hasMany(Offer::class);
+    }
+
+    public function webmasters(): HasMany
+    {
+        return $this->hasMany(User::class)->where('role', User::ROLE_WEBMASTER);
     }
 }

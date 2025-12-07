@@ -33,7 +33,7 @@ Route::middleware(['auth', 'verified', 'role:super_admin'])->prefix('super-admin
     Route::resource('partner-programs', SuperAdminPartnerProgramController::class)->except(['show']);
 });
 
-Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin', 'section.access', 'partner_program.access'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('offer-categories', AdminOfferCategoryController::class)->except(['create', 'edit']);
@@ -84,7 +84,7 @@ Route::post('webmasters/stop-impersonate', [AdminWebmasterController::class, 'st
     ->middleware('auth')
     ->name('webmasters.stopImpersonate');
 
-Route::middleware(['auth', 'verified', 'role:webmaster'])->prefix('webmaster')->name('webmaster.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:webmaster', 'partner_program.access'])->prefix('webmaster')->name('webmaster.')->group(function () {
     Route::get('/dashboard', [WebmasterDashboardController::class, 'index'])->name('dashboard');
     Route::get('/offers', [WebmasterOfferController::class, 'index'])->name('offers.index');
     Route::get('/offers/{offer}', [WebmasterOfferController::class, 'show'])->name('offers.show');

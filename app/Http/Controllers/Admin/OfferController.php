@@ -18,6 +18,11 @@ class OfferController extends Controller
 {
     public function index(Request $request)
     {
+        $partnerProgram = app(PartnerProgramContext::class)->getPartnerProgram();
+        $offerCount = Offer::count();
+        $offerLimit = $partnerProgram?->offer_limit;
+        $offerLimitReached = $partnerProgram && ! $partnerProgram->is_unlimited && $offerLimit !== null && $offerCount >= $offerLimit;
+
         $perPage = (int) $request->integer('per_page', 10);
         $perPage = in_array($perPage, [10, 25, 50], true) ? $perPage : 10;
         $sort = $request->input('sort', 'name');
@@ -78,6 +83,12 @@ class OfferController extends Controller
             'offers' => $offers,
             'categories' => OfferCategory::orderBy('name')->get(),
             'filters' => $request->only(['category_id', 'status', 'search', 'sort', 'direction', 'per_page', 'geo', 'geos']),
+            'offerLimit' => [
+                'count' => $offerCount,
+                'limit' => $offerLimit,
+                'is_unlimited' => (bool) ($partnerProgram?->is_unlimited),
+                'reached' => $offerLimitReached,
+            ],
         ]);
     }
 
@@ -93,6 +104,15 @@ class OfferController extends Controller
 
     public function store(Request $request)
     {
+        $partnerProgram = app(PartnerProgramContext::class)->getPartnerProgram();
+        $currentCount = Offer::count();
+        if ($partnerProgram && ! $partnerProgram->is_unlimited) {
+            $limit = $partnerProgram->offer_limit ?? 0;
+            if ($limit !== null && $currentCount >= $limit) {
+                return back()->withErrors(['limit' => 'Вы достигли лимита по количеству офферов.'])->withInput();
+            }
+        }
+
         $validated = $this->validateData($request);
 
         if ($request->hasFile('image')) {
@@ -105,7 +125,7 @@ class OfferController extends Controller
         $primaryCategory = $validated['offer_category_id'] ?? ($validated['category_ids'][0] ?? null);
         $validated['offer_category_id'] = $primaryCategory;
 
-        $validated['partner_program_id'] = app(PartnerProgramContext::class)->getPartnerProgramId() ?? $request->user()->partner_program_id;
+        $validated['partner_program_id'] = $partnerProgram?->id ?? $request->user()->partner_program_id;
 
         $offer = Offer::create($validated);
         $offer->categories()->sync($validated['category_ids'] ?? array_filter([$primaryCategory]));

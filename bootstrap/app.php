@@ -28,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
             'section.access' => \App\Http\Middleware\EnsureSectionAccess::class,
+            'partner_program.access' => \App\Http\Middleware\EnsurePartnerProgramAccessible::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
