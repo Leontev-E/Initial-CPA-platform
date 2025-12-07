@@ -17,7 +17,7 @@ class EnsureUserHasRole
     {
         $user = $request->user();
 
-        if (! $user) {
+        if (!$user) {
             abort(403, __('Доступ запрещен'));
         }
 
@@ -25,7 +25,9 @@ class EnsureUserHasRole
             return $next($request);
         }
 
-        if (empty($roles) || ! in_array($user->role, $roles, true)) {
+        $normalizedRole = $user->role === 'partner_admin' ? 'admin' : $user->role;
+
+        if (empty($roles) || !in_array($normalizedRole, $roles, true)) {
             abort(403, __('Доступ запрещен'));
         }
 
