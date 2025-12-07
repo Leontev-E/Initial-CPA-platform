@@ -20,8 +20,15 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Webmaster\ToolController as WebmasterToolController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
-Route::get('/', fn () => redirect()->route('login'));
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+
+    return Inertia::render('Welcome');
+});
 
 Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])

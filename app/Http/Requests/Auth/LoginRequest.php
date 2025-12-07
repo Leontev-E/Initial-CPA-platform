@@ -11,6 +11,14 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        // Backward compatibility: accept "email" field like Breeze tests
+        if (!$this->has('login') && $this->filled('email')) {
+            $this->merge(['login' => $this->input('email')]);
+        }
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */

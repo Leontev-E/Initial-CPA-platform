@@ -102,7 +102,13 @@ class IncomingLeadWebhookController extends Controller
     private function logIncoming(Request $request, int $userId, ?array $payload, ?Lead $lead, ?string $error, ?int $statusCode, ?string $statusBefore = null, ?string $statusAfter = null): void
     {
         try {
+            $partnerProgramId = $lead?->partner_program_id
+                ?? $request->user()?->partner_program_id
+                ?? app(PartnerProgramContext::class)->getPartnerProgramId()
+                ?? 1;
+
             LeadWebhookLog::create([
+                'partner_program_id' => $partnerProgramId,
                 'direction' => 'incoming',
                 'event' => 'incoming_status_update',
                 'user_id' => $userId,

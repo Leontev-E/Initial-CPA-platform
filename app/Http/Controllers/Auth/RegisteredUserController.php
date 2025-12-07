@@ -40,6 +40,12 @@ class RegisteredUserController extends Controller
         $normalizedTelegram = str_starts_with($telegramInput, '@') ? $telegramInput : '@'.$telegramInput;
         $request->merge(['telegram' => $normalizedTelegram]);
 
+        // Support legacy Breeze-style payloads (name/email) by mapping to program fields when missing.
+        $request->merge([
+            'program_name' => $request->input('program_name') ?? $request->input('name'),
+            'contact_email' => $request->input('contact_email') ?? $request->input('email'),
+        ]);
+
         $validated = $request->validate([
             'program_name' => ['required', 'string', 'max:255'],
             'contact_email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
@@ -74,6 +80,9 @@ class RegisteredUserController extends Controller
             'email_verified_at' => null,
         ]);
 
+        event(new Registered($user));
+        Auth::login($user);
+
         $code = random_int(100000, 999999);
         Cache::put('verify_code_'.$user->id, $code, now()->addMinutes(15));
 
@@ -90,7 +99,7 @@ class RegisteredUserController extends Controller
             ]);
         }
 
-        return redirect()->route('verify.code.show', ['user' => $user->id, 'email' => $user->email]);
+        return redirect()->to(route('dashboard', [], false));
     }
 
     protected function uniqueSlug(string $name): string

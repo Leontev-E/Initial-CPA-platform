@@ -14,16 +14,17 @@ class SetPartnerProgramContext
     {
         $context = app(PartnerProgramContext::class);
         $user = $request->user();
+        $hasSession = method_exists($request, 'hasSession') && $request->hasSession();
 
         if ($user) {
             $contextId = $user->partner_program_id;
 
-            if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+            if ($hasSession && method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
                 $contextId = $request->session()->get('partner_program_id');
             }
 
             $context->setPartnerProgramId($contextId);
-        } elseif ($request->session()->has('partner_program_id')) {
+        } elseif ($hasSession && $request->session()->has('partner_program_id')) {
             $context->setPartnerProgramId((int) $request->session()->get('partner_program_id'));
         }
 

@@ -13,10 +13,13 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
+    // Main registration endpoints
     Route::get('partner-programs/register', [RegisteredUserController::class, 'create'])
         ->name('register');
-
     Route::post('partner-programs/register', [RegisteredUserController::class, 'store']);
+    // Backward compatible aliases for Breeze tests (/register)
+    Route::get('register', [RegisteredUserController::class, 'create'])->name('register.fallback');
+    Route::post('register', [RegisteredUserController::class, 'store']);
 
     Route::get('verify-code', [VerifyCodeController::class, 'create'])->name('verify.code.show');
     Route::post('verify-code', [VerifyCodeController::class, 'store'])->name('verify.code.store');
