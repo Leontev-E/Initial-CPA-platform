@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\User;
+use App\Models\PartnerProgram;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,10 +30,17 @@ class ProfileController extends Controller
                 ->get(['id', 'name', 'email', 'telegram', 'employee_role', 'permissions', 'created_at']);
         }
 
+        $partnerProgram = null;
+        if ($user->isAdmin() && $user->partner_program_id) {
+            $partnerProgram = PartnerProgram::withoutGlobalScopes()
+                ->find($user->partner_program_id);
+        }
+
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
             'employees' => $employees,
+            'partnerProgram' => $partnerProgram,
         ]);
     }
 

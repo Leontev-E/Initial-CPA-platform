@@ -67,7 +67,7 @@ export default function Show({ offer, apiKey }) {
                     <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-3 text-sm text-indigo-900">
                         <div className="text-sm font-semibold text-indigo-900">Скачать api.php</div>
                         <div className="mt-1 text-xs text-indigo-800">
-                            Файл для отправки лидов в пару кликов. Внутри уже подставлены ваш API-ключ и ID оффера.
+                            Настроенный api файл для отправки лидов. Внутри уже подставлены ваш API-ключ и ID оффера.
                         </div>
                         <div className="mt-2 space-y-2">
                             <div>
