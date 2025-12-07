@@ -75,7 +75,8 @@ class RegisteredUserController extends Controller
             'email' => $validated['contact_email'],
             'telegram' => $validated['telegram'],
             'password' => $validated['password'],
-            'role' => User::ROLE_ADMIN,
+            // Store legacy partner_admin to satisfy DB check constraints; accessor normalizes to admin.
+            'role' => 'partner_admin',
             'partner_program_id' => $partnerProgram->id,
             'email_verified_at' => null,
         ]);
