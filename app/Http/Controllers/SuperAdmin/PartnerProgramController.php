@@ -7,15 +7,24 @@ use App\Models\PartnerProgram;
 use App\Models\User;
 use App\Support\PartnerProgramContext;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class PartnerProgramController extends Controller
 {
+    /**
+     * Super-admin should always query partner programs globally.
+     */
+    protected function baseQuery(): Builder
+    {
+        return PartnerProgram::withoutGlobalScopes();
+    }
+
     public function index(Request $request)
     {
-        $programs = PartnerProgram::withCount([
+        $programs = $this->baseQuery()->withCount([
             'offers as offers_count' => fn($q) => $q->withoutGlobalScopes(),
             'webmasters as webmasters_count' => fn($q) => $q->withoutGlobalScopes()->where('role', User::ROLE_WEBMASTER),
         ])
@@ -44,7 +53,7 @@ class PartnerProgramController extends Controller
     {
         $data = $this->validatedData($request);
 
-        $program = PartnerProgram::create($data);
+        $program = $this->baseQuery()->create($data);
 
         return redirect()->route('super-admin.partner-programs.index')->with('success', 'Партнерская программа создана');
     }
@@ -52,12 +61,14 @@ class PartnerProgramController extends Controller
     public function edit(PartnerProgram $partnerProgram)
     {
         return Inertia::render('SuperAdmin/PartnerPrograms/Form', [
-            'program' => $partnerProgram,
+            'program' => $this->baseQuery()->findOrFail($partnerProgram->id),
         ]);
     }
 
     public function update(Request $request, PartnerProgram $partnerProgram)
     {
+        $partnerProgram = $this->baseQuery()->findOrFail($partnerProgram->id);
+
         $data = $this->validatedData($request, $partnerProgram->id);
         $partnerProgram->update($data);
 
@@ -66,6 +77,8 @@ class PartnerProgramController extends Controller
 
     public function switch(PartnerProgram $partnerProgram, Request $request)
     {
+        $partnerProgram = $this->baseQuery()->findOrFail($partnerProgram->id);
+
         $request->session()->put('partner_program_id', $partnerProgram->id);
         app(PartnerProgramContext::class)->setPartnerProgram($partnerProgram);
 
