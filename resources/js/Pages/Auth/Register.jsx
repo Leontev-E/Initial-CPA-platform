@@ -10,8 +10,6 @@ export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
         program_name: '',
         contact_email: '',
-        name: '',
-        email: '',
         telegram: '',
         password: '',
         password_confirmation: '',
@@ -74,41 +72,6 @@ export default function Register() {
 
                     <InputError message={errors.contact_email} className="mt-2" />
                 </div>
-
-                <div>
-                    <InputLabel htmlFor="name" value="Ваше имя" />
-
-                    <TextInput
-                        id="name"
-                        name="name"
-                        value={data.name}
-                        className="mt-1 block w-full"
-                        autoComplete="name"
-                        onChange={(e) => setData('name', e.target.value)}
-                        required
-                    />
-
-                    <InputError message={errors.name} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Ваш email" />
-
-                    <TextInput
-                        id="email"
-                        type="email"
-                        name="email"
-                        value={data.email}
-                        className="mt-1 block w-full"
-                        autoComplete="username"
-                        onChange={(e) => setData('email', e.target.value)}
-                        placeholder="user@example.com"
-                        required
-                    />
-
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
                 <div className="mt-4">
                     <InputLabel htmlFor="telegram" value="Telegram" />
 

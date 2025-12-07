@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
@@ -41,16 +42,7 @@ class RegisteredUserController extends Controller
 
         $validated = $request->validate([
             'program_name' => ['required', 'string', 'max:255'],
-            'contact_email' => ['required', 'email', 'max:255'],
-            'name' => 'required|string|min:2|max:255',
-            'email' => [
-                'required',
-                'string',
-                'lowercase',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email'),
-            ],
+            'contact_email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
             'telegram' => [
                 'required',
                 'string',
@@ -61,7 +53,7 @@ class RegisteredUserController extends Controller
         ], [
             'password.confirmed' => 'Пароли не совпадают',
             'password.min' => 'Минимальная длина пароля 8 символов',
-            'email.unique' => 'Email уже используется, выберите другой.',
+            'contact_email.unique' => 'Email уже используется, выберите другой.',
             'telegram.unique' => 'Telegram уже используется, выберите другой.',
         ]);
 
@@ -73,8 +65,8 @@ class RegisteredUserController extends Controller
         ]);
 
         $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
+            'name' => $validated['program_name'],
+            'email' => $validated['contact_email'],
             'telegram' => $validated['telegram'],
             'password' => $validated['password'],
             'role' => User::ROLE_ADMIN,
