@@ -14,32 +14,32 @@ export default function AuthenticatedLayout({ header, children }) {
     const navItems = useMemo(() => {
         if (user.role === 'super_admin') {
             return [
-                { label: '??????????? ?????????', name: 'super-admin.partner-programs.index', section: null },
+                { label: 'Партнерские программы', name: 'super-admin.partner-programs.index', section: null },
                 partnerProgram
-                    ? { label: `???????: ${partnerProgram.name}`, name: 'admin.dashboard', section: null }
+                    ? { label: `Админка: ${partnerProgram.name}`, name: 'admin.dashboard', section: null }
                     : null,
             ].filter(Boolean);
         }
 
         if (user.role === 'admin') {
             return [
-                { label: '??????? ???????', name: 'admin.dashboard', section: null },
-                { label: '?????????', name: 'admin.offer-categories.index', section: 'categories' },
-                { label: '??????', name: 'admin.offers.index', section: 'offers' },
-                { label: '????', name: 'admin.leads.index', section: 'leads' },
-                { label: '??????????', name: 'admin.webmasters.index', section: 'webmasters' },
-                { label: '??????', name: 'admin.reports.offers', section: 'reports' },
-                { label: '???????', name: 'admin.payouts.index', section: 'payouts', badge: auth.pendingPayouts },
-                { label: '???????', name: 'admin.webhooks.index', section: 'webhooks' },
+                { label: 'Дашборд', name: 'admin.dashboard', section: null },
+                { label: 'Категории', name: 'admin.offer-categories.index', section: 'categories' },
+                { label: 'Офферы', name: 'admin.offers.index', section: 'offers' },
+                { label: 'Лиды', name: 'admin.leads.index', section: 'leads' },
+                { label: 'Вебмастера', name: 'admin.webmasters.index', section: 'webmasters' },
+                { label: 'Отчеты', name: 'admin.reports.offers', section: 'reports' },
+                { label: 'Выплаты', name: 'admin.payouts.index', section: 'payouts', badge: auth.pendingPayouts },
+                { label: 'Постбеки', name: 'admin.webhooks.index', section: 'webhooks' },
             ];
         }
 
         return [
-            { label: '??????? ??????????', name: 'webmaster.dashboard', section: null },
-            { label: '??????', name: 'webmaster.offers.index', section: null },
-            { label: '??????????', name: 'webmaster.leads.index', section: null },
-            { label: '???????????', name: 'webmaster.tools.index', section: null },
-            { label: '???????', name: 'webmaster.payouts.index', section: null },
+            { label: 'Главная', name: 'webmaster.dashboard', section: null },
+            { label: 'Офферы', name: 'webmaster.offers.index', section: null },
+            { label: 'Статистика', name: 'webmaster.leads.index', section: null },
+            { label: 'Инструменты', name: 'webmaster.tools.index', section: null },
+            { label: 'Выплаты', name: 'webmaster.payouts.index', section: null },
         ];
     }, [user.role, partnerProgram, auth.pendingPayouts]);
 
@@ -64,7 +64,7 @@ export default function AuthenticatedLayout({ header, children }) {
         const yyyy = d.getFullYear();
         const hh = String(d.getHours()).padStart(2, '0');
         const min = String(d.getMinutes()).padStart(2, '0');
-        return `Дата: ${dd}.${mm}.${yyyy} · Время: ${hh}:${min}`;
+        return `Последний вход: ${dd}.${mm}.${yyyy} в ${hh}:${min}`;
     };
 
     const formatMoney = (value) => {
@@ -121,7 +121,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         <div className={`text-sm font-semibold ${wmMeta.balance >= wmMeta.min_payout ? 'text-green-700' : 'text-gray-600'}`}>
                             {formatMoney(wmMeta.balance)} $
                         </div>
-                        <div className="text-[11px] text-gray-500">Минимум к выводу: {formatMoney(wmMeta.min_payout)} $</div>
+                        <div className="text-[11px] text-gray-500">Мин. к выплате: {formatMoney(wmMeta.min_payout)} $</div>
                     </div>
                 )}
                 <Link
@@ -136,6 +136,16 @@ export default function AuthenticatedLayout({ header, children }) {
         </>
     );
 
+    const roleSubtitle = () => {
+        if (user.role === 'super_admin') {
+            return 'Суперадмин';
+        }
+        if (user.role === 'admin') {
+            return partnerProgram?.name || 'Партнерская программа';
+        }
+        return 'Кабинет вебмастера';
+    };
+
     return (
         <div className="flex min-h-screen bg-slate-50">
             <aside className="hidden w-64 flex-col border-r bg-white/90 p-4 pb-16 shadow-sm lg:flex">
@@ -146,9 +156,7 @@ export default function AuthenticatedLayout({ header, children }) {
                             BoostClicks CPA Platform
                         </div>
                         <div className="text-xs text-gray-500">
-                            {user.role === 'admin'
-                                ? 'Кабинет ПП'
-                                : 'Кабинет вебмастера'}
+                            {roleSubtitle()}
                         </div>
                     </div>
                 </div>
@@ -158,14 +166,14 @@ export default function AuthenticatedLayout({ header, children }) {
             <div className="flex-1 pb-24">
                 {impersonating && (
                     <div className="bg-amber-100 text-amber-800 px-4 py-2 text-sm flex items-center justify-between">
-                        <div>Вы вошли под другим пользователем</div>
+                        <div>Вы работаете в режиме имперсонации.</div>
                         <Link
                             href={route('webmasters.stopImpersonate')}
                             method="post"
                             as="button"
                             className="rounded bg-amber-200 px-3 py-1 text-xs font-semibold hover:bg-amber-300"
                         >
-                            Вернуться в партнерскую программу
+                            Выйти из режима
                         </Link>
                     </div>
                 )}
@@ -192,11 +200,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                         </div>
                                     )}
                                     <div className="text-xs uppercase tracking-wide text-gray-500">
-                                        {user.role === 'super_admin'
-                                            ? '??????????'
-                                            : user.role === 'admin'
-                                                ? (partnerProgram?.name || '??????????? ?????????')
-                                                : '??????? ??????????'}
+                                        {roleSubtitle()}
                                     </div>
                                 </div>
                             </div>
@@ -206,7 +210,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 href={route('profile.edit')}
                                 className="rounded-full border border-indigo-200 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50"
                             >
-                                Личный кабинет
+                                Профиль
                             </Link>
                             <div className="text-right">{formatLastLogin(user.last_login_at)}</div>
                             {user.role === 'webmaster' && installEvent && (
@@ -233,7 +237,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
                 <main className="p-4 lg:p-8">{children}</main>
                 <footer className="fixed bottom-0 left-0 right-0 border-t bg-white/90 px-4 py-3 text-center text-xs text-gray-600 shadow-inner">
-                    <a className="text-indigo-600" href="https://boostclicks.ru">https://boostclicks.ru</a> BoostClicks - Евгений Леонтьев <a className="text-indigo-600" href="https://t.me/boostclicks">https://t.me/boostclicks</a>
+                    <a className="text-indigo-600" href="https://boostclicks.ru">https://boostclicks.ru</a> BoostClicks - партнерская платформа <a className="text-indigo-600" href="https://t.me/boostclicks">https://t.me/boostclicks</a>
                 </footer>
             </div>
         </div>
