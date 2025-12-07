@@ -4,12 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Jobs\SendLeadWebhooksJob;
+use App\Models\Concerns\HasPartnerProgram;
 
 class Lead extends Model
 {
+    use HasPartnerProgram;
+
     public ?string $fromStatusForWebhook = null;
 
     protected $fillable = [
+        'partner_program_id',
         'offer_id',
         'webmaster_id',
         'geo',

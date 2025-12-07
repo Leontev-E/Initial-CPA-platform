@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Lead;
 use App\Models\LeadWebhookLog;
 use App\Models\User;
+use App\Support\PartnerProgramContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -29,6 +30,8 @@ class IncomingLeadWebhookController extends Controller
         if (! $user) {
             return $this->unauthorized('Неверный токен вебхука');
         }
+
+        app(PartnerProgramContext::class)->setPartnerProgramId($user->partner_program_id);
 
         $validator = Validator::make($request->all(), [
             'lead_id' => ['required', 'integer'],

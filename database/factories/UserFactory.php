@@ -32,6 +32,7 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
             'role' => 'webmaster',
             'is_active' => true,
+            'partner_program_id' => 1,
         ];
     }
 

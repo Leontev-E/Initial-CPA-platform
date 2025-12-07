@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Lead;
 use App\Models\LeadWebhook;
 use App\Models\LeadWebhookLog;
+use App\Support\PartnerProgramContext;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -13,6 +14,7 @@ class LeadWebhookDispatcher
     public function dispatch(Lead $lead, ?string $fromStatus = null): void
     {
         $lead->loadMissing('offer');
+        app(PartnerProgramContext::class)->setPartnerProgramId($lead->partner_program_id);
 
         $webhooks = LeadWebhook::query()
             ->where('is_active', true)
@@ -45,6 +47,7 @@ class LeadWebhookDispatcher
             }
 
             LeadWebhookLog::create([
+                'partner_program_id' => $lead->partner_program_id,
                 'webhook_id' => $hook->id,
                 'user_id' => $hook->user_id,
                 'lead_id' => $lead->id,

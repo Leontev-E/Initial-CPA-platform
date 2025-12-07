@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\PartnerProgramContext;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -30,9 +31,10 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $partnerProgram = app(PartnerProgramContext::class)->getPartnerProgram();
 
         $webmasterMeta = null;
-        if ($user && $user->role === 'webmaster') {
+        if ($user && method_exists($user, 'isWebmaster') && $user->isWebmaster()) {
             $earned = (float) \App\Models\Lead::where('webmaster_id', $user->id)->where('status', 'sale')->sum('payout');
             $paid = (float) \App\Models\PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
             $locked = (float) \App\Models\PayoutRequest::where('webmaster_id', $user->id)->whereIn('status', ['pending', 'in_process'])->sum('amount');
@@ -45,7 +47,7 @@ class HandleInertiaRequests extends Middleware
         }
 
         $pendingPayouts = 0;
-        if ($user && $user->role === 'admin') {
+        if ($user && method_exists($user, 'isPartnerAdmin') && $user->isPartnerAdmin()) {
             $pendingPayouts = (int) \App\Models\PayoutRequest::where('status', 'pending')->count();
         }
 
@@ -55,6 +57,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
                 'webmasterMeta' => $webmasterMeta,
             ],
+            'partnerProgram' => $partnerProgram ? $partnerProgram->only(['id', 'name', 'slug', 'status', 'domain']) : null,
             'locale' => app()->getLocale(),
             'impersonating' => (bool) $request->session()->get('impersonate_admin_id'),
             'pendingPayouts' => $pendingPayouts,

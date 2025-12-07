@@ -122,7 +122,12 @@ class PayoutController extends Controller
             'details' => ['nullable', 'string'],
         ]);
 
-        PayoutRequest::create($validated);
+        $partnerProgramId = app(\App\Support\PartnerProgramContext::class)->getPartnerProgramId() ?? $request->user()->partner_program_id;
+
+        PayoutRequest::create([
+            ...$validated,
+            'partner_program_id' => $partnerProgramId,
+        ]);
 
         return back()->with('success', 'Заявка на выплату создана');
     }

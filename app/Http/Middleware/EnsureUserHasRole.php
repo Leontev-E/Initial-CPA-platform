@@ -17,7 +17,15 @@ class EnsureUserHasRole
     {
         $user = $request->user();
 
-        if (! $user || empty($roles) || ! in_array($user->role, $roles, true)) {
+        if (! $user) {
+            abort(403, __('Доступ запрещен'));
+        }
+
+        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+            return $next($request);
+        }
+
+        if (empty($roles) || ! in_array($user->role, $roles, true)) {
             abort(403, __('Доступ запрещен'));
         }
 

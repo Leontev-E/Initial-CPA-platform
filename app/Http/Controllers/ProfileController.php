@@ -101,6 +101,7 @@ class ProfileController extends Controller
             ],
             'invited_by' => $user->id,
             'email_verified_at' => now(),
+            'partner_program_id' => $user->partner_program_id,
         ]);
 
         Mail::send('emails.employee_invite', [

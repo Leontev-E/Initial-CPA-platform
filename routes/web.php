@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\PayoutController as AdminPayoutController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\LeadWebhookController as AdminLeadWebhookController;
 use App\Http\Controllers\Admin\WebmasterController as AdminWebmasterController;
+use App\Http\Controllers\SuperAdmin\PartnerProgramController as SuperAdminPartnerProgramController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
@@ -25,6 +26,12 @@ Route::get('/', fn () => redirect()->route('login'));
 Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
+
+Route::middleware(['auth', 'verified', 'role:super_admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
+    Route::post('partner-programs/reset-context', [SuperAdminPartnerProgramController::class, 'resetContext'])->name('partner-programs.reset');
+    Route::post('partner-programs/{partnerProgram}/switch', [SuperAdminPartnerProgramController::class, 'switch'])->name('partner-programs.switch');
+    Route::resource('partner-programs', SuperAdminPartnerProgramController::class)->except(['show']);
+});
 
 Route::middleware(['auth', 'verified', 'role:admin', 'section.access'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');

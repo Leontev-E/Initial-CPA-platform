@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\PartnerProgram;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -34,25 +35,13 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $existing = User::query()
-            ->where(function ($q) use ($request) {
-                $q->where('email', $request->email)
-                    ->orWhere('telegram', $request->telegram);
-            })
-            ->first();
-
-        if ($existing && $existing->email_verified_at) {
-            // Уже подтвержденный пользователь
-            throw ValidationException::withMessages([
-                'email' => 'Данный email уже подтвержден. Обратитесь к менеджеру.',
-            ]);
-        }
-
         $telegramInput = $request->input('telegram', '');
         $normalizedTelegram = str_starts_with($telegramInput, '@') ? $telegramInput : '@'.$telegramInput;
         $request->merge(['telegram' => $normalizedTelegram]);
 
         $validated = $request->validate([
+            'program_name' => ['required', 'string', 'max:255'],
+            'contact_email' => ['required', 'email', 'max:255'],
             'name' => 'required|string|min:2|max:255',
             'email' => [
                 'required',
@@ -60,41 +49,38 @@ class RegisteredUserController extends Controller
                 'lowercase',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')->ignore($existing?->id),
+                Rule::unique('users', 'email'),
             ],
             'telegram' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('users', 'telegram')->ignore($existing?->id),
+                Rule::unique('users', 'telegram'),
             ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
             'password.confirmed' => 'Пароли не совпадают',
             'password.min' => 'Минимальная длина пароля 8 символов',
-            'email.unique' => 'Email уже используется, но не подтвержден. Введите код из письма или запросите новый.',
-            'telegram.unique' => 'Telegram уже используется, но не подтвержден.',
+            'email.unique' => 'Email уже используется, выберите другой.',
+            'telegram.unique' => 'Telegram уже используется, выберите другой.',
         ]);
 
-        if ($existing) {
-            $user = tap($existing)->update([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'telegram' => $validated['telegram'],
-                'password' => $validated['password'],
-                'role' => User::ROLE_ADMIN,
-                'email_verified_at' => null,
-            ]);
-        } else {
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'telegram' => $validated['telegram'],
-                'password' => $validated['password'],
-                'role' => User::ROLE_ADMIN,
-                'email_verified_at' => null,
-            ]);
-        }
+        $partnerProgram = PartnerProgram::create([
+            'name' => $validated['program_name'],
+            'slug' => $this->uniqueSlug($validated['program_name']),
+            'contact_email' => $validated['contact_email'],
+            'status' => 'active',
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'telegram' => $validated['telegram'],
+            'password' => $validated['password'],
+            'role' => User::ROLE_ADMIN,
+            'partner_program_id' => $partnerProgram->id,
+            'email_verified_at' => null,
+        ]);
 
         $code = random_int(100000, 999999);
         Cache::put('verify_code_'.$user->id, $code, now()->addMinutes(15));
@@ -104,10 +90,8 @@ class RegisteredUserController extends Controller
                 $message->to($user->email)->subject('Код подтверждения BoostClicks');
             });
         } catch (\Throwable $e) {
-            // Если почта не настроена, вернуть ошибку
-            if (! $existing) {
-                $user->delete();
-            }
+            $user->delete();
+            $partnerProgram->delete();
 
             throw ValidationException::withMessages([
                 'email' => 'Не удалось отправить код. Проверьте почту или повторите позже.',
@@ -115,5 +99,19 @@ class RegisteredUserController extends Controller
         }
 
         return redirect()->route('verify.code.show', ['user' => $user->id, 'email' => $user->email]);
+    }
+
+    protected function uniqueSlug(string $name): string
+    {
+        $base = Str::slug($name) ?: 'program';
+        $slug = $base;
+        $counter = 1;
+
+        while (PartnerProgram::where('slug', $slug)->exists()) {
+            $slug = $base.'-'.$counter;
+            $counter++;
+        }
+
+        return $slug;
     }
 }

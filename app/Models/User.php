@@ -4,15 +4,18 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Concerns\HasPartnerProgram;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasPartnerProgram;
 
-    public const ROLE_ADMIN = 'admin';
+    public const ROLE_SUPER_ADMIN = 'super_admin';
+    public const ROLE_PARTNER_ADMIN = 'admin';
+    public const ROLE_ADMIN = self::ROLE_PARTNER_ADMIN; // Backward compatible alias
     public const ROLE_WEBMASTER = 'webmaster';
 
     /**
@@ -23,6 +26,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'partner_program_id',
         'telegram',
         'note',
         'dashboard_message',
@@ -92,7 +96,17 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->role === self::ROLE_ADMIN;
+        return $this->isPartnerAdmin();
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === self::ROLE_SUPER_ADMIN;
+    }
+
+    public function isPartnerAdmin(): bool
+    {
+        return $this->role === self::ROLE_PARTNER_ADMIN;
     }
 
     public function isWebmaster(): bool
@@ -107,7 +121,7 @@ class User extends Authenticatable
 
     public function canImpersonateWebmaster(): bool
     {
-        if (! $this->isAdmin()) {
+        if (! $this->isAdmin() && ! $this->isSuperAdmin()) {
             return false;
         }
 
@@ -122,7 +136,7 @@ class User extends Authenticatable
     public function canImpersonateEmployee(): bool
     {
         // Только для администраторов ПП
-        if (! $this->isAdmin()) {
+        if (! $this->isAdmin() && ! $this->isSuperAdmin()) {
             return false;
         }
 

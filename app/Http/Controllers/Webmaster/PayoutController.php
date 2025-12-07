@@ -68,6 +68,7 @@ class PayoutController extends Controller
         }
 
         PayoutRequest::create([
+            'partner_program_id' => $user->partner_program_id,
             'webmaster_id' => $user->id,
             'amount' => $validated['amount'],
             'method' => $validated['method'],

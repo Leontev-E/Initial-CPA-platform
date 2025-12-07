@@ -3,7 +3,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
-    const { auth, impersonating } = usePage().props;
+    const { auth, impersonating, partnerProgram } = usePage().props;
     const user = auth.user;
     const wmMeta = auth.webmasterMeta;
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -12,27 +12,36 @@ export default function AuthenticatedLayout({ header, children }) {
     const allowedSections = user.invited_by ? (user.permissions?.sections || []) : null;
 
     const navItems = useMemo(() => {
+        if (user.role === 'super_admin') {
+            return [
+                { label: '??????????? ?????????', name: 'super-admin.partner-programs.index', section: null },
+                partnerProgram
+                    ? { label: `???????: ${partnerProgram.name}`, name: 'admin.dashboard', section: null }
+                    : null,
+            ].filter(Boolean);
+        }
+
         if (user.role === 'admin') {
             return [
-                { label: 'Дашборд партнерской программы', name: 'admin.dashboard', section: null },
-                { label: 'Категории', name: 'admin.offer-categories.index', section: 'categories' },
-                { label: 'Офферы', name: 'admin.offers.index', section: 'offers' },
-                { label: 'Лиды', name: 'admin.leads.index', section: 'leads' },
-                { label: 'Вебмастера', name: 'admin.webmasters.index', section: 'webmasters' },
-                { label: 'Аналитика', name: 'admin.reports.offers', section: 'reports' },
-                { label: 'Выплаты', name: 'admin.payouts.index', section: 'payouts', badge: auth.pendingPayouts },
-                { label: 'Вебхуки', name: 'admin.webhooks.index', section: 'webhooks' },
+                { label: '??????? ???????', name: 'admin.dashboard', section: null },
+                { label: '?????????', name: 'admin.offer-categories.index', section: 'categories' },
+                { label: '??????', name: 'admin.offers.index', section: 'offers' },
+                { label: '????', name: 'admin.leads.index', section: 'leads' },
+                { label: '??????????', name: 'admin.webmasters.index', section: 'webmasters' },
+                { label: '??????', name: 'admin.reports.offers', section: 'reports' },
+                { label: '???????', name: 'admin.payouts.index', section: 'payouts', badge: auth.pendingPayouts },
+                { label: '???????', name: 'admin.webhooks.index', section: 'webhooks' },
             ];
         }
 
         return [
-            { label: 'Дашборд вебмастера', name: 'webmaster.dashboard', section: null },
-            { label: 'Офферы', name: 'webmaster.offers.index', section: null },
-            { label: 'Статистика', name: 'webmaster.leads.index', section: null },
-            { label: 'Инструменты', name: 'webmaster.tools.index', section: null },
-            { label: 'Выплаты', name: 'webmaster.payouts.index', section: null },
+            { label: '??????? ??????????', name: 'webmaster.dashboard', section: null },
+            { label: '??????', name: 'webmaster.offers.index', section: null },
+            { label: '??????????', name: 'webmaster.leads.index', section: null },
+            { label: '???????????', name: 'webmaster.tools.index', section: null },
+            { label: '???????', name: 'webmaster.payouts.index', section: null },
         ];
-    }, [user.role]);
+    }, [user.role, partnerProgram, auth.pendingPayouts]);
 
     const isActive = (name) =>
         route().current(name) || route().current(`${name}.*`);
@@ -183,7 +192,11 @@ export default function AuthenticatedLayout({ header, children }) {
                                         </div>
                                     )}
                                     <div className="text-xs uppercase tracking-wide text-gray-500">
-                                        {user.role === 'admin' ? 'Партнерская программа' : 'Кабинет вебмастера'}
+                                        {user.role === 'super_admin'
+                                            ? '??????????'
+                                            : user.role === 'admin'
+                                                ? (partnerProgram?.name || '??????????? ?????????')
+                                                : '??????? ??????????'}
                                     </div>
                                 </div>
                             </div>

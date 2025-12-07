@@ -10,7 +10,11 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        if ($user->isAdmin()) {
+        if ($user->isSuperAdmin()) {
+            return redirect()->route('super-admin.partner-programs.index');
+        }
+
+        if ($user->isPartnerAdmin()) {
             return redirect()->route('admin.dashboard');
         }
 

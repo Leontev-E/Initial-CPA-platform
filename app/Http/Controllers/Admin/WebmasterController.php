@@ -98,6 +98,7 @@ class WebmasterController extends Controller
             'password' => Hash::make($password),
             'role' => User::ROLE_WEBMASTER,
             'min_payout' => $validated['min_payout'] ?? 0,
+            'partner_program_id' => app(\App\Support\PartnerProgramContext::class)->getPartnerProgramId() ?? $request->user()->partner_program_id,
         ]);
 
         $this->sendCredentialsEmail($user, $password, $request->user());
@@ -239,7 +240,11 @@ class WebmasterController extends Controller
         ]);
 
         OfferWebmasterRate::updateOrCreate(
-            ['offer_id' => $data['offer_id'], 'webmaster_id' => $user->id],
+            [
+                'offer_id' => $data['offer_id'],
+                'webmaster_id' => $user->id,
+                'partner_program_id' => $user->partner_program_id,
+            ],
             ['custom_payout' => $data['custom_payout'], 'is_allowed' => $data['is_allowed']]
         );
 
@@ -257,6 +262,7 @@ class WebmasterController extends Controller
         ]);
 
         PayoutRequest::create([
+            'partner_program_id' => $user->partner_program_id,
             'webmaster_id' => $user->id,
             'amount' => $data['amount'],
             'method' => $data['method'],
@@ -277,6 +283,7 @@ class WebmasterController extends Controller
         ]);
 
         BalanceAdjustment::create([
+            'partner_program_id' => $user->partner_program_id,
             'webmaster_id' => $user->id,
             'created_by' => $request->user()->id,
             'amount' => $data['amount'],

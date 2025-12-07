@@ -40,6 +40,7 @@ class PostbackDispatcher
             }
 
             PostbackLog::create([
+                'partner_program_id' => $lead->partner_program_id,
                 'webmaster_id' => $lead->webmaster_id,
                 'lead_id' => $lead->id,
                 'offer_id' => $lead->offer_id,

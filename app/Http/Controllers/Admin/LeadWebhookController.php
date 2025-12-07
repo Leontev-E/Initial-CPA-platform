@@ -102,6 +102,7 @@ class LeadWebhookController extends Controller
     {
         $data = $this->validateData($request);
         $data['user_id'] = $request->user()->id;
+        $data['partner_program_id'] = app(\App\Support\PartnerProgramContext::class)->getPartnerProgramId() ?? $request->user()->partner_program_id;
 
         LeadWebhook::create($data);
 
@@ -113,6 +114,7 @@ class LeadWebhookController extends Controller
         $this->authorizeWebhook($request, $webhook);
 
         $data = $this->validateData($request);
+        $data['partner_program_id'] = $webhook->partner_program_id;
 
         $webhook->update($data);
 

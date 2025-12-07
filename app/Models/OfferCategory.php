@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\HasPartnerProgram;
 
 class OfferCategory extends Model
 {
+    use HasPartnerProgram;
+
     protected $fillable = [
+        'partner_program_id',
         'name',
         'slug',
         'description',

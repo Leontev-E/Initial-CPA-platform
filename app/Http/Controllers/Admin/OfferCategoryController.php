@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Offer;
 use App\Models\OfferCategory;
+use App\Support\PartnerProgramContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class OfferCategoryController extends Controller
@@ -128,14 +130,22 @@ class OfferCategoryController extends Controller
 
     public function store(Request $request)
     {
+        $partnerProgramId = app(PartnerProgramContext::class)->getPartnerProgramId() ?? $request->user()->partner_program_id;
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255', 'unique:offer_categories,slug'],
+            'slug' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('offer_categories', 'slug')->where('partner_program_id', $partnerProgramId),
+            ],
             'description' => ['nullable', 'string'],
             'is_active' => ['boolean'],
         ]);
 
         $validated['slug'] = $validated['slug'] ?? Str::slug($validated['name']);
+        $validated['partner_program_id'] = $partnerProgramId;
 
         OfferCategory::create($validated);
 
@@ -144,14 +154,24 @@ class OfferCategoryController extends Controller
 
     public function update(Request $request, OfferCategory $offerCategory)
     {
+        $partnerProgramId = app(PartnerProgramContext::class)->getPartnerProgramId() ?? $offerCategory->partner_program_id;
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255', "unique:offer_categories,slug,{$offerCategory->id}"],
+            'slug' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('offer_categories', 'slug')
+                    ->where('partner_program_id', $partnerProgramId)
+                    ->ignore($offerCategory->id),
+            ],
             'description' => ['nullable', 'string'],
             'is_active' => ['boolean'],
         ]);
 
         $validated['slug'] = $validated['slug'] ?? $offerCategory->slug ?? Str::slug($validated['name']);
+        $validated['partner_program_id'] = $partnerProgramId;
 
         $offerCategory->update($validated);
 
@@ -176,8 +196,9 @@ class OfferCategoryController extends Controller
 
     public function attachOffer(Request $request, OfferCategory $offerCategory)
     {
+        $partnerProgramId = app(PartnerProgramContext::class)->getPartnerProgramId() ?? $offerCategory->partner_program_id;
         $data = $request->validate([
-            'offer_id' => ['required', 'exists:offers,id'],
+            'offer_id' => ['required', Rule::exists('offers', 'id')->where('partner_program_id', $partnerProgramId)],
         ]);
 
         $offerCategory->offersMany()->syncWithoutDetaching([$data['offer_id']]);
@@ -187,8 +208,9 @@ class OfferCategoryController extends Controller
 
     public function detachOffer(Request $request, OfferCategory $offerCategory)
     {
+        $partnerProgramId = app(PartnerProgramContext::class)->getPartnerProgramId() ?? $offerCategory->partner_program_id;
         $data = $request->validate([
-            'offer_id' => ['required', 'exists:offers,id'],
+            'offer_id' => ['required', Rule::exists('offers', 'id')->where('partner_program_id', $partnerProgramId)],
         ]);
 
         $offerCategory->offersMany()->detach($data['offer_id']);

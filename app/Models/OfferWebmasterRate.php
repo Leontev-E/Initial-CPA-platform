@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\HasPartnerProgram;
 
 class OfferWebmasterRate extends Model
 {
+    use HasPartnerProgram;
+
     protected $fillable = [
+        'partner_program_id',
         'offer_id',
         'webmaster_id',
         'custom_payout',

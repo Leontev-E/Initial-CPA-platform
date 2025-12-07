@@ -8,6 +8,8 @@ import { useState, useMemo } from 'react';
 
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
+        program_name: '',
+        contact_email: '',
         name: '',
         email: '',
         telegram: '',
@@ -37,9 +39,44 @@ export default function Register() {
         <GuestLayout>
             <Head title="Регистрация партнерской программы" />
 
-            <form onSubmit={submit}>
+            <form onSubmit={submit} className="space-y-4">
                 <div>
-                    <InputLabel htmlFor="name" value="Название CPA сети" />
+                    <InputLabel htmlFor="program_name" value="Название партнерской программы" />
+
+                    <TextInput
+                        id="program_name"
+                        name="program_name"
+                        value={data.program_name}
+                        className="mt-1 block w-full"
+                        autoComplete="organization"
+                        isFocused={true}
+                        onChange={(e) => setData('program_name', e.target.value)}
+                        required
+                    />
+
+                    <InputError message={errors.program_name} className="mt-2" />
+                </div>
+
+                <div>
+                    <InputLabel htmlFor="contact_email" value="Контактный email программы" />
+
+                    <TextInput
+                        id="contact_email"
+                        type="email"
+                        name="contact_email"
+                        value={data.contact_email}
+                        className="mt-1 block w-full"
+                        autoComplete="email"
+                        onChange={(e) => setData('contact_email', e.target.value)}
+                        placeholder="owner@example.com"
+                        required
+                    />
+
+                    <InputError message={errors.contact_email} className="mt-2" />
+                </div>
+
+                <div>
+                    <InputLabel htmlFor="name" value="Ваше имя" />
 
                     <TextInput
                         id="name"
@@ -47,7 +84,6 @@ export default function Register() {
                         value={data.name}
                         className="mt-1 block w-full"
                         autoComplete="name"
-                        isFocused={true}
                         onChange={(e) => setData('name', e.target.value)}
                         required
                     />
@@ -56,7 +92,7 @@ export default function Register() {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email" />
+                    <InputLabel htmlFor="email" value="Ваш email" />
 
                     <TextInput
                         id="email"
@@ -65,10 +101,10 @@ export default function Register() {
                         value={data.email}
                         className="mt-1 block w-full"
                         autoComplete="username"
-                                onChange={(e) => setData('email', e.target.value)}
-                            placeholder="user@example.com"
-                            required
-                        />
+                        onChange={(e) => setData('email', e.target.value)}
+                        placeholder="user@example.com"
+                        required
+                    />
 
                     <InputError message={errors.email} className="mt-2" />
                 </div>
@@ -82,15 +118,15 @@ export default function Register() {
                         name="telegram"
                         value={data.telegram}
                         className="mt-1 block w-full"
-                            onChange={(e) => {
-                                const v = e.target.value.startsWith('@')
-                                    ? e.target.value
-                                    : '@' + e.target.value;
-                                setData('telegram', v);
-                            }}
-                            placeholder="@username"
-                            required
-                        />
+                        onChange={(e) => {
+                            const v = e.target.value.startsWith('@')
+                                ? e.target.value
+                                : '@' + e.target.value;
+                            setData('telegram', v);
+                        }}
+                        placeholder="@username"
+                        required
+                    />
 
                     <InputError message={errors.telegram} className="mt-2" />
                 </div>
@@ -169,7 +205,7 @@ export default function Register() {
                         href={route('login')}
                         className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
-                        Уже есть аккаунт?
+                        Уже зарегистрированы?
                     </Link>
 
                     <PrimaryButton className="ms-4" disabled={processing}>

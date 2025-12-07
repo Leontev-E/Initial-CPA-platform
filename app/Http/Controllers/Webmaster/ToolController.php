@@ -19,7 +19,7 @@ class ToolController extends Controller
         $user = $request->user();
         $apiKey = ApiKey::firstOrCreate(
             ['webmaster_id' => $user->id, 'is_active' => true],
-            ['key' => Str::uuid()->toString()]
+            ['key' => Str::uuid()->toString(), 'partner_program_id' => $user->partner_program_id]
         );
 
         $postbacks = PostbackSetting::where('webmaster_id', $user->id)
@@ -78,6 +78,7 @@ class ToolController extends Controller
             'webmaster_id' => $user->id,
             'key' => Str::uuid()->toString(),
             'is_active' => true,
+            'partner_program_id' => $user->partner_program_id,
         ]);
 
         return back()->with('success', 'API ключ обновлен')->with('apiKey', $apiKey);
@@ -106,7 +107,7 @@ class ToolController extends Controller
 
         foreach ($validated as $pb) {
             PostbackSetting::updateOrCreate(
-                ['webmaster_id' => $user->id, 'event' => $pb['event']],
+                ['webmaster_id' => $user->id, 'event' => $pb['event'], 'partner_program_id' => $user->partner_program_id],
                 ['url' => $pb['url'], 'is_active' => (bool) ($pb['is_active'] ?? true)],
             );
         }

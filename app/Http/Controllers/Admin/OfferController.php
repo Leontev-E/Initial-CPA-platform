@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Offer;
 use App\Models\OfferLanding;
 use App\Models\OfferCategory;
+use App\Support\PartnerProgramContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use ZipArchive;
 
@@ -103,6 +105,8 @@ class OfferController extends Controller
         $primaryCategory = $validated['offer_category_id'] ?? ($validated['category_ids'][0] ?? null);
         $validated['offer_category_id'] = $primaryCategory;
 
+        $validated['partner_program_id'] = app(PartnerProgramContext::class)->getPartnerProgramId() ?? $request->user()->partner_program_id;
+
         $offer = Offer::create($validated);
         $offer->categories()->sync($validated['category_ids'] ?? array_filter([$primaryCategory]));
 
@@ -122,6 +126,8 @@ class OfferController extends Controller
 
         $primaryCategory = $validated['offer_category_id'] ?? ($validated['category_ids'][0] ?? $offer->offer_category_id);
         $validated['offer_category_id'] = $primaryCategory;
+
+        $validated['partner_program_id'] = $offer->partner_program_id;
 
         $offer->update($validated);
         $offer->categories()->sync($validated['category_ids'] ?? array_filter([$primaryCategory]));
@@ -144,12 +150,26 @@ class OfferController extends Controller
 
     protected function validateData(Request $request, ?int $offerId = null): array
     {
+        $partnerProgramId = app(PartnerProgramContext::class)->getPartnerProgramId() ?? $request->user()?->partner_program_id;
+
         return $request->validate([
-            'offer_category_id' => ['nullable', 'exists:offer_categories,id'],
+            'offer_category_id' => [
+                'nullable',
+                Rule::exists('offer_categories', 'id')->where('partner_program_id', $partnerProgramId),
+            ],
             'category_ids' => ['array'],
-            'category_ids.*' => ['exists:offer_categories,id'],
+            'category_ids.*' => [
+                Rule::exists('offer_categories', 'id')->where('partner_program_id', $partnerProgramId),
+            ],
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255', 'unique:offers,slug,'.$offerId],
+            'slug' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('offers', 'slug')
+                    ->where('partner_program_id', $partnerProgramId)
+                    ->ignore($offerId),
+            ],
             'default_payout' => ['required', 'numeric', 'min:0'],
             'allowed_geos' => ['nullable'],
             'description' => ['nullable', 'string'],
@@ -207,6 +227,7 @@ class OfferController extends Controller
             $path = $file->store('landings/raw', 'public');
 
             $landing = $offer->landings()->create([
+                'partner_program_id' => $offer->partner_program_id,
                 'type' => 'local',
                 'name' => $validated['name'],
                 'file_path' => $path,
@@ -221,6 +242,7 @@ class OfferController extends Controller
             }
 
             $offer->landings()->create([
+                'partner_program_id' => $offer->partner_program_id,
                 'type' => 'link',
                 'name' => $validated['name'],
                 'url' => $validated['url'],

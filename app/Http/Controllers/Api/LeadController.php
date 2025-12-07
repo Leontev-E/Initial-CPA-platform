@@ -7,6 +7,7 @@ use App\Jobs\SendPostbacksJob;
 use App\Models\ApiKey;
 use App\Models\Lead;
 use App\Models\Offer;
+use App\Support\PartnerProgramContext;
 use Illuminate\Http\Request;
 
 class LeadController extends Controller
@@ -20,6 +21,9 @@ class LeadController extends Controller
         if (! $apiKey || ! $apiKey->webmaster?->is_active) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
+
+        $partnerProgramId = $apiKey->partner_program_id ?? $apiKey->webmaster?->partner_program_id;
+        app(PartnerProgramContext::class)->setPartnerProgramId($partnerProgramId);
 
         $validated = $request->validate([
             'offer_id' => ['required', 'exists:offers,id'],
@@ -46,6 +50,7 @@ class LeadController extends Controller
         }
 
         $lead = Lead::create([
+            'partner_program_id' => $partnerProgramId,
             'offer_id' => $offer->id,
             'webmaster_id' => $apiKey->webmaster_id,
             'geo' => strtoupper($validated['geo']),

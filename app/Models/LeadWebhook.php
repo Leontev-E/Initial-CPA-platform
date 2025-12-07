@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\HasPartnerProgram;
 
 class LeadWebhook extends Model
 {
+    use HasPartnerProgram;
+
     protected $fillable = [
+        'partner_program_id',
         'user_id',
         'name',
         'url',

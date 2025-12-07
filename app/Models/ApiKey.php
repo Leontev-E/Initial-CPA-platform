@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\HasPartnerProgram;
 
 class ApiKey extends Model
 {
+    use HasPartnerProgram;
+
     protected $fillable = [
+        'partner_program_id',
         'webmaster_id',
         'key',
         'is_active',

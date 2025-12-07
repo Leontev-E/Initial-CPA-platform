@@ -74,7 +74,7 @@ class OfferController extends Controller
 
         $apiKey = ApiKey::firstOrCreate(
             ['webmaster_id' => $user->id, 'is_active' => true],
-            ['key' => Str::uuid()->toString()]
+            ['key' => Str::uuid()->toString(), 'partner_program_id' => $user->partner_program_id]
         );
 
         return Inertia::render('Webmaster/Offers/Show', [
@@ -89,7 +89,7 @@ class OfferController extends Controller
 
         $apiKey = ApiKey::firstOrCreate(
             ['webmaster_id' => $user->id, 'is_active' => true],
-            ['key' => Str::uuid()->toString()]
+            ['key' => Str::uuid()->toString(), 'partner_program_id' => $user->partner_program_id]
         );
 
         $allowedGeos = array_filter((array) $offer->allowed_geos ?? []);
