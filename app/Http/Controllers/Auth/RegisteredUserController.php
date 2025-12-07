@@ -10,7 +10,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
@@ -75,8 +74,7 @@ class RegisteredUserController extends Controller
             'email' => $validated['contact_email'],
             'telegram' => $validated['telegram'],
             'password' => $validated['password'],
-            // Store legacy partner_admin to satisfy DB check constraints; accessor normalizes to admin.
-            'role' => 'partner_admin',
+            'role' => User::ROLE_ADMIN,
             'partner_program_id' => $partnerProgram->id,
             'email_verified_at' => null,
         ]);
@@ -117,3 +115,4 @@ class RegisteredUserController extends Controller
         return $slug;
     }
 }
+
