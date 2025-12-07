@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Builder;
 
 class PartnerProgram extends Model
@@ -45,5 +46,13 @@ class PartnerProgram extends Model
     public function webmasters(): HasMany
     {
         return $this->hasMany(User::class)->where('role', User::ROLE_WEBMASTER);
+    }
+
+    public function owner(): HasOne
+    {
+        return $this->hasOne(User::class)
+            ->withoutGlobalScopes() // super-admin context should see real owner even when switched
+            ->where('role', User::ROLE_ADMIN)
+            ->whereNull('invited_by');
     }
 }

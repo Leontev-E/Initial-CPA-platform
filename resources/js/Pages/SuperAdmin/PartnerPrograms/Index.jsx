@@ -53,6 +53,7 @@ export default function Index({ auth, programs, currentPartnerProgramId }) {
                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Лимиты</th>
                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Домен</th>
                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Email</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Telegram</th>
                             <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Действия</th>
                         </tr>
                     </thead>
@@ -95,6 +96,7 @@ export default function Index({ auth, programs, currentPartnerProgramId }) {
                                 </td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{program.domain || '—'}</td>
                                 <td className="px-4 py-3 text-sm text-gray-700">{program.contact_email || '—'}</td>
+                                <td className="px-4 py-3 text-sm text-gray-700">{program.owner?.telegram || '-'}</td>
                                 <td className="px-4 py-3 text-right">
                                     <div className="flex items-center justify-end gap-2">
                                         <Link

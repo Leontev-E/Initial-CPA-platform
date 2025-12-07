@@ -18,7 +18,14 @@ class PartnerProgramController extends Controller
         $programs = PartnerProgram::withCount([
             'offers as offers_count' => fn($q) => $q->withoutGlobalScopes(),
             'webmasters as webmasters_count' => fn($q) => $q->withoutGlobalScopes()->where('role', User::ROLE_WEBMASTER),
-        ])->orderByDesc('created_at')->paginate(20)->withQueryString();
+        ])
+            ->with([
+                'owner' => fn($q) => $q->withoutGlobalScopes()
+                    ->select('id', 'partner_program_id', 'name', 'telegram', 'email'),
+            ])
+            ->orderByDesc('created_at')
+            ->paginate(20)
+            ->withQueryString();
 
         return Inertia::render('SuperAdmin/PartnerPrograms/Index', [
             'programs' => $programs,
