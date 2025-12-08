@@ -95,7 +95,7 @@ export default function Index({ offers, filters, categories, geos }) {
                                 });
                                 applyFilters();
                             }}
-                            className="h-10 rounded border px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                            className="h-10 self-end rounded border px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                         >
                             Сбросить
                         </button>
