@@ -13,12 +13,17 @@ class EnsurePartnerProgramAccessible
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
+        $context = app(PartnerProgramContext::class);
 
         if ($user && method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
             return $next($request);
         }
 
-        $program = app(PartnerProgramContext::class)->getPartnerProgram();
+        if ($user && method_exists($user, 'isSuperAdmin') && ! $user->isSuperAdmin()) {
+            $context->setPartnerProgramId($user->partner_program_id);
+        }
+
+        $program = $context->getPartnerProgram();
 
         if ($program && $program->is_blocked) {
             return Inertia::render('BlockedProgram', [
