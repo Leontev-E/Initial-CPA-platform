@@ -1,7 +1,7 @@
 import geosOptions from '@/data/geos.json';
 import { useMemo, useState } from 'react';
 
-export default function GeoMultiSelect({ value = [], onChange, placeholder = 'GEO', emptyLabel = 'Все GEO', className = '' }) {
+export default function GeoMultiSelect({ value = [], onChange, placeholder = 'GEO', className = '' }) {
     const [input, setInput] = useState('');
     const [open, setOpen] = useState(false);
 
@@ -21,10 +21,6 @@ export default function GeoMultiSelect({ value = [], onChange, placeholder = 'GE
         setInput('');
     };
 
-    const remove = (code) => {
-        onChange((value || []).filter((v) => v !== code));
-    };
-
     return (
         <div className={`w-full ${className}`.trim()}>
             {placeholder && (
@@ -35,7 +31,7 @@ export default function GeoMultiSelect({ value = [], onChange, placeholder = 'GE
             <div className="relative">
                 <input
                     className="h-10 w-full rounded border px-3 text-sm"
-                    placeholder="Поиск или код GEO"
+                    placeholder={(value && value.length > 0) ? value.join(', ') : 'Введите код GEO'}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -61,28 +57,11 @@ export default function GeoMultiSelect({ value = [], onChange, placeholder = 'GE
                             >
                                 <span>{geo.value} — {geo.text}</span>
                                 {value.includes(geo.value) && (
-                                    <span className="text-[11px] text-indigo-600">добавлен</span>
+                                    <span className="text-[11px] text-indigo-600">Выбрано</span>
                                 )}
                             </button>
                         ))}
                     </div>
-                )}
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-                {(value || []).map((code) => (
-                    <span key={code} className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-1 text-[11px] text-indigo-700">
-                        {code}
-                        <button
-                            type="button"
-                            onClick={() => remove(code)}
-                            className="text-indigo-500 hover:text-indigo-700"
-                        >
-                            ×
-                        </button>
-                    </span>
-                ))}
-                {(!value || value.length === 0) && (
-                    <span className="text-xs text-gray-500">{emptyLabel}</span>
                 )}
             </div>
         </div>
