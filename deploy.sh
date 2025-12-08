@@ -28,6 +28,6 @@ php artisan route:cache
 php artisan view:cache
 
 echo ">>> Перезапускаю сервисы..."
-systemctl restart cpa-http.service cpa-queue.service || true
+systemctl restart cpa-http.service cpa-queue.service cpa-queue-webhooks.service || true
 
 echo ">>> Деплой завершён."

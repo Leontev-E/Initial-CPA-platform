@@ -27,6 +27,7 @@ class LeadWebhookDispatcher
 
             $payload = $this->buildPayload($lead, $hook->fields, $fromStatus);
             $expandedUrl = $this->expandMacros($hook->url, $payload);
+            $loggedUrl = urldecode($expandedUrl);
             $method = strtolower($hook->method ?? 'post');
 
             $statusCode = null;
@@ -79,10 +80,11 @@ class LeadWebhookDispatcher
                 'status_before' => $fromStatus,
                 'status_after' => $lead->status,
                 'method' => $method,
-                'url' => $expandedUrl,
+                'url' => $loggedUrl,
                 'status_code' => $statusCode,
                 'response_body' => $responseBody,
                 'error_message' => $error,
+                'payload' => $payload,
                 'direction' => 'outgoing',
             ]);
         }

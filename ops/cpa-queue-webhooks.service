@@ -1,0 +1,17 @@
+[Unit]
+Description=Queue worker for BoostClicks webhooks
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+Restart=always
+RestartSec=5
+WorkingDirectory=/var/www/openai-book.store
+ExecStart=/usr/bin/php /var/www/openai-book.store/artisan queue:work --queue=webhooks,default --sleep=3 --tries=3 --max-time=3600
+ExecStop=/usr/bin/php /var/www/openai-book.store/artisan queue:restart
+StandardOutput=append:/var/www/openai-book.store/storage/logs/queue-webhooks.log
+StandardError=append:/var/www/openai-book.store/storage/logs/queue-webhooks.log
+
+[Install]
+WantedBy=multi-user.target
