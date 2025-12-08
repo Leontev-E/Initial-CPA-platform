@@ -20,6 +20,7 @@ export default function Index({ leads, offers, webmasters, filters, geos }) {
         date_from: filters?.date_from ?? '',
         date_to: filters?.date_to ?? '',
         category_id: filters?.category_id ?? '',
+        per_page: filters?.per_page ?? 30,
     });
 
     const applyFilters = () => {
@@ -144,6 +145,7 @@ export default function Index({ leads, offers, webmasters, filters, geos }) {
                                         date_from: '',
                                         date_to: '',
                                         category_id: '',
+                                        per_page: 30,
                                     });
                                     applyFilters();
                                 }}
@@ -198,6 +200,38 @@ export default function Index({ leads, offers, webmasters, filters, geos }) {
                         <div className="mt-1 text-xs text-indigo-600">subid: {lead.subid || '—'}</div>
                     </div>
                 ))}
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                    <span className="text-[12px] text-gray-500">На странице</span>
+                    <select
+                        className="h-9 rounded border px-2 pr-8 text-sm"
+                        value={filterForm.data.per_page}
+                        onChange={(e) => {
+                            filterForm.setData('per_page', Number(e.target.value));
+                            applyFilters();
+                        }}
+                    >
+                        <option value={10}>10</option>
+                        <option value={25}>25</option>
+                        <option value={30}>30</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                    </select>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                    {leads.links?.map((link, idx) => (
+                        <button
+                            key={idx}
+                            disabled={!link.url}
+                            onClick={() => link.url && router.visit(link.url, { preserveState: true, preserveScroll: true })}
+                            className={`rounded px-3 py-1 text-xs font-semibold min-w-[40px] text-center ${link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 border'} ${!link.url ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-50'}`}
+                        >
+                            {link.label?.replace(/&laquo;|&raquo;/g, '').trim() || idx + 1}
+                        </button>
+                    ))}
+                </div>
             </div>
         </AuthenticatedLayout>
     );

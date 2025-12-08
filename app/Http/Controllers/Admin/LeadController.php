@@ -18,7 +18,8 @@ class LeadController extends Controller
     {
         $query = $this->baseQuery($request);
 
-        $leads = $query->latest()->paginate(25)->withQueryString();
+        $perPage = in_array((int) $request->input('per_page'), [10, 25, 30, 50, 100]) ? (int) $request->input('per_page') : 30;
+        $leads = $query->latest()->paginate($perPage)->withQueryString();
 
         return Inertia::render('Admin/Leads/Index', [
             'leads' => $leads,
@@ -32,6 +33,7 @@ class LeadController extends Controller
                 'date_from' => $request->input('date_from'),
                 'date_to' => $request->input('date_to'),
                 'category_id' => $request->input('category_id'),
+                'per_page' => $perPage,
             ],
             'geos' => Lead::select('geo')->whereNotNull('geo')->distinct()->orderBy('geo')->pluck('geo'),
         ]);
