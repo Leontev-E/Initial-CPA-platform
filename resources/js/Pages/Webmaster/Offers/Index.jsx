@@ -151,7 +151,7 @@ export default function Index({ offers, filters, categories, geos }) {
                     <div className="flex items-center gap-2">
                         <span className="text-[12px] text-gray-500">На странице</span>
                         <select
-                            className="h-9 rounded border px-2 text-sm"
+                            className="h-9 rounded border px-2 pr-8 text-sm"
                             value={filterForm.data.per_page}
                             onChange={(e) => {
                                 filterForm.setData('per_page', Number(e.target.value));
