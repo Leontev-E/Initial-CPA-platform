@@ -10,9 +10,11 @@ export default function Index({ offers, categories, filters, offerLimit }) {
     const [filterGeoOpen, setFilterGeoOpen] = useState(false);
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
+    const [fileInputKey, setFileInputKey] = useState(Date.now());
     const geoMap = useMemo(() => Object.fromEntries(geos.map((g) => [g.value, g.text])), []);
     const limitInfo = offerLimit ?? usePage().props.offerLimit;
     const limitReached = limitInfo?.reached;
+    const noCategories = categories.length === 0;
 
     const { data, setData, post, processing, reset, errors } = useForm({
         offer_category_id: categories[0]?.id ?? '',
@@ -28,6 +30,7 @@ export default function Index({ offers, categories, filters, offerLimit }) {
         is_active: true,
         image: null,
     });
+    const formDisabled = noCategories;
 
     const filterForm = useForm({
         search: filters?.search ?? '',
@@ -78,6 +81,9 @@ export default function Index({ offers, categories, filters, offerLimit }) {
                 setData('allowed_geos', []);
                 setGeoInput('');
                 setData('call_center_timezone', 'local');
+                setStartTime('');
+                setEndTime('');
+                setFileInputKey(Date.now());
             },
         });
     };
@@ -153,7 +159,19 @@ export default function Index({ offers, categories, filters, offerLimit }) {
                             Вы достигли лимита по количеству офферов. Свяжитесь с поддержкой, чтобы увеличить лимит.
                         </div>
                     )}
+                    {noCategories && (
+                        <div className="mt-2 space-y-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                            <div>Чтобы создать оффер, сначала добавьте категорию.</div>
+                            <Link
+                                href={route('admin.offer-categories.index')}
+                                className="inline-flex items-center gap-2 rounded border border-red-200 bg-white px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+                            >
+                                Перейти к категориям
+                            </Link>
+                        </div>
+                    )}
                     <form onSubmit={submit} className="mt-3 space-y-3" encType="multipart/form-data">
+                        <fieldset disabled={formDisabled} className="space-y-3">
                         <div className="rounded border px-3 py-2">
                             <div className="text-xs font-semibold text-gray-600">Категории</div>
                             <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
@@ -338,6 +356,7 @@ export default function Index({ offers, categories, filters, offerLimit }) {
                                 Фото оффера (jpg/png)
                             </label>
                             <input
+                                key={fileInputKey}
                                 type="file"
                                 accept="image/*"
                                 className="mt-1 w-full rounded-lg border px-3 py-2"
@@ -366,6 +385,7 @@ export default function Index({ offers, categories, filters, offerLimit }) {
                         >
                             Создать
                         </button>
+                        </fieldset>
                     </form>
                 </div>
 
