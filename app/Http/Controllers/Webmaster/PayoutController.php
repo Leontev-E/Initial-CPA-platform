@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Webmaster;
 use App\Http\Controllers\Controller;
 use App\Models\Lead;
 use App\Models\PayoutRequest;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,15 +14,35 @@ class PayoutController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        $filters = [
+            'status' => $request->string('status')->toString(),
+            'method' => $request->string('method')->toString(),
+            'date_from' => $request->input('date_from'),
+            'date_to' => $request->input('date_to'),
+            'per_page' => (int) $request->input('per_page', 10),
+        ];
+        $perPage = in_array($filters['per_page'], [10, 25, 50]) ? $filters['per_page'] : 10;
+
         $payouts = PayoutRequest::where('webmaster_id', $user->id)
+            ->when($filters['status'], fn ($q, $status) => $q->where('status', $status))
+            ->when($filters['method'], fn ($q, $method) => $q->where('method', $method))
+            ->when($filters['date_from'], fn ($q, $from) => $q->whereDate('created_at', '>=', Carbon::parse($from)->startOfDay()))
+            ->when($filters['date_to'], fn ($q, $to) => $q->whereDate('created_at', '<=', Carbon::parse($to)->endOfDay()))
             ->latest()
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString()
             ->through(function (PayoutRequest $payout) {
                 $payout->created_at_human = optional($payout->created_at)->format('d.m.Y H:i');
                 $payout->public_comment = $payout->public_comment;
                 return $payout;
             });
+        $methods = PayoutRequest::where('webmaster_id', $user->id)
+            ->select('method')
+            ->distinct()
+            ->pluck('method')
+            ->filter()
+            ->values()
+            ->all();
 
         $earned = Lead::where('webmaster_id', $user->id)->where('status', 'sale')->sum('payout');
         $paid = PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
@@ -36,6 +57,8 @@ class PayoutController extends Controller
             'balance' => $available,
             'minPayout' => $minPayout,
             'canRequest' => $canRequest,
+            'filters' => $filters,
+            'methods' => $methods,
         ]);
     }
 

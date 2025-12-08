@@ -8,13 +8,29 @@ const statusColors = {
     cancelled: 'bg-red-50 text-red-700 border border-red-200',
 };
 
-export default function Index({ payouts, balance, minPayout, canRequest }) {
+export default function Index({ payouts, balance, minPayout, canRequest, filters = {}, methods = [] }) {
     const wallets = usePage().props.auth.user?.payout_wallets ?? [];
     const hasWallets = wallets.length > 0;
+    const filterForm = useForm({
+        status: filters.status ?? '',
+        method: filters.method ?? '',
+        date_from: filters.date_from ?? '',
+        date_to: filters.date_to ?? '',
+        per_page: filters.per_page ?? 10,
+    });
+
     const { data, setData, post, processing, reset, errors } = useForm({
         amount: '',
         wallet_id: hasWallets ? 0 : null,
     });
+
+    const applyFilters = () => {
+        filterForm.get(route('webmaster.payouts.index'), {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    };
 
     const submit = (e) => {
         e.preventDefault();
@@ -30,6 +46,99 @@ export default function Index({ payouts, balance, minPayout, canRequest }) {
             header={<h2 className="text-xl font-semibold text-gray-800">Выплаты</h2>}
         >
             <Head title="Выплаты" />
+
+            <div className="mb-4 rounded-xl bg-white p-4 shadow-sm">
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                    <div>
+                        <div className="text-[11px] uppercase text-gray-500">Статус</div>
+                        <select
+                            className="mt-1 h-10 w-full rounded border px-3 text-sm"
+                            value={filterForm.data.status}
+                            onChange={(e) => {
+                                filterForm.setData('status', e.target.value);
+                                applyFilters();
+                            }}
+                        >
+                            <option value="">Все</option>
+                            <option value="pending">pending</option>
+                            <option value="in_process">in_process</option>
+                            <option value="paid">paid</option>
+                            <option value="cancelled">cancelled</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div className="text-[11px] uppercase text-gray-500">Метод</div>
+                        <select
+                            className="mt-1 h-10 w-full rounded border px-3 text-sm"
+                            value={filterForm.data.method}
+                            onChange={(e) => {
+                                filterForm.setData('method', e.target.value);
+                                applyFilters();
+                            }}
+                        >
+                            <option value="">Все</option>
+                            {methods.map((m) => (
+                                <option key={m} value={m}>{m}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <div className="text-[11px] uppercase text-gray-500">Дата с</div>
+                        <input
+                            type="date"
+                            className="mt-1 h-10 w-full rounded border px-3 text-sm"
+                            value={filterForm.data.date_from}
+                            onChange={(e) => filterForm.setData('date_from', e.target.value)}
+                            onBlur={applyFilters}
+                        />
+                    </div>
+                    <div>
+                        <div className="text-[11px] uppercase text-gray-500">Дата по</div>
+                        <input
+                            type="date"
+                            className="mt-1 h-10 w-full rounded border px-3 text-sm"
+                            value={filterForm.data.date_to}
+                            onChange={(e) => filterForm.setData('date_to', e.target.value)}
+                            onBlur={applyFilters}
+                        />
+                    </div>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[12px] text-gray-500">На странице</span>
+                        <select
+                            className="h-9 rounded border px-2 pr-8 text-sm"
+                            value={filterForm.data.per_page}
+                            onChange={(e) => {
+                                filterForm.setData('per_page', Number(e.target.value));
+                                applyFilters();
+                            }}
+                        >
+                            <option value={10}>10</option>
+                            <option value={25}>25</option>
+                            <option value={50}>50</option>
+                        </select>
+                    </div>
+                    {(filterForm.data.status || filterForm.data.method || filterForm.data.date_from || filterForm.data.date_to || filterForm.data.per_page !== 10) && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                filterForm.setData({
+                                    status: '',
+                                    method: '',
+                                    date_from: '',
+                                    date_to: '',
+                                    per_page: 10,
+                                });
+                                applyFilters();
+                            }}
+                            className="rounded border px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                        >
+                            Сбросить
+                        </button>
+                    )}
+                </div>
+            </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
                 <div className="rounded-xl bg-white p-4 shadow-sm space-y-3">
