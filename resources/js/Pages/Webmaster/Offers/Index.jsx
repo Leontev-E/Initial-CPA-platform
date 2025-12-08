@@ -174,7 +174,7 @@ export default function Index({ offers, filters, categories, geos }) {
                                 key={idx}
                                 disabled={!link.url}
                                 onClick={() => link.url && router.visit(link.url, { preserveState: true, preserveScroll: true })}
-                                className={`rounded px-3 py-1 text-xs font-semibold ${link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 border'} ${!link.url ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-50'}`}
+                                className={`rounded px-3 py-1 text-xs font-semibold min-w-[40px] text-center ${link.active ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 border'} ${!link.url ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-50'}`}
                             >
                                 {label}
                             </button>

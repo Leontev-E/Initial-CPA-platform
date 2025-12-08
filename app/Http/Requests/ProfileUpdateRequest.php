@@ -25,6 +25,9 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+            'payout_wallets' => ['sometimes', 'array'],
+            'payout_wallets.*.type' => ['required_with:payout_wallets', 'string', 'in:USDT TRC20,Card,Other'],
+            'payout_wallets.*.details' => ['required_with:payout_wallets', 'string', 'max:255'],
         ];
     }
 }

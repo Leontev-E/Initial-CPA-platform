@@ -38,6 +38,7 @@ class User extends Authenticatable
         'last_activity_at',
         'employee_role',
         'permissions',
+        'payout_wallets',
         'invited_by',
         'min_payout',
         'incoming_webhook_token',
@@ -67,6 +68,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'permissions' => 'array',
+            'payout_wallets' => 'array',
         ];
     }
 

@@ -42,11 +42,20 @@ class PayoutController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
+        $wallets = $user->payout_wallets ?? [];
         $validated = $request->validate([
             'amount' => ['required', 'numeric', 'min:0'],
-            'method' => ['required', 'string', 'in:USDT TRC20,Карта банка'],
-            'wallet_address' => ['required', 'string', 'max:255'],
+            'wallet_id' => ['required', 'integer', 'min:0'],
         ]);
+        if (! isset($wallets[$validated['wallet_id']])) {
+            return back()->withErrors(['wallet_id' => 'Добавьте реквизиты в профиле и попробуйте снова.']);
+        }
+        $wallet = $wallets[$validated['wallet_id']];
+        $method = $wallet['type'] ?? 'Other';
+        $address = trim((string) ($wallet['details'] ?? ''));
+        if ($address === '') {
+            return back()->withErrors(['wallet_id' => 'В выбранном реквизите нет данных. Обновите его в профиле.']);
+        }
 
         $earned = Lead::where('webmaster_id', $user->id)->where('status', 'sale')->sum('payout');
         $paid = PayoutRequest::where('webmaster_id', $user->id)->where('status', 'paid')->sum('amount');
@@ -71,8 +80,8 @@ class PayoutController extends Controller
             'partner_program_id' => $user->partner_program_id,
             'webmaster_id' => $user->id,
             'amount' => $validated['amount'],
-            'method' => $validated['method'],
-            'wallet_address' => $validated['wallet_address'],
+            'method' => $method,
+            'wallet_address' => $address,
             'details' => '',
             'status' => 'pending',
         ]);

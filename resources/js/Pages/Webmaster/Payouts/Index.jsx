@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, router } from '@inertiajs/react';
+import { Head, useForm, router, usePage, Link } from '@inertiajs/react';
 
 const statusColors = {
     pending: 'bg-amber-50 text-amber-700 border border-amber-200',
@@ -9,16 +9,17 @@ const statusColors = {
 };
 
 export default function Index({ payouts, balance, minPayout, canRequest }) {
+    const wallets = usePage().props.auth.user?.payout_wallets ?? [];
+    const hasWallets = wallets.length > 0;
     const { data, setData, post, processing, reset, errors } = useForm({
         amount: '',
-        method: 'USDT TRC20',
-        wallet_address: '',
+        wallet_id: hasWallets ? 0 : null,
     });
 
     const submit = (e) => {
         e.preventDefault();
         post(route('webmaster.payouts.store'), {
-            onSuccess: () => reset('amount', 'wallet_address'),
+            onSuccess: () => reset('amount'),
         });
     };
 
@@ -48,37 +49,41 @@ export default function Index({ payouts, balance, minPayout, canRequest }) {
                             До минимальной суммы осталось {formatCurrency(minPayout - balance)} $
                         </div>
                     )}
+                    {!hasWallets && (
+                        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                            Добавьте реквизиты в <Link className="text-indigo-700 underline" href={route('profile.edit')}>личном кабинете</Link>, чтобы отправлять заявки.
+                        </div>
+                    )}
                     <form onSubmit={submit} className="space-y-3">
                         <input
                             className="w-full rounded border px-3 py-2"
                             placeholder="Сумма"
                             value={data.amount}
                             onChange={(e) => setData('amount', e.target.value)}
-                            disabled={!canRequest}
+                            disabled={!canRequest || !hasWallets}
                         />
                         {errors.amount && (
                             <div className="text-xs text-red-600">{errors.amount}</div>
                         )}
                         <select
                             className="w-full rounded border px-3 py-2"
-                            value={data.method}
-                            onChange={(e) => setData('method', e.target.value)}
-                            disabled={!canRequest}
+                            value={data.wallet_id ?? ''}
+                            onChange={(e) => setData('wallet_id', Number(e.target.value))}
+                            disabled={!canRequest || !hasWallets}
                         >
-                            <option value="USDT TRC20">USDT TRC20</option>
-                            <option value="Карта банка">Карта банка</option>
+                            {wallets.map((wallet, idx) => (
+                                <option key={idx} value={idx}>
+                                    {wallet.type}: {wallet.details}
+                                </option>
+                            ))}
                         </select>
-                        <input
-                            className="w-full rounded border px-3 py-2"
-                            placeholder="Адрес кошелька"
-                            value={data.wallet_address}
-                            onChange={(e) => setData('wallet_address', e.target.value)}
-                            disabled={!canRequest}
-                        />
+                        {errors.wallet_id && (
+                            <div className="text-xs text-red-600">{errors.wallet_id}</div>
+                        )}
                         <button
                             type="submit"
-                            disabled={processing || !canRequest}
-                            className={`rounded-lg px-4 py-2 text-sm font-semibold text-white ${canRequest ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-400 cursor-not-allowed'}`}
+                            disabled={processing || !canRequest || !hasWallets}
+                            className={`rounded-lg px-4 py-2 text-sm font-semibold text-white ${canRequest && hasWallets ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-400 cursor-not-allowed'}`}
                         >
                             Отправить заявку
                         </button>
