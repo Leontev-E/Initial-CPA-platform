@@ -17,6 +17,12 @@ class IncomingLeadWebhookController extends Controller
 
     public function updateStatus(Request $request): JsonResponse
     {
+        // Поддержка нестандартных кодировок из внешних вебхуков (PowerShell/Windows)
+        $normalizedPayload = $this->decodeJsonPayload($request);
+        if (! empty($normalizedPayload)) {
+            $request->replace($normalizedPayload);
+        }
+
         $token = $request->header('X-Webhook-Token') ?? $request->query('token') ?? $request->input('token');
         if (! $token) {
             return $this->unauthorized('Не передан токен вебхука');
@@ -132,6 +138,33 @@ class IncomingLeadWebhookController extends Controller
             'success' => false,
             'message' => $message,
         ], 401);
+    }
+
+    private function decodeJsonPayload(Request $request): array
+    {
+        $raw = $request->getContent();
+        $tryDecode = function (string $body): ?array {
+            $decoded = json_decode($body, true);
+            return is_array($decoded) ? $decoded : null;
+        };
+
+        if (mb_detect_encoding($raw, 'UTF-8', true)) {
+            if ($decoded = $tryDecode($raw)) {
+                return $decoded;
+            }
+        }
+
+        $encodings = ['UTF-16', 'UTF-16LE', 'UTF-16BE', 'CP866', 'CP1251', 'Windows-1251', 'ISO-8859-5', 'KOI8-R', 'MacCyrillic'];
+        foreach ($encodings as $enc) {
+            $converted = @mb_convert_encoding($raw, 'UTF-8', $enc);
+            if ($converted !== false && mb_detect_encoding($converted, 'UTF-8', true)) {
+                if ($decoded = $tryDecode($converted)) {
+                    return $decoded;
+                }
+            }
+        }
+
+        return [];
     }
 
     private function logIncoming(Request $request, int $userId, ?array $payload, ?Lead $lead, ?string $error, ?int $statusCode, ?string $statusBefore = null, ?string $statusAfter = null): void
