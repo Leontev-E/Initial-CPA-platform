@@ -76,8 +76,10 @@ class IncomingLeadWebhookController extends Controller
 
         $oldStatus = $lead->status;
         $lead->status = $data['status'];
+        $normalizedComment = null;
         if (! empty($data['comment'])) {
-            $lead->comment = $this->normalizeText($data['comment']);
+            $normalizedComment = $this->normalizeText($data['comment']);
+            $lead->comment = $normalizedComment;
         }
         $lead->save();
 
@@ -88,7 +90,7 @@ class IncomingLeadWebhookController extends Controller
             'user_id' => $user->id,
             'from_status' => $oldStatus,
             'to_status' => $lead->status,
-            'comment' => $data['comment'] ?? null,
+            'comment' => $normalizedComment ? '[WEBHOOK] '.$normalizedComment : '[WEBHOOK]',
         ]);
 
         return response()->json([
@@ -101,12 +103,17 @@ class IncomingLeadWebhookController extends Controller
 
     private function normalizeText(string $text): string
     {
-        // Попытка конвертировать в UTF-8, если клиент прислал в другой кодировке (напр. cp866/powershell)
-        foreach (['UTF-8', 'CP866', 'Windows-1251'] as $encoding) {
+        // Если уже валидный UTF-8 — возвращаем как есть
+        if (mb_detect_encoding($text, 'UTF-8', true)) {
+            return $text;
+        }
+
+        // Попытка конвертировать, если Powershell/другая OEM-страница прислала cp866/win1251
+        $encodings = ['CP866', 'Windows-1251', 'ISO-8859-5'];
+        foreach ($encodings as $encoding) {
             $converted = @mb_convert_encoding($text, 'UTF-8', $encoding);
-            if ($converted !== false) {
-                $text = $converted;
-                break;
+            if ($converted !== false && mb_detect_encoding($converted, 'UTF-8', true)) {
+                return $converted;
             }
         }
 
