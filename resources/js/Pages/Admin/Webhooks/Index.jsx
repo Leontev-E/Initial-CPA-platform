@@ -146,6 +146,15 @@ export default function Index({ webhooks, logs = null, webhookOptions = [], filt
         return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
     };
 
+    const formatPayload = (payload) => {
+        if (!payload) return '—';
+        try {
+            return JSON.stringify(payload, null, 2);
+        } catch (e) {
+            return String(payload);
+        }
+    };
+
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800">Вебхуки</h2>}>
             <Head title="Вебхуки" />
@@ -405,6 +414,7 @@ function OutgoingSection({
                                 <th className="px-3 py-2">Lead ID</th>
                                 <th className="px-3 py-2">HTTP</th>
                                 <th className="px-3 py-2">URL</th>
+                                <th className="px-3 py-2">Payload</th>
                                 <th className="px-3 py-2">Результат</th>
                             </tr>
                         </thead>
@@ -419,6 +429,11 @@ function OutgoingSection({
                                     <td className="px-3 py-2">{log.lead_id ?? '—'}</td>
                                     <td className="px-3 py-2">{log.status_code ?? '—'}</td>
                                     <td className="px-3 py-2 break-all text-xs text-gray-700">{log.url}</td>
+                                    <td className="px-3 py-2 text-xs text-gray-700">
+                                        <pre className="whitespace-pre-wrap break-all rounded border bg-gray-50 px-2 py-1 text-[11px] leading-snug">
+                                            {formatPayload(log.payload)}
+                                        </pre>
+                                    </td>
                                     <td className="px-3 py-2">
                                         {log.error_message ? (
                                             <span className="rounded bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
@@ -434,7 +449,7 @@ function OutgoingSection({
                             ))}
                             {(logs?.data?.length ?? 0) === 0 && (
                                 <tr>
-                                    <td className="px-3 py-4 text-center text-xs text-gray-500" colSpan={7}>
+                                    <td className="px-3 py-4 text-center text-xs text-gray-500" colSpan={8}>
                                         Нет записей
                                     </td>
                                 </tr>

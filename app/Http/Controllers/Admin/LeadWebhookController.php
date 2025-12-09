@@ -18,17 +18,22 @@ class LeadWebhookController extends Controller
             ->latest()
             ->get();
 
+        $driver = DB::connection()->getDriverName();
+        $payloadColumn = $driver === 'pgsql' ? 'payload::text' : 'payload';
+        $like = $driver === 'pgsql' ? 'ILIKE' : 'LIKE';
+
         $logs = LeadWebhookLog::with('webhook:id,name')
             ->where('direction', 'outgoing')
             ->where('user_id', $request->user()->id)
             ->where('created_at', '>=', now()->subDays(10))
-            ->when($request->filled('search'), function ($query) use ($request) {
+            ->when($request->filled('search'), function ($query) use ($request, $payloadColumn, $like) {
                 $term = $request->string('search')->toString();
-                $query->where(function ($q) use ($term) {
+                $query->where(function ($q) use ($term, $payloadColumn, $like) {
                     $q->where('url', 'like', "%{$term}%")
                         ->orWhere('event', 'like', "%{$term}%")
                         ->orWhere('status_code', 'like', "%{$term}%")
-                        ->orWhere('lead_id', 'like', "%{$term}%");
+                        ->orWhere('lead_id', 'like', "%{$term}%")
+                        ->orWhereRaw("CAST({$payloadColumn} AS TEXT) {$like} ?", ["%{$term}%"]);
                 });
             })
             ->when($request->filled('event'), fn($q) => $q->where('event', $request->string('event')->toString()))
