@@ -28,6 +28,15 @@ const fieldOptions = [
     { value: 'shipping_address', label: 'Адрес доставки' },
 ];
 
+const formatPayload = (payload) => {
+    if (!payload) return '—';
+    try {
+        return JSON.stringify(payload, null, 2);
+    } catch (e) {
+        return String(payload);
+    }
+};
+
 export default function Index({ webhooks, logs = null, webhookOptions = [], filters = {}, incoming = {} }) {
     const createForm = useForm({
         name: '',
@@ -144,15 +153,6 @@ export default function Index({ webhooks, logs = null, webhookOptions = [], filt
         const hh = String(d.getHours()).padStart(2, '0');
         const min = String(d.getMinutes()).padStart(2, '0');
         return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
-    };
-
-    const formatPayload = (payload) => {
-        if (!payload) return '—';
-        try {
-            return JSON.stringify(payload, null, 2);
-        } catch (e) {
-            return String(payload);
-        }
     };
 
     return (
