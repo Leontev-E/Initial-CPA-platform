@@ -3,7 +3,7 @@ import geos from '@/data/geos.json';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
-export default function Index({ offers, categories, filters, offerLimit }) {
+export default function Index({ offers, categories, filters, offerLimit, webmasters = [] }) {
     const [geoInput, setGeoInput] = useState('');
     const [geoOpen, setGeoOpen] = useState(false);
     const [filterGeoInput, setFilterGeoInput] = useState('');
@@ -28,9 +28,27 @@ export default function Index({ offers, categories, filters, offerLimit }) {
         call_center_hours: '',
         call_center_timezone: 'local',
         is_active: true,
+        is_private: false,
+        allowed_webmasters: [],
         image: null,
     });
     const formDisabled = noCategories;
+    const addAllowedWebmaster = () => {
+        const firstId = webmasters[0]?.id ?? '';
+        setData('allowed_webmasters', [...(data.allowed_webmasters || []), { webmaster_id: firstId, custom_payout: '' }]);
+    };
+    const updateAllowedWebmaster = (idx, field, value) => {
+        setData(
+            'allowed_webmasters',
+            (data.allowed_webmasters || []).map((row, i) => (i === idx ? { ...row, [field]: value } : row)),
+        );
+    };
+    const removeAllowedWebmaster = (idx) => {
+        setData(
+            'allowed_webmasters',
+            (data.allowed_webmasters || []).filter((_, i) => i !== idx),
+        );
+    };
 
     const filterForm = useForm({
         search: filters?.search ?? '',
@@ -366,6 +384,63 @@ export default function Index({ offers, categories, filters, offerLimit }) {
                             />
                             {errors.image && (
                                 <div className="text-xs text-red-600">{errors.image}</div>
+                            )}
+                        </div>
+                        <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+                            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                                <input
+                                    type="checkbox"
+                                    checked={data.is_private}
+                                    onChange={(e) => setData('is_private', e.target.checked)}
+                                />
+                                Приватный оффер (видят только выбранные вебмастера)
+                            </label>
+                            {data.is_private && (
+                                <div className="space-y-2">
+                                    <div className="flex flex-wrap gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={addAllowedWebmaster}
+                                            className="rounded border border-indigo-200 px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50"
+                                        >
+                                            Добавить вебмастера
+                                        </button>
+                                        {errors['allowed_webmasters'] && (
+                                            <div className="text-xs text-red-600">{errors['allowed_webmasters']}</div>
+                                        )}
+                                    </div>
+                                    {(data.allowed_webmasters || []).map((row, idx) => (
+                                        <div key={idx} className="grid gap-2 rounded border px-3 py-2 md:grid-cols-3">
+                                            <select
+                                                className="h-10 rounded border px-2 text-sm"
+                                                value={row.webmaster_id}
+                                                onChange={(e) => updateAllowedWebmaster(idx, 'webmaster_id', e.target.value)}
+                                            >
+                                                {webmasters.map((wm) => (
+                                                    <option key={wm.id} value={wm.id}>
+                                                        {wm.name} ({wm.email})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <input
+                                                className="h-10 rounded border px-3 text-sm"
+                                                placeholder="Инд. ставка (опц.)"
+                                                value={row.custom_payout ?? ''}
+                                                onChange={(e) => updateAllowedWebmaster(idx, 'custom_payout', e.target.value)}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeAllowedWebmaster(idx)}
+                                                className="h-10 rounded border border-red-200 px-3 text-sm font-semibold text-red-700 hover:bg-red-50"
+                                            >
+                                                Удалить
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {(data.allowed_webmasters || []).length === 0 && (
+                                        <div className="text-xs text-gray-500">Не выбрано ни одного вебмастера</div>
+                                    )}
+                                </div>
                             )}
                         </div>
                         <label className="inline-flex items-center gap-2 text-sm text-gray-700">

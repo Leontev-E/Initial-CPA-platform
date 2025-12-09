@@ -24,12 +24,14 @@ class Offer extends Model
         'call_center_hours',
         'call_center_timezone',
         'is_active',
+        'is_private',
     ];
 
     protected $casts = [
         'allowed_geos' => 'array',
         'default_payout' => 'decimal:2',
         'is_active' => 'boolean',
+        'is_private' => 'boolean',
     ];
 
     protected $appends = ['image_url', 'created_at_human'];

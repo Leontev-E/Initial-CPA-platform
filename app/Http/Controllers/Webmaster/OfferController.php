@@ -22,6 +22,10 @@ class OfferController extends Controller
         $geoFilters = array_filter(array_map('trim', (array) $request->input('geos', [])));
 
         $query = Offer::where('is_active', true)
+            ->where(function ($q) use ($user) {
+                $q->where('is_private', false)
+                    ->orWhereHas('rates', fn ($r) => $r->where('webmaster_id', $user->id));
+            })
             ->whereHas('category', fn ($q) => $q->where('is_active', true))
             ->whereDoesntHave('categories', fn ($q) => $q->where('is_active', false))
             ->with(['category', 'categories'])
@@ -65,6 +69,10 @@ class OfferController extends Controller
     public function show(Request $request, Offer $offer)
     {
         $user = $request->user();
+        if ($offer->is_private) {
+            $hasAccess = OfferWebmasterRate::where('offer_id', $offer->id)->where('webmaster_id', $user->id)->exists();
+            abort_unless($hasAccess, 403);
+        }
         $custom = OfferWebmasterRate::where('offer_id', $offer->id)
             ->where('webmaster_id', $user->id)
             ->value('custom_payout');

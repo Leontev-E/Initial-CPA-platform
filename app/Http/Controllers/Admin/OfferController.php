@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Offer;
 use App\Models\OfferLanding;
 use App\Models\OfferCategory;
+use App\Models\OfferWebmasterRate;
+use App\Models\User;
 use App\Support\PartnerProgramContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -82,6 +84,10 @@ class OfferController extends Controller
         return Inertia::render('Admin/Offers/Index', [
             'offers' => $offers,
             'categories' => OfferCategory::orderBy('name')->get(),
+            'webmasters' => User::where('role', User::ROLE_WEBMASTER)
+                ->where('partner_program_id', $partnerProgram?->id ?? $request->user()->partner_program_id)
+                ->orderBy('name')
+                ->get(['id', 'name', 'email']),
             'filters' => $request->only(['category_id', 'status', 'search', 'sort', 'direction', 'per_page', 'geo', 'geos']),
             'offerLimit' => [
                 'count' => $offerCount,
@@ -130,6 +136,8 @@ class OfferController extends Controller
         $offer = Offer::create($validated);
         $offer->categories()->sync($validated['category_ids'] ?? array_filter([$primaryCategory]));
 
+        $this->syncAllowedWebmasters($offer, $validated['allowed_webmasters'] ?? [], (bool) ($validated['is_private'] ?? false));
+
         return redirect()->route('admin.offers.index')->with('success', 'Оффер создан');
     }
 
@@ -151,6 +159,8 @@ class OfferController extends Controller
 
         $offer->update($validated);
         $offer->categories()->sync($validated['category_ids'] ?? array_filter([$primaryCategory]));
+
+        $this->syncAllowedWebmasters($offer, $validated['allowed_webmasters'] ?? [], (bool) ($validated['is_private'] ?? false));
 
         return back()->with('success', 'Оффер обновлен');
     }
@@ -198,8 +208,48 @@ class OfferController extends Controller
             'call_center_hours' => ['nullable', 'string', 'max:255'],
             'call_center_timezone' => ['nullable', 'in:local,msk'],
             'is_active' => ['boolean'],
+            'is_private' => ['boolean'],
+            'allowed_webmasters' => ['array'],
+            'allowed_webmasters.*.webmaster_id' => [
+                'required_with:allowed_webmasters',
+                'integer',
+                Rule::exists('users', 'id')
+                    ->where('partner_program_id', $partnerProgramId)
+                    ->where('role', User::ROLE_WEBMASTER),
+            ],
+            'allowed_webmasters.*.custom_payout' => ['nullable', 'numeric', 'min:0'],
             'image' => ['nullable', 'image'],
         ]);
+    }
+
+    private function syncAllowedWebmasters(Offer $offer, array $webmasters, bool $isPrivate): void
+    {
+        if (! $isPrivate) {
+            return;
+        }
+
+        $ids = collect($webmasters)
+            ->filter(fn ($row) => ! empty($row['webmaster_id']))
+            ->map(function ($row) use ($offer) {
+                $custom = isset($row['custom_payout']) && $row['custom_payout'] !== '' ? $row['custom_payout'] : null;
+                OfferWebmasterRate::updateOrCreate(
+                    [
+                        'offer_id' => $offer->id,
+                        'webmaster_id' => (int) $row['webmaster_id'],
+                    ],
+                    [
+                        'partner_program_id' => $offer->partner_program_id,
+                        'custom_payout' => $custom,
+                    ]
+                );
+                return (int) $row['webmaster_id'];
+            })
+            ->unique()
+            ->values();
+
+        OfferWebmasterRate::where('offer_id', $offer->id)
+            ->whereNotIn('webmaster_id', $ids)
+            ->delete();
     }
 
     protected function normalizeGeos(array|string|null $geos): array
