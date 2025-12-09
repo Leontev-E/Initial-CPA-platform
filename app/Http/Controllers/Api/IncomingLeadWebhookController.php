@@ -23,7 +23,7 @@ class IncomingLeadWebhookController extends Controller
         }
 
         $user = User::query()
-            ->where('role', User::ROLE_ADMIN)
+            ->whereIn('role', [User::ROLE_ADMIN, 'partner_admin'])
             ->where('incoming_webhook_token', $token)
             ->first();
 
