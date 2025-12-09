@@ -648,6 +648,7 @@ function IncomingSection({
                                 <th className="px-3 py-2">Статус до</th>
                                 <th className="px-3 py-2">Статус после</th>
                                 <th className="px-3 py-2">IP</th>
+                                <th className="px-3 py-2">Payload</th>
                                 <th className="px-3 py-2">Результат</th>
                             </tr>
                         </thead>
@@ -661,6 +662,14 @@ function IncomingSection({
                                     <td className="px-3 py-2">{log.status_before ?? '—'}</td>
                                     <td className="px-3 py-2">{log.status_after ?? '—'}</td>
                                     <td className="px-3 py-2">{log.ip ?? '—'}</td>
+                                    <td className="px-3 py-2 text-xs text-gray-700">
+                                        <details>
+                                            <summary className="cursor-pointer text-indigo-700 hover:underline">Показать payload</summary>
+                                            <pre className="mt-1 whitespace-pre-wrap break-all rounded border bg-gray-50 px-2 py-1 text-[11px] leading-snug">
+                                                {formatPayload(log.payload)}
+                                            </pre>
+                                        </details>
+                                    </td>
                                     <td className="px-3 py-2">
                                         {log.error_message ? (
                                             <span className="rounded bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
@@ -676,7 +685,7 @@ function IncomingSection({
                             ))}
                             {(incoming?.logs?.data?.length ?? 0) === 0 && (
                                 <tr>
-                                    <td className="px-3 py-4 text-center text-xs text-gray-500" colSpan={6}>
+                                    <td className="px-3 py-4 text-center text-xs text-gray-500" colSpan={7}>
                                         Нет записей
                                     </td>
                                 </tr>

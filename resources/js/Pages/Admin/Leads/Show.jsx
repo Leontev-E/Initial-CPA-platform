@@ -168,7 +168,7 @@ export default function Show({ lead, statuses }) {
                                                 <div className="text-xs text-gray-500">{formatDate(log.created_at)}</div>
                                             </div>
                                             <div className="text-xs text-gray-500">
-                                                {log.user?.name ? `Изменил: ${log.user.name}` : '—'}
+                                                {log.user?.email ? `Изменил: ${log.user.email}` : '—'}
                                             </div>
                                             {log.comment && (
                                                 <div className="mt-1 rounded bg-slate-50 px-2 py-1 text-xs text-gray-700">

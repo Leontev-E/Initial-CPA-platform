@@ -77,11 +77,19 @@ class IncomingLeadWebhookController extends Controller
         $oldStatus = $lead->status;
         $lead->status = $data['status'];
         if (! empty($data['comment'])) {
-            $lead->comment = $data['comment'];
+            $lead->comment = $this->normalizeText($data['comment']);
         }
         $lead->save();
 
         $this->logIncoming($request, $user->id, $data, $lead, null, 200, $oldStatus, $lead->status);
+
+        \App\Models\LeadStatusLog::create([
+            'lead_id' => $lead->id,
+            'user_id' => $user->id,
+            'from_status' => $oldStatus,
+            'to_status' => $lead->status,
+            'comment' => $data['comment'] ?? null,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -89,6 +97,20 @@ class IncomingLeadWebhookController extends Controller
             'old_status' => $oldStatus,
             'new_status' => $lead->status,
         ]);
+    }
+
+    private function normalizeText(string $text): string
+    {
+        // Попытка конвертировать в UTF-8, если клиент прислал в другой кодировке (напр. cp866/powershell)
+        foreach (['UTF-8', 'CP866', 'Windows-1251'] as $encoding) {
+            $converted = @mb_convert_encoding($text, 'UTF-8', $encoding);
+            if ($converted !== false) {
+                $text = $converted;
+                break;
+            }
+        }
+
+        return $text;
     }
 
     private function unauthorized(string $message): JsonResponse
