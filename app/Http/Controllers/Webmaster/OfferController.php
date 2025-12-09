@@ -23,7 +23,12 @@ class OfferController extends Controller
 
         $query = Offer::where('is_active', true)
             ->where(function ($q) use ($user) {
-                $q->where('is_private', false)
+                $q->where(function ($public) use ($user) {
+                    $public->where('is_private', false)
+                        ->whereDoesntHave('rates', function ($r) use ($user) {
+                            $r->where('webmaster_id', $user->id)->where('is_allowed', false);
+                        });
+                })
                     ->orWhereHas('rates', fn ($r) => $r->where('webmaster_id', $user->id)->where('is_allowed', true));
             })
             ->whereHas('category', fn ($q) => $q->where('is_active', true))
@@ -69,6 +74,12 @@ class OfferController extends Controller
     public function show(Request $request, Offer $offer)
     {
         $user = $request->user();
+        $denied = OfferWebmasterRate::where('offer_id', $offer->id)
+            ->where('webmaster_id', $user->id)
+            ->where('is_allowed', false)
+            ->exists();
+        abort_if($denied, 403);
+
         if ($offer->is_private) {
             $hasAccess = OfferWebmasterRate::where('offer_id', $offer->id)
                 ->where('webmaster_id', $user->id)
