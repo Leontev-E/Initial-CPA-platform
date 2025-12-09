@@ -28,14 +28,18 @@ const fieldOptions = [
     { value: 'shipping_address', label: 'Адрес доставки' },
 ];
 
-const formatPayload = (payload) => {
-    if (!payload) return '—';
-    try {
-        return JSON.stringify(payload, null, 2);
-    } catch (e) {
-        return String(payload);
-    }
-};
+    const formatPayload = (payload) => {
+        if (!payload) return '—';
+        try {
+            return JSON.stringify(payload, null, 2);
+        } catch (e) {
+            return String(payload);
+        }
+    };
+
+    const togglePayload = (id) => {
+        setExpandedPayloads((prev) => ({ ...prev, [id]: !prev[id] }));
+    };
 
 export default function Index({ webhooks, logs = null, webhookOptions = [], filters = {}, incoming = {} }) {
     const createForm = useForm({
@@ -68,6 +72,7 @@ export default function Index({ webhooks, logs = null, webhookOptions = [], filt
 
     const [activeTab, setActiveTab] = useState(initialTab);
     const [showToken, setShowToken] = useState(false);
+    const [expandedPayloads, setExpandedPayloads] = useState({});
 
     const setTab = (tab) => {
         setActiveTab(tab);
@@ -430,9 +435,21 @@ function OutgoingSection({
                                     <td className="px-3 py-2">{log.status_code ?? '—'}</td>
                                     <td className="px-3 py-2 break-all text-xs text-gray-700">{log.url}</td>
                                     <td className="px-3 py-2 text-xs text-gray-700">
-                                        <pre className="whitespace-pre-wrap break-all rounded border bg-gray-50 px-2 py-1 text-[11px] leading-snug">
-                                            {formatPayload(log.payload)}
-                                        </pre>
+                                        <div className="space-y-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => togglePayload(log.id)}
+                                                className="rounded border px-2 py-1 text-[11px] font-semibold text-indigo-700 hover:bg-indigo-50"
+                                            >
+                                                {expandedPayloads[log.id] ? 'Свернуть' : 'Развернуть'}
+                                            </button>
+                                            <pre
+                                                className="whitespace-pre-wrap break-all rounded border bg-gray-50 px-2 py-1 text-[11px] leading-snug"
+                                                style={!expandedPayloads[log.id] ? { maxHeight: '4.5rem', overflow: 'hidden' } : {}}
+                                            >
+                                                {formatPayload(log.payload)}
+                                            </pre>
+                                        </div>
                                     </td>
                                     <td className="px-3 py-2">
                                         {log.error_message ? (
