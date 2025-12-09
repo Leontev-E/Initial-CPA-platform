@@ -108,13 +108,19 @@ class IncomingLeadWebhookController extends Controller
             return $text;
         }
 
-        // Попытка конвертировать, если Powershell/другая OEM-страница прислала cp866/win1251
-        $encodings = ['CP866', 'Windows-1251', 'ISO-8859-5'];
+        // Попытка конвертировать из типичных кодировок PowerShell/Windows консоли
+        $encodings = ['CP866', 'CP1251', 'Windows-1251', 'ISO-8859-5', 'KOI8-R', 'MacCyrillic'];
         foreach ($encodings as $encoding) {
             $converted = @mb_convert_encoding($text, 'UTF-8', $encoding);
             if ($converted !== false && mb_detect_encoding($converted, 'UTF-8', true)) {
                 return $converted;
             }
+        }
+
+        // Фолбек: попытка iconv, игнорируя ошибки
+        $converted = @iconv(mb_detect_encoding($text, $encodings, true) ?: 'UTF-8', 'UTF-8//IGNORE', $text);
+        if ($converted !== false) {
+            return $converted;
         }
 
         return $text;
