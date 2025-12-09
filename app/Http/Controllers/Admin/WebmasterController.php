@@ -151,7 +151,7 @@ class WebmasterController extends Controller
                     ->where('webmaster_id', $user->id)
                     ->first();
                 $offer->custom_payout = $rate?->custom_payout;
-                $offer->is_allowed = $rate?->is_allowed ?? true;
+                $offer->is_allowed = (bool) ($rate?->is_allowed ?? (! $offer->is_private));
                 return $offer;
             });
 

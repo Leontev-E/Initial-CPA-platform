@@ -14,10 +14,12 @@ class OfferWebmasterRate extends Model
         'offer_id',
         'webmaster_id',
         'custom_payout',
+        'is_allowed',
     ];
 
     protected $casts = [
         'custom_payout' => 'decimal:2',
+        'is_allowed' => 'boolean',
     ];
 
     public function offer()

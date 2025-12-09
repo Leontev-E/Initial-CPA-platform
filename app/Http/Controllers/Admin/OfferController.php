@@ -240,6 +240,7 @@ class OfferController extends Controller
                     [
                         'partner_program_id' => $offer->partner_program_id,
                         'custom_payout' => $custom,
+                        'is_allowed' => true,
                     ]
                 );
                 return (int) $row['webmaster_id'];

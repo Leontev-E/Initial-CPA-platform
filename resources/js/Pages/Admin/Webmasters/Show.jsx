@@ -232,7 +232,7 @@ function RateRow({ offer, webmasterId }) {
     const form = useForm({
         offer_id: offer.id,
         custom_payout: offer.custom_payout ?? '',
-        is_allowed: offer.is_allowed ?? true,
+        is_allowed: offer.is_allowed ?? !offer.is_private,
     });
 
     const submit = (e) => {
@@ -253,6 +253,16 @@ function RateRow({ offer, webmasterId }) {
                 </div>
                 <div className="text-xs text-gray-500">
                     {(offer.categories || []).map((c) => c.name).join(', ') || 'Без категории'}
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                    {offer.is_private && (
+                        <span className="rounded bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700">
+                            Приватный оффер
+                        </span>
+                    )}
+                    <span className={`rounded px-2 py-1 text-[11px] font-semibold ${form.data.is_allowed ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                        {form.data.is_allowed ? 'Доступ открыт' : 'Нет доступа'}
+                    </span>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-600">
                     <label className="inline-flex items-center gap-1">
