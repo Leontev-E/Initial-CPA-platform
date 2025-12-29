@@ -10,12 +10,14 @@ class SuperAdminSeeder extends Seeder
 {
     public function run(): void
     {
+        $password = env('SEED_SUPER_ADMIN_PASSWORD', env('SEED_DEFAULT_PASSWORD', 'ChangeMe123!'));
+
         User::updateOrCreate(
             ['email' => 'evgen.leonev@yandex.ru'],
             [
                 'name' => 'Super Admin',
                 'telegram' => '@super_admin',
-                'password' => Hash::make('[REDACTED_PASSWORD]'),
+                'password' => Hash::make($password),
                 'role' => User::ROLE_SUPER_ADMIN,
                 'partner_program_id' => null,
                 'is_active' => true,

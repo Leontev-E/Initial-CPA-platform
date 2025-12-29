@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
         $this->call(SuperAdminSeeder::class);
 
         $context = app(PartnerProgramContext::class);
+        $defaultPassword = env('SEED_DEFAULT_PASSWORD', 'ChangeMe123!');
 
         $defaultProgram = PartnerProgram::firstOrCreate(
             ['id' => 1],
@@ -53,7 +54,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Super Admin',
             'email' => 'owner@platform.test',
             'telegram' => '@super_owner',
-            'password' => 'password',
+            'password' => $defaultPassword,
             'role' => User::ROLE_SUPER_ADMIN,
             'partner_program_id' => null,
         ]);
@@ -64,7 +65,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Admin',
             'email' => 'admin@cpa.test',
             'telegram' => '@admin_boostclicks',
-            'password' => 'password',
+            'password' => $defaultPassword,
             'role' => User::ROLE_ADMIN,
             'partner_program_id' => $defaultProgram->id,
         ]);
@@ -73,7 +74,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Webmaster',
             'email' => 'webmaster@cpa.test',
             'telegram' => '@webmaster_boost',
-            'password' => 'password',
+            'password' => $defaultPassword,
             'role' => User::ROLE_WEBMASTER,
             'partner_program_id' => $defaultProgram->id,
         ]);
@@ -204,7 +205,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Second Admin',
             'email' => 'admin2@cpa.test',
             'telegram' => '@admin_second',
-            'password' => 'password',
+            'password' => $defaultPassword,
             'role' => User::ROLE_ADMIN,
             'partner_program_id' => $secondProgram->id,
         ]);
@@ -213,7 +214,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Second Webmaster',
             'email' => 'webmaster2@cpa.test',
             'telegram' => '@wm_second',
-            'password' => 'password',
+            'password' => $defaultPassword,
             'role' => User::ROLE_WEBMASTER,
             'partner_program_id' => $secondProgram->id,
         ]);
