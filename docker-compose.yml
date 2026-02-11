@@ -12,8 +12,8 @@ services:
     ports:
       - "8010:8000"
     depends_on:
-      pgbouncer:
-        condition: service_started
+      db:
+        condition: service_healthy
       redis:
         condition: service_started
     restart: unless-stopped
@@ -27,8 +27,8 @@ services:
       - /opt/cpa-boostclicks:/app
     command: php artisan horizon
     depends_on:
-      pgbouncer:
-        condition: service_started
+      db:
+        condition: service_healthy
       redis:
         condition: service_started
     restart: unless-stopped
@@ -42,8 +42,8 @@ services:
       - /opt/cpa-boostclicks:/app
     command: php artisan schedule:work
     depends_on:
-      pgbouncer:
-        condition: service_started
+      db:
+        condition: service_healthy
       redis:
         condition: service_started
     restart: unless-stopped
@@ -64,13 +64,14 @@ services:
     restart: unless-stopped
 
   pgbouncer:
-    image: edoburu/pgbouncer:1.23.1
+    image: edoburu/pgbouncer
     environment:
       DB_USER: cpa_user
       DB_PASSWORD: Petr26ushka
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: cpa_db
+      AUTH_TYPE: trust
       POOL_MODE: transaction
       MAX_CLIENT_CONN: 500
       DEFAULT_POOL_SIZE: 80

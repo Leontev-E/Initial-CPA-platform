@@ -83,12 +83,20 @@ Scheduled automatically every 5 minutes.
 ## 4. PostgreSQL + PgBouncer
 
 PostgreSQL remains primary transactional DB.
-`docker-compose.yml` includes PgBouncer and routes app traffic through it:
+Default app connection is direct to Postgres:
 
 ```bash
 DB_CONNECTION=pgsql
+DB_HOST=db
+DB_PORT=5432
+```
+
+`docker-compose.yml` includes optional PgBouncer service (`pgbouncer`) for connection pooling.
+If you switch app traffic to PgBouncer in Docker network, use:
+
+```bash
 DB_HOST=pgbouncer
-DB_PORT=6432
+DB_PORT=5432
 ```
 
 Added high-volume indexes for `leads` to speed dashboard/report filters.
