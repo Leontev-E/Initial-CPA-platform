@@ -14,6 +14,15 @@ return [
         'mode' => env('IP2LOCATION_MODE', 'FILE_IO'),
     ],
 
+    // Fallback HTTP lookup for cases where local DB is missing/unavailable.
+    'http_fallback' => [
+        'enabled' => env('GEOIP_HTTP_FALLBACK_ENABLED', true),
+        'url' => env('GEOIP_HTTP_FALLBACK_URL', 'https://ipwho.is/{ip}'),
+        'connect_timeout' => (int) env('GEOIP_HTTP_FALLBACK_CONNECT_TIMEOUT', 2),
+        'timeout' => (int) env('GEOIP_HTTP_FALLBACK_TIMEOUT', 3),
+        'cache_ttl_seconds' => (int) env('GEOIP_HTTP_FALLBACK_CACHE_TTL', 86400),
+    ],
+
     'auto_update' => [
         'enabled' => env('GEOIP_AUTO_UPDATE_ENABLED', true),
         // Optional direct URL. If empty, command builds official IP2Location URL from token+package.

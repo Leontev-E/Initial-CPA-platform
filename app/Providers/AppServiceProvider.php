@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Contracts\GeoIpResolver;
 use App\Services\Analytics\ClickHouseLeadEvents;
+use App\Services\Geo\ChainGeoIpResolver;
+use App\Services\Geo\HttpGeoIpResolver;
 use App\Services\Geo\Ip2LocationGeoIpResolver;
 use App\Services\Geo\NullGeoIpResolver;
 use App\Support\PartnerProgramContext;
@@ -32,11 +34,25 @@ class AppServiceProvider extends ServiceProvider
                 return new NullGeoIpResolver();
             }
 
-            if (! class_exists(Database::class)) {
+            $resolvers = [];
+
+            if (class_exists(Database::class)) {
+                $resolvers[] = new Ip2LocationGeoIpResolver();
+            }
+
+            if ((bool) config('geoip.http_fallback.enabled', true)) {
+                $resolvers[] = new HttpGeoIpResolver();
+            }
+
+            if ($resolvers === []) {
                 return new NullGeoIpResolver();
             }
 
-            return new Ip2LocationGeoIpResolver();
+            if (count($resolvers) === 1) {
+                return $resolvers[0];
+            }
+
+            return new ChainGeoIpResolver($resolvers);
         });
     }
 

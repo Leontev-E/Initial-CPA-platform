@@ -38,12 +38,12 @@ class SmartLinkRouter
         $geo = $requestIp ? $this->geoIpResolver->resolveCountryCode($requestIp) : null;
         $deviceType = $this->detectDeviceType((string) $request->userAgent());
 
-        $assignment = $this->resolveAssignment($smartLink, $request->query('wm_token'));
+        $assignment = $this->resolveAssignment($smartLink, $request);
         $webmaster = $assignment?->webmaster;
         $allowedOfferIds = $webmaster ? $this->resolveAllowedOfferIds($webmaster) : null;
 
         $rawQuery = (array) $request->query();
-        $query = Arr::except($rawQuery, ['wm_token']);
+        $query = Arr::except($rawQuery, ['wm_token', 'wm_id', 'webmaster_id']);
 
         $activeStreams = $smartLink->streams
             ->where('is_active', true)
@@ -173,18 +173,24 @@ class SmartLinkRouter
         ];
     }
 
-    private function resolveAssignment(SmartLink $smartLink, mixed $token): ?SmartLinkAssignment
+    private function resolveAssignment(SmartLink $smartLink, Request $request): ?SmartLinkAssignment
     {
-        $token = trim((string) $token);
-        if ($token === '') {
+        $token = trim((string) $request->query('wm_token'));
+        $webmasterId = (int) ($request->query('wm_id') ?: $request->query('webmaster_id') ?: 0);
+
+        $query = $smartLink->assignments()
+            ->where('is_active', true)
+            ->with('webmaster:id,is_active');
+
+        if ($token !== '') {
+            $query->where('token', $token);
+        } elseif ($webmasterId > 0) {
+            $query->where('webmaster_id', $webmasterId);
+        } else {
             return null;
         }
 
-        $assignment = $smartLink->assignments()
-            ->where('token', $token)
-            ->where('is_active', true)
-            ->with('webmaster:id,is_active')
-            ->first();
+        $assignment = $query->first();
 
         if (! $assignment || ! $assignment->webmaster?->is_active) {
             return null;
