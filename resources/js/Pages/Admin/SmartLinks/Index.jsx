@@ -90,7 +90,8 @@ export default function Index({ smartLinks, offers, presets, webmasters = [], fi
                 devices: data.devices || [],
                 query: parseQueryRules(data.query_input),
             },
-        })).post(route('admin.smart-link-presets.store'), { preserveScroll: true, onSuccess: () => presetForm.reset() });
+        }));
+        presetForm.post(route('admin.smart-link-presets.store'), { preserveScroll: true, onSuccess: () => presetForm.reset() });
     };
 
     const submitCreate = (e) => {
@@ -117,7 +118,8 @@ export default function Index({ smartLinks, offers, presets, webmasters = [], fi
                     query: parseQueryRules(s.query_input),
                 },
             })),
-        })).post(route('admin.smart-links.store'), { preserveScroll: true });
+        }));
+        form.post(route('admin.smart-links.store'), { preserveScroll: true });
     };
 
     return (

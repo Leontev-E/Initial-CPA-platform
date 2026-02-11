@@ -129,7 +129,8 @@ export default function Show({ smartLink, offers, presets, webmasters = [], clic
                     query: parseQueryRules(s.query_input),
                 },
             })),
-        })).patch(route('admin.smart-links.update', smartLink.id), { preserveScroll: true });
+        }));
+        form.patch(route('admin.smart-links.update', smartLink.id), { preserveScroll: true });
     };
 
     const submitFilters = (e) => {
