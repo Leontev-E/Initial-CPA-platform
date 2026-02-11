@@ -22,8 +22,9 @@ const COMMON_WORD_REPLACEMENTS = [
     ['из', 'from'],
     ['при', 'when'],
 ].map(([source, target]) => [
-    new RegExp(`(?<![\\u0400-\\u04FF\\d])${source}(?![\\u0400-\\u04FF\\d])`, 'g'),
-    target,
+    // Avoid lookbehind for wider browser compatibility.
+    new RegExp(`(^|[^\\u0400-\\u04FF\\d])(${source})(?=$|[^\\u0400-\\u04FF\\d])`, 'g'),
+    `$1${target}`,
 ]);
 
 let currentLocale = 'ru';
