@@ -132,3 +132,41 @@ Monolith CPA platform on Laravel + React (Inertia) + Tailwind. Roles: admin/webm
 
 BoostClicks — Евгений Леонтьев — https://t.me/boostclicks  
 BoostClicks — https://boostclicks.ru/
+
+## ClickHouse (analytics)
+
+ClickHouse is used as an analytics store for high-volume click/lead events, while PostgreSQL remains the primary transactional database.
+
+1. Enable in `.env`:
+
+```bash
+CLICKHOUSE_ENABLED=true
+CLICKHOUSE_HOST=127.0.0.1
+CLICKHOUSE_PORT=8123
+CLICKHOUSE_USER=default
+CLICKHOUSE_PASSWORD=
+CLICKHOUSE_DATABASE=analytics
+CLICKHOUSE_HTTPS=false
+CLICKHOUSE_TIMEOUT=10
+CLICKHOUSE_CONNECT_TIMEOUT=5
+CLICKHOUSE_TABLE_LEAD_EVENTS=lead_events
+CLICKHOUSE_RETENTION_MONTHS=24
+```
+
+2. Create schema:
+
+```bash
+php artisan clickhouse:setup
+```
+
+3. Run queue worker (required for async replication):
+
+```bash
+php artisan queue:work --queue=default,webhooks --sleep=3 --tries=3
+```
+
+4. Verify table exists:
+
+```bash
+clickhouse-client -q "SHOW TABLES FROM analytics"
+```
