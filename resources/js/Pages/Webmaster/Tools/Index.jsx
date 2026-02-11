@@ -455,6 +455,9 @@ echo json_encode(['status' => 'ok', 'lead_id' => 123]);
                                                 <div className="font-semibold text-gray-900">{smartLink.name}</div>
                                                 <div className="text-xs text-gray-500">slug: {smartLink.slug}</div>
                                                 <div className="text-xs text-gray-500">Активных потоков: {smartLink.streams_count}</div>
+                                                <div className="text-xs text-gray-500">Access: {smartLink.is_public ? 'public' : 'private'}</div>
+                                                <div className="text-xs text-gray-500">Clicks: {smartLink.clicks_count ?? 0}</div>
+                                                <div className="text-xs text-gray-500">Conversions: {smartLink.conversions_count ?? 0}</div>
                                             </div>
 
                                             <div className="mt-3 space-y-2">

@@ -1,552 +1,269 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 
-function Pagination({ links = [] }) {
-    if (!Array.isArray(links) || links.length <= 3) {
-        return null;
+const DEVICES = ['desktop', 'mobile', 'tablet'];
+
+function parseQueryRules(text) {
+    if (!text || !text.trim()) return {};
+    const source = text.trim();
+    try {
+        const parsed = JSON.parse(source);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch {
+        return source.split(/\r?\n/).reduce((acc, line) => {
+            const [key, ...rest] = line.split('=');
+            const k = (key || '').trim();
+            if (!k) return acc;
+            const value = rest.join('=').trim();
+            acc[k] = value === '' ? '*' : value;
+            return acc;
+        }, {});
     }
+}
 
+function Pagination({ links = [] }) {
+    if (!Array.isArray(links) || links.length <= 3) return null;
     return (
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
-            {links.map((link, idx) => {
-                const label = link.label
-                    .replace('&laquo; Previous', 'Предыдущая')
-                    .replace('Next &raquo;', 'Следующая');
-
-                if (!link.url) {
-                    return (
-                        <span
-                            key={idx}
-                            className="rounded border border-gray-200 px-3 py-1 text-gray-400"
-                            dangerouslySetInnerHTML={{ __html: label }}
-                        />
-                    );
-                }
-
-                return (
+        <div className="mt-4 flex flex-wrap gap-2 text-sm">
+            {links.map((link, idx) => (
+                link.url ? (
                     <Link
                         key={idx}
                         href={link.url}
                         className={`rounded border px-3 py-1 ${link.active ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                        dangerouslySetInnerHTML={{ __html: label }}
+                        dangerouslySetInnerHTML={{ __html: link.label }}
                     />
-                );
-            })}
+                ) : (
+                    <span key={idx} className="rounded border border-gray-200 px-3 py-1 text-gray-400" dangerouslySetInnerHTML={{ __html: link.label }} />
+                )
+            ))}
         </div>
     );
 }
 
-function parseJsonObject(text) {
-    if (!text || !text.trim()) {
-        return {};
-    }
-
-    try {
-        const parsed = JSON.parse(text);
-        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
-    } catch {
-        return {};
-    }
-}
-
-export default function Index({ smartLinks, offers, presets, filters = {} }) {
+export default function Index({ smartLinks, offers, presets, webmasters = [], filters = {} }) {
     const { flash } = usePage().props;
-
-    const searchForm = useForm({
-        search: filters.search ?? '',
-        status: filters.status ?? '',
-        per_page: filters.per_page ?? 10,
-    });
-
-    const presetForm = useForm({
-        name: '',
-        description: '',
-        default_weight: 100,
-        default_priority: 0,
-        geos_csv: '',
-        query_json: '',
-        devices: [],
-        is_active: true,
-    });
-
-    const createForm = useForm({
+    const searchForm = useForm({ search: filters.search ?? '', status: filters.status ?? '', per_page: filters.per_page ?? 10 });
+    const presetForm = useForm({ name: '', default_weight: 100, default_priority: 0, geos_csv: '', query_input: '', devices: [], is_active: true });
+    const form = useForm({
         name: '',
         slug: '',
         is_active: true,
+        is_public: true,
         fallback_offer_id: '',
         fallback_url: '',
-        streams: [
-            {
-                name: 'A',
-                offer_id: '',
-                preset_id: '',
-                weight: 50,
-                priority: 0,
-                target_url: '',
-                geos_csv: '',
-                query_json: '',
-                devices: [],
-                is_active: true,
-            },
-            {
-                name: 'B',
-                offer_id: '',
-                preset_id: '',
-                weight: 50,
-                priority: 0,
-                target_url: '',
-                geos_csv: '',
-                query_json: '',
-                devices: [],
-                is_active: true,
-            },
-        ],
+        webmaster_ids: [],
+        streams: [{ name: 'A', offer_id: '', preset_id: '', weight: 100, priority: 0, target_url: '', geos_csv: '', query_input: '', devices: [], is_active: true }],
     });
 
     const submitSearch = (e) => {
         e.preventDefault();
-        searchForm.get(route('admin.smart-links.index'), {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
-
-    const addStream = () => {
-        createForm.setData('streams', [
-            ...createForm.data.streams,
-            {
-                name: '',
-                offer_id: '',
-                preset_id: '',
-                weight: 100,
-                priority: 0,
-                target_url: '',
-                geos_csv: '',
-                query_json: '',
-                devices: [],
-                is_active: true,
-            },
-        ]);
-    };
-
-    const removeStream = (idx) => {
-        createForm.setData('streams', createForm.data.streams.filter((_, i) => i !== idx));
+        searchForm.get(route('admin.smart-links.index'), { preserveState: true, preserveScroll: true, replace: true });
     };
 
     const updateStream = (idx, patch) => {
-        createForm.setData(
-            'streams',
-            createForm.data.streams.map((row, i) => (i === idx ? { ...row, ...patch } : row)),
-        );
+        form.setData('streams', form.data.streams.map((row, i) => (i === idx ? { ...row, ...patch } : row)));
+    };
+
+    const addStream = () => {
+        form.setData('streams', [...form.data.streams, { name: '', offer_id: '', preset_id: '', weight: 100, priority: 0, target_url: '', geos_csv: '', query_input: '', devices: [], is_active: true }]);
+    };
+
+    const removeStream = (idx) => {
+        form.setData('streams', form.data.streams.filter((_, i) => i !== idx));
+    };
+
+    const toggleWebmaster = (id, checked) => {
+        const current = form.data.webmaster_ids || [];
+        form.setData('webmaster_ids', checked ? Array.from(new Set([...current, id])) : current.filter((x) => x !== id));
     };
 
     const submitPreset = (e) => {
         e.preventDefault();
-
         presetForm.transform((data) => ({
             name: data.name,
-            description: data.description,
             default_weight: Number(data.default_weight || 100),
             default_priority: Number(data.default_priority || 0),
             is_active: Boolean(data.is_active),
             rules: {
-                geos: data.geos_csv
-                    .split(',')
-                    .map((x) => x.trim().toUpperCase())
-                    .filter(Boolean),
-                devices: data.devices,
-                query: parseJsonObject(data.query_json),
+                geos: (data.geos_csv || '').split(',').map((x) => x.trim().toUpperCase()).filter(Boolean),
+                devices: data.devices || [],
+                query: parseQueryRules(data.query_input),
             },
-        })).post(route('admin.smart-link-presets.store'), {
-            preserveScroll: true,
-            onSuccess: () => {
-                presetForm.reset();
-                presetForm.setData('default_weight', 100);
-                presetForm.setData('default_priority', 0);
-                presetForm.setData('is_active', true);
-            },
-        });
+        })).post(route('admin.smart-link-presets.store'), { preserveScroll: true, onSuccess: () => presetForm.reset() });
     };
 
     const submitCreate = (e) => {
         e.preventDefault();
-
-        createForm.transform((data) => ({
+        form.transform((data) => ({
             name: data.name,
-            slug: data.slug,
+            slug: data.slug || null,
             is_active: Boolean(data.is_active),
+            is_public: Boolean(data.is_public),
             fallback_offer_id: data.fallback_offer_id || null,
             fallback_url: data.fallback_url || null,
-            streams: data.streams.map((stream) => ({
-                name: stream.name,
-                offer_id: stream.offer_id || null,
-                preset_id: stream.preset_id || null,
-                weight: Number(stream.weight || 0),
-                priority: Number(stream.priority || 0),
-                target_url: stream.target_url || null,
-                is_active: Boolean(stream.is_active),
+            webmaster_ids: data.webmaster_ids || [],
+            streams: data.streams.map((s) => ({
+                name: s.name || null,
+                offer_id: s.offer_id || null,
+                preset_id: s.preset_id || null,
+                weight: Number(s.weight || 0),
+                priority: Number(s.priority || 0),
+                target_url: s.target_url || null,
+                is_active: Boolean(s.is_active),
                 rules: {
-                    geos: (stream.geos_csv || '')
-                        .split(',')
-                        .map((x) => x.trim().toUpperCase())
-                        .filter(Boolean),
-                    devices: stream.devices || [],
-                    query: parseJsonObject(stream.query_json),
+                    geos: (s.geos_csv || '').split(',').map((x) => x.trim().toUpperCase()).filter(Boolean),
+                    devices: s.devices || [],
+                    query: parseQueryRules(s.query_input),
                 },
             })),
-        })).post(route('admin.smart-links.store'), {
-            preserveScroll: true,
-        });
-    };
-
-    const presetUsage = (preset) => {
-        const geos = Array.isArray(preset.rules?.geos) ? preset.rules.geos.join(', ') : '';
-        const devices = Array.isArray(preset.rules?.devices) ? preset.rules.devices.join(', ') : '';
-        return [geos && `geo: ${geos}`, devices && `devices: ${devices}`].filter(Boolean).join(' | ') || 'Без правил';
+        })).post(route('admin.smart-links.store'), { preserveScroll: true });
     };
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Смартлинки</h2>}>
-            <Head title="Смартлинки" />
-
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800">SmartLinks</h2>}>
+            <Head title="SmartLinks" />
             <div className="space-y-6">
-                {flash?.success ? (
-                    <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{flash.success}</div>
-                ) : null}
+                {flash?.success ? <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{flash.success}</div> : null}
+
+                <section className="rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-900">
+                    <div className="font-semibold">SmartLink Guide</div>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
+                        <li>Query rules: JSON or line-by-line format like <code>utm_source=facebook</code>, <code>sub1=*</code>.</li>
+                        <li>Disable public access and select webmasters to create private tokenized links.</li>
+                        <li>Every redirect contains <code>click_id</code> for conversion postback matching.</li>
+                    </ul>
+                </section>
 
                 <div className="grid gap-6 lg:grid-cols-2">
                     <section className="rounded-xl border bg-white p-4 shadow-sm">
-                        <h3 className="text-base font-semibold text-gray-900">Создать SmartLink</h3>
+                        <h3 className="text-base font-semibold text-gray-900">Create SmartLink</h3>
                         <form onSubmit={submitCreate} className="mt-3 space-y-3">
-                            <div className="grid gap-3 md:grid-cols-2">
-                                <input
-                                    className="rounded border px-3 py-2"
-                                    placeholder="Название"
-                                    value={createForm.data.name}
-                                    onChange={(e) => createForm.setData('name', e.target.value)}
-                                    required
-                                />
-                                <input
-                                    className="rounded border px-3 py-2"
-                                    placeholder="Slug (опционально)"
-                                    value={createForm.data.slug}
-                                    onChange={(e) => createForm.setData('slug', e.target.value)}
-                                />
-                                <select
-                                    className="rounded border px-3 py-2"
-                                    value={createForm.data.fallback_offer_id}
-                                    onChange={(e) => createForm.setData('fallback_offer_id', e.target.value)}
-                                >
-                                    <option value="">Fallback оффер (опционально)</option>
-                                    {offers.map((offer) => (
-                                        <option key={offer.id} value={offer.id}>{offer.name}</option>
-                                    ))}
+                            <div className="grid gap-2 md:grid-cols-2">
+                                <input className="rounded border px-3 py-2" placeholder="Name" value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} required />
+                                <input className="rounded border px-3 py-2" placeholder="Slug (optional)" value={form.data.slug} onChange={(e) => form.setData('slug', e.target.value)} />
+                                <select className="rounded border px-3 py-2" value={form.data.fallback_offer_id} onChange={(e) => form.setData('fallback_offer_id', e.target.value)}>
+                                    <option value="">Fallback offer</option>
+                                    {offers.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                                 </select>
-                                <input
-                                    className="rounded border px-3 py-2"
-                                    placeholder="Fallback URL (опционально)"
-                                    value={createForm.data.fallback_url}
-                                    onChange={(e) => createForm.setData('fallback_url', e.target.value)}
-                                />
+                                <input className="rounded border px-3 py-2" placeholder="Fallback URL" value={form.data.fallback_url} onChange={(e) => form.setData('fallback_url', e.target.value)} />
                             </div>
 
-                            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-                                <input
-                                    type="checkbox"
-                                    checked={createForm.data.is_active}
-                                    onChange={(e) => createForm.setData('is_active', e.target.checked)}
-                                />
-                                Активен
-                            </label>
+                            <div className="flex flex-wrap gap-4 text-sm">
+                                <label className="inline-flex items-center gap-2"><input type="checkbox" checked={form.data.is_active} onChange={(e) => form.setData('is_active', e.target.checked)} />Active</label>
+                                <label className="inline-flex items-center gap-2"><input type="checkbox" checked={Boolean(form.data.is_public)} onChange={(e) => form.setData('is_public', e.target.checked)} />Public access</label>
+                            </div>
+
+                            <div className="rounded border border-slate-200 bg-slate-50 p-3">
+                                <div className="text-xs font-semibold uppercase text-slate-600">Webmaster Access</div>
+                                <div className="mt-2 max-h-32 space-y-1 overflow-auto text-xs">
+                                    {webmasters.map((w) => (
+                                        <label key={w.id} className="flex items-center gap-2">
+                                            <input type="checkbox" checked={(form.data.webmaster_ids || []).includes(w.id)} onChange={(e) => toggleWebmaster(w.id, e.target.checked)} />
+                                            <span>{w.name} ({w.email})</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
 
                             <div className="space-y-3 rounded border border-indigo-100 bg-indigo-50/40 p-3">
                                 <div className="flex items-center justify-between">
-                                    <div className="text-sm font-semibold text-indigo-900">Потоки (A/B + правила + веса)</div>
-                                    <button type="button" onClick={addStream} className="rounded border border-indigo-300 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100">
-                                        Добавить поток
-                                    </button>
+                                    <div className="text-sm font-semibold text-indigo-900">Streams</div>
+                                    <button type="button" onClick={addStream} className="rounded border border-indigo-300 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100">Add stream</button>
                                 </div>
-
-                                {createForm.data.streams.map((stream, idx) => (
-                                    <div key={idx} className="rounded border bg-white p-3">
+                                {form.data.streams.map((stream, idx) => (
+                                    <div key={idx} className="space-y-2 rounded border bg-white p-3">
                                         <div className="grid gap-2 md:grid-cols-3">
-                                            <input
-                                                className="rounded border px-2 py-2"
-                                                placeholder="Название потока"
-                                                value={stream.name}
-                                                onChange={(e) => updateStream(idx, { name: e.target.value })}
-                                            />
-                                            <select
-                                                className="rounded border px-2 py-2"
-                                                value={stream.offer_id}
-                                                onChange={(e) => updateStream(idx, { offer_id: e.target.value })}
-                                            >
-                                                <option value="">Оффер (опционально, если указан target URL)</option>
-                                                {offers.map((offer) => (
-                                                    <option key={offer.id} value={offer.id}>{offer.name}</option>
-                                                ))}
+                                            <input className="rounded border px-2 py-2" placeholder="Name" value={stream.name} onChange={(e) => updateStream(idx, { name: e.target.value })} />
+                                            <select className="rounded border px-2 py-2" value={stream.offer_id} onChange={(e) => updateStream(idx, { offer_id: e.target.value })}>
+                                                <option value="">Offer</option>
+                                                {offers.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                                             </select>
-                                            <select
-                                                className="rounded border px-2 py-2"
-                                                value={stream.preset_id}
-                                                onChange={(e) => updateStream(idx, { preset_id: e.target.value })}
-                                            >
-                                                <option value="">Пресет (опционально)</option>
-                                                {presets.filter((p) => p.is_active).map((preset) => (
-                                                    <option key={preset.id} value={preset.id}>{preset.name}</option>
-                                                ))}
+                                            <select className="rounded border px-2 py-2" value={stream.preset_id} onChange={(e) => updateStream(idx, { preset_id: e.target.value })}>
+                                                <option value="">Preset</option>
+                                                {presets.filter((p) => p.is_active).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                                             </select>
-                                            <input
-                                                type="number"
-                                                className="rounded border px-2 py-2"
-                                                placeholder="Вес"
-                                                value={stream.weight}
-                                                onChange={(e) => updateStream(idx, { weight: e.target.value })}
-                                            />
-                                            <input
-                                                type="number"
-                                                className="rounded border px-2 py-2"
-                                                placeholder="Приоритет"
-                                                value={stream.priority}
-                                                onChange={(e) => updateStream(idx, { priority: e.target.value })}
-                                            />
-                                            <input
-                                                className="rounded border px-2 py-2"
-                                                placeholder="Target URL (опционально, если указан оффер)"
-                                                value={stream.target_url}
-                                                onChange={(e) => updateStream(idx, { target_url: e.target.value })}
-                                            />
-                                            <input
-                                                className="rounded border px-2 py-2"
-                                                placeholder="Правила GEO (RU,KZ,UZ)"
-                                                value={stream.geos_csv}
-                                                onChange={(e) => updateStream(idx, { geos_csv: e.target.value })}
-                                            />
-                                            <input
-                                                className="rounded border px-2 py-2 md:col-span-2"
-                                                placeholder='Query-правила JSON, пример: {"utm_source":"facebook"}'
-                                                value={stream.query_json}
-                                                onChange={(e) => updateStream(idx, { query_json: e.target.value })}
-                                            />
+                                            <input type="number" className="rounded border px-2 py-2" placeholder="Weight" value={stream.weight} onChange={(e) => updateStream(idx, { weight: e.target.value })} />
+                                            <input type="number" className="rounded border px-2 py-2" placeholder="Priority" value={stream.priority} onChange={(e) => updateStream(idx, { priority: e.target.value })} />
+                                            <input className="rounded border px-2 py-2" placeholder="Target URL" value={stream.target_url} onChange={(e) => updateStream(idx, { target_url: e.target.value })} />
+                                            <input className="rounded border px-2 py-2" placeholder="GEO rules (RU,KZ)" value={stream.geos_csv} onChange={(e) => updateStream(idx, { geos_csv: e.target.value })} />
+                                            <textarea className="rounded border px-2 py-2 md:col-span-2" placeholder={'Query rules (JSON or lines)\nutm_source=facebook'} value={stream.query_input} onChange={(e) => updateStream(idx, { query_input: e.target.value })} />
                                         </div>
-
-                                        <div className="mt-2 flex flex-wrap items-center gap-4">
-                                            {['desktop', 'mobile', 'tablet'].map((device) => (
-                                                <label key={device} className="inline-flex items-center gap-2 text-xs text-gray-700">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={(stream.devices || []).includes(device)}
-                                                        onChange={(e) => {
-                                                            const current = stream.devices || [];
-                                                            updateStream(idx, {
-                                                                devices: e.target.checked
-                                                                    ? [...current, device]
-                                                                    : current.filter((d) => d !== device),
-                                                            });
-                                                        }}
-                                                    />
+                                        <div className="flex flex-wrap items-center gap-4 text-xs">
+                                            {DEVICES.map((device) => (
+                                                <label key={device} className="inline-flex items-center gap-2">
+                                                    <input type="checkbox" checked={(stream.devices || []).includes(device)} onChange={(e) => {
+                                                        const current = stream.devices || [];
+                                                        updateStream(idx, { devices: e.target.checked ? [...current, device] : current.filter((d) => d !== device) });
+                                                    }} />
                                                     {device}
                                                 </label>
                                             ))}
-
-                                            <label className="inline-flex items-center gap-2 text-xs text-gray-700">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={Boolean(stream.is_active)}
-                                                    onChange={(e) => updateStream(idx, { is_active: e.target.checked })}
-                                                />
-                                                активен
-                                            </label>
-
-                                            <button
-                                                type="button"
-                                                onClick={() => removeStream(idx)}
-                                                className="ml-auto rounded border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
-                                            >
-                                                Удалить
-                                            </button>
+                                            <label className="inline-flex items-center gap-2"><input type="checkbox" checked={Boolean(stream.is_active)} onChange={(e) => updateStream(idx, { is_active: e.target.checked })} />active</label>
+                                            <button type="button" onClick={() => removeStream(idx)} className="ml-auto rounded border border-red-200 px-2 py-1 font-semibold text-red-600 hover:bg-red-50">Delete</button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
 
-                            {Object.values(createForm.errors || {}).length > 0 ? (
-                                <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                                    {Object.entries(createForm.errors).map(([k, v]) => (
-                                        <div key={k}>{k}: {v}</div>
-                                    ))}
-                                </div>
-                            ) : null}
-
-                            <button
-                                type="submit"
-                                className="rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                                disabled={createForm.processing}
-                            >
-                                Создать SmartLink
-                            </button>
+                            {Object.keys(form.errors || {}).length > 0 ? <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{Object.entries(form.errors).map(([k, v]) => <div key={k}>{k}: {v}</div>)}</div> : null}
+                            <button type="submit" className="rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700" disabled={form.processing}>Create SmartLink</button>
                         </form>
                     </section>
 
                     <section className="rounded-xl border bg-white p-4 shadow-sm">
-                        <h3 className="text-base font-semibold text-gray-900">Пресеты потоков</h3>
+                        <h3 className="text-base font-semibold text-gray-900">Quick Preset</h3>
                         <form onSubmit={submitPreset} className="mt-3 space-y-2">
+                            <input className="w-full rounded border px-3 py-2" placeholder="Preset name" value={presetForm.data.name} onChange={(e) => presetForm.setData('name', e.target.value)} required />
                             <div className="grid gap-2 md:grid-cols-2">
-                                <input
-                                    className="rounded border px-3 py-2"
-                                    placeholder="Название пресета"
-                                    value={presetForm.data.name}
-                                    onChange={(e) => presetForm.setData('name', e.target.value)}
-                                    required
-                                />
-                                <input
-                                    className="rounded border px-3 py-2"
-                                    placeholder="Описание"
-                                    value={presetForm.data.description}
-                                    onChange={(e) => presetForm.setData('description', e.target.value)}
-                                />
-                                <input
-                                    type="number"
-                                    className="rounded border px-3 py-2"
-                                    placeholder="Вес по умолчанию"
-                                    value={presetForm.data.default_weight}
-                                    onChange={(e) => presetForm.setData('default_weight', e.target.value)}
-                                />
-                                <input
-                                    type="number"
-                                    className="rounded border px-3 py-2"
-                                    placeholder="Приоритет по умолчанию"
-                                    value={presetForm.data.default_priority}
-                                    onChange={(e) => presetForm.setData('default_priority', e.target.value)}
-                                />
-                                <input
-                                    className="rounded border px-3 py-2"
-                                    placeholder="Правила GEO (RU,KZ,UZ)"
-                                    value={presetForm.data.geos_csv}
-                                    onChange={(e) => presetForm.setData('geos_csv', e.target.value)}
-                                />
-                                <input
-                                    className="rounded border px-3 py-2"
-                                    placeholder='Query-правила JSON: {"utm_source":"fb"}'
-                                    value={presetForm.data.query_json}
-                                    onChange={(e) => presetForm.setData('query_json', e.target.value)}
-                                />
+                                <input type="number" className="rounded border px-3 py-2" placeholder="Weight" value={presetForm.data.default_weight} onChange={(e) => presetForm.setData('default_weight', e.target.value)} />
+                                <input type="number" className="rounded border px-3 py-2" placeholder="Priority" value={presetForm.data.default_priority} onChange={(e) => presetForm.setData('default_priority', e.target.value)} />
+                                <input className="rounded border px-3 py-2" placeholder="GEO rules (RU,KZ)" value={presetForm.data.geos_csv} onChange={(e) => presetForm.setData('geos_csv', e.target.value)} />
+                                <textarea className="rounded border px-3 py-2" placeholder="Query rules" value={presetForm.data.query_input} onChange={(e) => presetForm.setData('query_input', e.target.value)} />
                             </div>
-
-                            <div className="flex flex-wrap items-center gap-4 text-sm">
-                                {['desktop', 'mobile', 'tablet'].map((device) => (
+                            <div className="flex flex-wrap gap-3 text-sm">
+                                {DEVICES.map((device) => (
                                     <label key={device} className="inline-flex items-center gap-2">
-                                        <input
-                                            type="checkbox"
-                                            checked={presetForm.data.devices.includes(device)}
-                                            onChange={(e) => {
-                                                presetForm.setData(
-                                                    'devices',
-                                                    e.target.checked
-                                                        ? [...presetForm.data.devices, device]
-                                                        : presetForm.data.devices.filter((d) => d !== device),
-                                                );
-                                            }}
-                                        />
+                                        <input type="checkbox" checked={presetForm.data.devices.includes(device)} onChange={(e) => presetForm.setData('devices', e.target.checked ? [...presetForm.data.devices, device] : presetForm.data.devices.filter((d) => d !== device))} />
                                         {device}
                                     </label>
                                 ))}
-                                <label className="inline-flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={presetForm.data.is_active}
-                                        onChange={(e) => presetForm.setData('is_active', e.target.checked)}
-                                    />
-                                    активен
-                                </label>
                             </div>
-
-                            <button
-                                type="submit"
-                                className="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                                disabled={presetForm.processing}
-                            >
-                                Добавить пресет
-                            </button>
+                            <button type="submit" className="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700" disabled={presetForm.processing}>Add preset</button>
                         </form>
-
-                        <div className="mt-4 space-y-2">
-                            {presets.length === 0 ? <div className="text-sm text-gray-500">Пресетов пока нет.</div> : null}
-                            {presets.map((preset) => (
-                                <div key={preset.id} className="rounded border px-3 py-2 text-sm">
-                                    <div className="font-semibold text-gray-800">{preset.name} {!preset.is_active ? '(неактивен)' : ''}</div>
-                                    <div className="text-xs text-gray-600">вес: {preset.default_weight}, приоритет: {preset.default_priority}</div>
-                                    <div className="text-xs text-gray-500">{presetUsage(preset)}</div>
-                                </div>
-                            ))}
-                        </div>
                     </section>
                 </div>
 
                 <section className="rounded-xl border bg-white p-4 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        <h3 className="text-base font-semibold text-gray-900">Смартлинки</h3>
+                        <h3 className="text-base font-semibold text-gray-900">SmartLinks</h3>
                         <form onSubmit={submitSearch} className="flex flex-wrap items-center gap-2">
-                            <input
-                                className="rounded border px-3 py-2 text-sm"
-                                placeholder="Поиск по названию/slug"
-                                value={searchForm.data.search}
-                                onChange={(e) => searchForm.setData('search', e.target.value)}
-                            />
-                            <select
-                                className="rounded border px-3 py-2 text-sm"
-                                value={searchForm.data.status}
-                                onChange={(e) => searchForm.setData('status', e.target.value)}
-                            >
-                                <option value="">Все статусы</option>
-                                <option value="active">Активные</option>
-                                <option value="inactive">Неактивные</option>
+                            <input className="rounded border px-3 py-2 text-sm" placeholder="Search" value={searchForm.data.search} onChange={(e) => searchForm.setData('search', e.target.value)} />
+                            <select className="rounded border px-3 py-2 text-sm" value={searchForm.data.status} onChange={(e) => searchForm.setData('status', e.target.value)}>
+                                <option value="">All</option><option value="active">Active</option><option value="inactive">Inactive</option>
                             </select>
-                            <button type="submit" className="rounded border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Фильтр</button>
+                            <button type="submit" className="rounded border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Filter</button>
                         </form>
                     </div>
-
                     <div className="mt-4 overflow-x-auto">
                         <table className="min-w-full text-sm">
-                            <thead>
-                                <tr className="border-b text-left text-xs uppercase tracking-wide text-gray-500">
-                                    <th className="px-3 py-2">Название</th>
-                                    <th className="px-3 py-2">Slug</th>
-                                    <th className="px-3 py-2">Потоки</th>
-                                    <th className="px-3 py-2">Клики</th>
-                                    <th className="px-3 py-2">Статус</th>
-                                    <th className="px-3 py-2">Действия</th>
-                                </tr>
-                            </thead>
+                            <thead><tr className="border-b text-left text-xs uppercase tracking-wide text-gray-500"><th className="px-3 py-2">Name</th><th className="px-3 py-2">Slug</th><th className="px-3 py-2">Streams</th><th className="px-3 py-2">Clicks</th><th className="px-3 py-2">Webmasters</th><th className="px-3 py-2">Access</th><th className="px-3 py-2">Status</th><th className="px-3 py-2">Actions</th></tr></thead>
                             <tbody>
                                 {(smartLinks?.data || []).map((item) => (
                                     <tr key={item.id} className="border-b">
-                                        <td className="px-3 py-2 font-semibold text-gray-800">{item.name}</td>
-                                        <td className="px-3 py-2 text-gray-600">{item.slug}</td>
-                                        <td className="px-3 py-2">{item.streams_count}</td>
-                                        <td className="px-3 py-2">{item.clicks_count}</td>
-                                        <td className="px-3 py-2">
-                                            <span className={`rounded px-2 py-1 text-xs font-semibold ${item.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                                                {item.is_active ? 'активен' : 'неактивен'}
-                                            </span>
-                                        </td>
-                                        <td className="px-3 py-2">
-                                            <div className="flex flex-wrap gap-2">
-                                                <Link href={route('admin.smart-links.show', item.id)} className="rounded border border-indigo-200 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-50">Открыть</Link>
-                                                <Link href={route('admin.smart-links.toggle', item.id)} method="patch" as="button" className="rounded border border-amber-200 px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-50">Переключить</Link>
-                                                <Link href={route('admin.smart-links.destroy', item.id)} method="delete" as="button" className="rounded border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">Удалить</Link>
-                                            </div>
-                                        </td>
+                                        <td className="px-3 py-2 font-semibold">{item.name}</td><td className="px-3 py-2">{item.slug}</td><td className="px-3 py-2">{item.streams_count}</td><td className="px-3 py-2">{item.clicks_count}</td><td className="px-3 py-2">{item.assignments_count ?? 0}</td>
+                                        <td className="px-3 py-2"><span className={`rounded px-2 py-1 text-xs font-semibold ${item.is_public ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>{item.is_public ? 'public' : 'private'}</span></td>
+                                        <td className="px-3 py-2"><span className={`rounded px-2 py-1 text-xs font-semibold ${item.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{item.is_active ? 'active' : 'inactive'}</span></td>
+                                        <td className="px-3 py-2"><div className="flex flex-wrap gap-2"><Link href={route('admin.smart-links.show', item.id)} className="rounded border border-indigo-200 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-50">Open</Link><Link href={route('admin.smart-links.toggle', item.id)} method="patch" as="button" className="rounded border border-amber-200 px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-50">Toggle</Link><Link href={route('admin.smart-links.destroy', item.id)} method="delete" as="button" className="rounded border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">Delete</Link></div></td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-
                     <Pagination links={smartLinks?.links} />
                 </section>
             </div>
         </AuthenticatedLayout>
     );
 }
+

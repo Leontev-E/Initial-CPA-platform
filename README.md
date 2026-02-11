@@ -216,6 +216,11 @@ Implemented:
 - Fallback logic (`fallback_url`, `fallback_offer`, fallback stream)
 - Full click log storage (`smart_link_clicks`) with `click_id`, stream, offer, GEO, device, UTM, query params, target URL
 - Stream presets (`smart_link_presets`) for reusable routing rule templates
+- Private/public access mode for SmartLinks
+- SmartLink-to-webmaster assignment (`smart_link_assignments`) with personal tokenized links (`wm_token`)
+- Conversion tracking fields on click log (`conversion_status`, `conversion_payout`, `conversion_revenue`, `conversion_profit`)
+- Advertiser postback intake endpoint with click matching and conversion logging (`smart_link_postback_logs`)
+- Optional lead upsert from SmartLink postback by `click_id` for end-to-end attribution in leads/payout flow
 
 Admin UI:
 
@@ -228,6 +233,23 @@ Public redirect endpoint:
 - `GET /r/{slug}`
 - Example: `https://cpa.boostclicks.ru/r/my-smartlink?subid=abc&utm_source=facebook`
 - The platform appends tracking params (`click_id`, `smart_link_id`, `stream_id`, `offer_id`) to destination URL
+- For private/assigned usage, use tokenized URL:
+  - `https://cpa.boostclicks.ru/r/my-smartlink?wm_token=<personal_token>&subid=abc`
+  - `wm_token` binds click to specific webmaster for accurate stats and conversion attribution
+
+Advertiser postback endpoint:
+
+- `GET|POST /api/smart-links/postback`
+- Required params:
+  - `token` — SmartLink postback token
+  - `click_id` — click identifier received in redirect destination
+- Optional params:
+  - `status` (`sale`, `in_work`, `cancel`, `trash`, etc. aliases supported)
+  - `payout` (webmaster payout)
+  - `revenue` (advertiser payout)
+  - `geo`, `comment`
+- Example:
+  - `https://cpa.boostclicks.ru/api/smart-links/postback?token=...&click_id=...&status=sale&payout=25&revenue=60`
 
 Stream rule format:
 
@@ -236,11 +258,14 @@ Stream rule format:
   "geos": ["RU", "KZ"],
   "devices": ["mobile", "desktop"],
   "query": {
-    "utm_source": "facebook",
-    "sub1": "campaign-a"
+      "utm_source": "facebook",
+    "sub1": "campaign-a",
+    "sub2": "*"
   }
 }
 ```
+
+`"*"` in query rule means “parameter must exist with any non-empty value”.
 
 Priority and A/B selection behavior:
 

@@ -5,8 +5,10 @@ namespace App\Services\SmartLinks;
 use App\Contracts\GeoIpResolver;
 use App\Models\Offer;
 use App\Models\SmartLink;
+use App\Models\SmartLinkAssignment;
 use App\Models\SmartLinkClick;
 use App\Models\SmartLinkStream;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -36,14 +38,29 @@ class SmartLinkRouter
         $geo = $requestIp ? $this->geoIpResolver->resolveCountryCode($requestIp) : null;
         $deviceType = $this->detectDeviceType((string) $request->userAgent());
 
+        $assignment = $this->resolveAssignment($smartLink, $request->query('wm_token'));
+        $webmaster = $assignment?->webmaster;
+        $allowedOfferIds = $webmaster ? $this->resolveAllowedOfferIds($webmaster) : null;
+
+        $rawQuery = (array) $request->query();
+        $query = Arr::except($rawQuery, ['wm_token']);
+
         $activeStreams = $smartLink->streams
             ->where('is_active', true)
-            ->filter(function (SmartLinkStream $stream) {
+            ->filter(function (SmartLinkStream $stream) use ($allowedOfferIds) {
                 if ($stream->target_url) {
                     return true;
                 }
 
-                return (bool) $stream->offer?->is_active;
+                if (! $stream->offer?->is_active) {
+                    return false;
+                }
+
+                if (is_array($allowedOfferIds)) {
+                    return in_array((int) $stream->offer_id, $allowedOfferIds, true);
+                }
+
+                return true;
             })
             ->values();
 
@@ -57,7 +74,9 @@ class SmartLinkRouter
         $matchedBy = null;
         $isFallback = false;
 
-        if ($matchedStreams->isNotEmpty()) {
+        $canRouteWithoutAssignment = $smartLink->is_public || $assignment !== null;
+
+        if ($canRouteWithoutAssignment && $matchedStreams->isNotEmpty()) {
             $selectedStream = $this->pickWeighted($this->highestPrioritySubset($matchedStreams));
             if ($selectedStream) {
                 $targetUrl = $this->resolveTargetUrl($selectedStream);
@@ -66,23 +85,28 @@ class SmartLinkRouter
             }
         }
 
-        if (! $targetUrl && $smartLink->fallback_url) {
+        if ($canRouteWithoutAssignment && ! $targetUrl && $smartLink->fallback_url) {
             $targetUrl = $smartLink->fallback_url;
             $selectedOffer = null;
             $matchedBy = 'fallback_url';
             $isFallback = true;
         }
 
-        if (! $targetUrl && $smartLink->fallbackOffer) {
-            $targetUrl = $this->buildTargetUrlFromOffer($smartLink->fallbackOffer);
-            if ($targetUrl) {
-                $selectedOffer = $smartLink->fallbackOffer;
-                $matchedBy = 'fallback_offer';
-                $isFallback = true;
+        if ($canRouteWithoutAssignment && ! $targetUrl && $smartLink->fallbackOffer) {
+            $fallbackAllowed = ! is_array($allowedOfferIds)
+                || in_array((int) $smartLink->fallbackOffer->id, $allowedOfferIds, true);
+
+            if ($fallbackAllowed) {
+                $targetUrl = $this->buildTargetUrlFromOffer($smartLink->fallbackOffer);
+                if ($targetUrl) {
+                    $selectedOffer = $smartLink->fallbackOffer;
+                    $matchedBy = 'fallback_offer';
+                    $isFallback = true;
+                }
             }
         }
 
-        if (! $targetUrl && $activeStreams->isNotEmpty()) {
+        if ($canRouteWithoutAssignment && ! $targetUrl && $activeStreams->isNotEmpty()) {
             $selectedStream = $this->pickWeighted($this->highestPrioritySubset($activeStreams));
             if ($selectedStream) {
                 $targetUrl = $this->resolveTargetUrl($selectedStream);
@@ -92,14 +116,19 @@ class SmartLinkRouter
             }
         }
 
-        $query = (array) $request->query();
+        if (! $canRouteWithoutAssignment) {
+            $matchedBy = 'private_access_required';
+        }
+
         $clickId = (string) Str::orderedUuid();
 
         $click = SmartLinkClick::create([
             'partner_program_id' => $smartLink->partner_program_id,
             'smart_link_id' => $smartLink->id,
             'smart_link_stream_id' => $selectedStream?->id,
+            'smart_link_assignment_id' => $assignment?->id,
             'offer_id' => $selectedOffer?->id,
+            'webmaster_id' => $webmaster?->id,
             'click_id' => $clickId,
             'matched_by' => $matchedBy,
             'is_fallback' => $isFallback,
@@ -142,6 +171,44 @@ class SmartLinkRouter
         ];
     }
 
+    private function resolveAssignment(SmartLink $smartLink, mixed $token): ?SmartLinkAssignment
+    {
+        $token = trim((string) $token);
+        if ($token === '') {
+            return null;
+        }
+
+        $assignment = $smartLink->assignments()
+            ->where('token', $token)
+            ->where('is_active', true)
+            ->with('webmaster:id,is_active')
+            ->first();
+
+        if (! $assignment || ! $assignment->webmaster?->is_active) {
+            return null;
+        }
+
+        return $assignment;
+    }
+
+    private function resolveAllowedOfferIds(User $webmaster): array
+    {
+        return Offer::query()
+            ->where('is_active', true)
+            ->where(function ($q) use ($webmaster) {
+                $q->where(function ($public) use ($webmaster) {
+                    $public->where('is_private', false)
+                        ->whereDoesntHave('rates', function ($r) use ($webmaster) {
+                            $r->where('webmaster_id', $webmaster->id)->where('is_allowed', false);
+                        });
+                })
+                    ->orWhereHas('rates', fn ($r) => $r->where('webmaster_id', $webmaster->id)->where('is_allowed', true));
+            })
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
     private function matchesRules(SmartLinkStream $stream, Request $request, ?string $geo, string $deviceType): bool
     {
         $rules = is_array($stream->rules) ? $stream->rules : [];
@@ -176,6 +243,11 @@ class SmartLinkRouter
                     return false;
                 }
 
+                // "*" means: query parameter must exist with any non-empty value.
+                if ((string) $expected === '*') {
+                    continue;
+                }
+
                 if ($expected !== null && $expected !== '' && (string) $actual !== (string) $expected) {
                     return false;
                 }
@@ -201,6 +273,7 @@ class SmartLinkRouter
         $weighted = $streams
             ->map(function (SmartLinkStream $stream) {
                 $stream->weight = max((int) $stream->weight, 0);
+
                 return $stream;
             })
             ->values();
@@ -315,3 +388,4 @@ class SmartLinkRouter
         return null;
     }
 }
+

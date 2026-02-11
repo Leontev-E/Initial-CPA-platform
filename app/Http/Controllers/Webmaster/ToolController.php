@@ -8,6 +8,8 @@ use App\Models\Offer;
 use App\Models\PostbackLog;
 use App\Models\PostbackSetting;
 use App\Models\SmartLink;
+use App\Models\SmartLinkAssignment;
+use App\Models\SmartLinkClick;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -72,12 +74,49 @@ class ToolController extends Controller
             ->pluck('id')
             ->all();
 
-        $smartLinks = SmartLink::query()
+        $smartLinksQuery = SmartLink::query()
             ->where('is_active', true)
-            ->with(['streams.offer:id,name,is_active'])
-            ->orderBy('name')
+            ->with([
+                'streams.offer:id,name,is_active',
+                'assignments' => fn ($q) => $q->where('webmaster_id', $user->id),
+            ])
+            ->orderBy('name');
+
+        $smartLinksRaw = $smartLinksQuery->get();
+
+        $clickStatsMap = SmartLinkClick::query()
+            ->where('webmaster_id', $user->id)
+            ->whereIn('smart_link_id', $smartLinksRaw->pluck('id')->all())
+            ->selectRaw('smart_link_id, COUNT(*) as clicks_count, SUM(CASE WHEN converted_at IS NOT NULL THEN 1 ELSE 0 END) as conversions_count')
+            ->groupBy('smart_link_id')
             ->get()
-            ->map(function (SmartLink $smartLink) use ($allowedOfferIds) {
+            ->keyBy('smart_link_id');
+
+        $smartLinks = $smartLinksRaw
+            ->map(function (SmartLink $smartLink) use ($allowedOfferIds, $user, $clickStatsMap) {
+                $assignment = $smartLink->assignments->first();
+
+                if (! $smartLink->is_public && (! $assignment || ! $assignment->is_active)) {
+                    return null;
+                }
+
+                if ($smartLink->is_public && (! $assignment || ! $assignment->is_active)) {
+                    if ($assignment) {
+                        $assignment->update([
+                            'is_active' => true,
+                            'token' => $assignment->token ?: SmartLinkAssignment::generateToken(),
+                        ]);
+                    } else {
+                        $assignment = SmartLinkAssignment::create([
+                            'partner_program_id' => $smartLink->partner_program_id,
+                            'smart_link_id' => $smartLink->id,
+                            'webmaster_id' => $user->id,
+                            'token' => SmartLinkAssignment::generateToken(),
+                            'is_active' => true,
+                        ]);
+                    }
+                }
+
                 $allowedStreams = $smartLink->streams
                     ->where('is_active', true)
                     ->filter(function ($stream) use ($allowedOfferIds) {
@@ -97,12 +136,22 @@ class ToolController extends Controller
                     return null;
                 }
 
+                $baseUrl = route('smart-links.redirect', ['smartLink' => $smartLink->slug]);
+                $tokenizedUrl = $assignment?->token
+                    ? $baseUrl.'?wm_token='.urlencode($assignment->token)
+                    : $baseUrl;
+
+                $clickStats = $clickStatsMap->get($smartLink->id);
+
                 return [
                     'id' => $smartLink->id,
                     'name' => $smartLink->name,
                     'slug' => $smartLink->slug,
-                    'url' => route('smart-links.redirect', ['smartLink' => $smartLink->slug]),
+                    'url' => $tokenizedUrl,
                     'streams_count' => $allowedStreams->count(),
+                    'is_public' => (bool) $smartLink->is_public,
+                    'clicks_count' => (int) ($clickStats?->clicks_count ?? 0),
+                    'conversions_count' => (int) ($clickStats?->conversions_count ?? 0),
                 ];
             })
             ->filter()

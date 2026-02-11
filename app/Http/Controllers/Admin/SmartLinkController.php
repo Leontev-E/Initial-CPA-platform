@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Offer;
 use App\Models\SmartLink;
-use App\Models\SmartLinkPreset;
+use App\Models\SmartLinkAssignment;
 use App\Models\SmartLinkClick;
+use App\Models\SmartLinkPreset;
+use App\Models\User;
 use App\Support\PartnerProgramContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,7 +28,7 @@ class SmartLinkController extends Controller
             : 10;
 
         $query = SmartLink::query()
-            ->withCount(['streams', 'clicks'])
+            ->withCount(['streams', 'clicks', 'assignments'])
             ->with('fallbackOffer:id,name')
             ->orderByDesc('created_at');
 
@@ -51,6 +53,10 @@ class SmartLinkController extends Controller
             'smartLinks' => $query->paginate($perPage)->withQueryString(),
             'offers' => Offer::query()->orderBy('name')->get(['id', 'name', 'is_active']),
             'presets' => SmartLinkPreset::query()->orderBy('name')->get(['id', 'name', 'default_weight', 'default_priority', 'rules', 'is_active']),
+            'webmasters' => User::query()
+                ->where('role', User::ROLE_WEBMASTER)
+                ->orderBy('name')
+                ->get(['id', 'name', 'email', 'is_active']),
             'filters' => $request->only(['search', 'status', 'per_page']),
         ]);
     }
@@ -58,22 +64,30 @@ class SmartLinkController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $partnerProgramId = app(PartnerProgramContext::class)->getPartnerProgramId() ?? $request->user()?->partner_program_id;
-
         $validated = $this->validatePayload($request, $partnerProgramId);
+
+        if (! ($validated['is_public'] ?? true) && empty($validated['webmaster_ids'] ?? [])) {
+            throw ValidationException::withMessages([
+                'webmaster_ids' => 'At least one webmaster is required for private smart links.',
+            ]);
+        }
 
         $smartLink = SmartLink::create([
             'partner_program_id' => $partnerProgramId,
             'name' => $validated['name'],
             'slug' => $validated['slug'] ?? Str::slug($validated['name']),
             'is_active' => (bool) ($validated['is_active'] ?? true),
+            'is_public' => (bool) ($validated['is_public'] ?? true),
             'fallback_offer_id' => $validated['fallback_offer_id'] ?? null,
             'fallback_url' => $validated['fallback_url'] ?? null,
+            'postback_token' => $validated['postback_token'] ?? Str::lower(Str::random(40)),
             'settings' => $validated['settings'] ?? null,
         ]);
 
         $this->syncStreams($smartLink, collect($validated['streams'] ?? []), $partnerProgramId);
+        $this->syncAssignments($smartLink, collect($validated['webmaster_ids'] ?? []), $partnerProgramId);
 
-        return redirect()->route('admin.smart-links.show', $smartLink)->with('success', 'Смартлинк создан');
+        return redirect()->route('admin.smart-links.show', $smartLink)->with('success', 'SmartLink created.');
     }
 
     public function show(Request $request, SmartLink $smartLink): Response
@@ -82,6 +96,7 @@ class SmartLinkController extends Controller
             'streams.offer:id,name,is_active',
             'streams.preset:id,name,default_weight,default_priority,rules',
             'fallbackOffer:id,name,is_active',
+            'assignments.webmaster:id,name,email,is_active',
         ]);
 
         $clickQuery = SmartLinkClick::query()
@@ -89,6 +104,7 @@ class SmartLinkController extends Controller
             ->with([
                 'stream:id,name,weight,priority',
                 'offer:id,name',
+                'webmaster:id,name,email',
             ])
             ->orderByDesc('id');
 
@@ -108,15 +124,34 @@ class SmartLinkController extends Controller
             $clickQuery->where('smart_link_stream_id', $request->integer('stream_id'));
         }
 
+        if ($request->filled('webmaster_id')) {
+            $clickQuery->where('webmaster_id', $request->integer('webmaster_id'));
+        }
+
         $clicks = $clickQuery->paginate(30)->withQueryString();
 
         return Inertia::render('Admin/SmartLinks/Show', [
             'smartLink' => $smartLink,
             'offers' => Offer::query()->orderBy('name')->get(['id', 'name', 'is_active']),
             'presets' => SmartLinkPreset::query()->orderBy('name')->get(['id', 'name', 'default_weight', 'default_priority', 'rules', 'is_active']),
+            'webmasters' => User::query()
+                ->where('role', User::ROLE_WEBMASTER)
+                ->orderBy('name')
+                ->get(['id', 'name', 'email', 'is_active']),
             'clicks' => $clicks,
-            'clickFilters' => $request->only(['click_id', 'geo', 'offer_id', 'stream_id']),
+            'clickFilters' => $request->only(['click_id', 'geo', 'offer_id', 'stream_id', 'webmaster_id']),
             'redirectUrl' => route('smart-links.redirect', ['smartLink' => $smartLink->slug]),
+            'postback' => [
+                'endpoint' => route('api.smart-links.postback'),
+                'token' => $smartLink->postback_token,
+                'sample' => route('api.smart-links.postback', [
+                    'token' => $smartLink->postback_token,
+                    'click_id' => '{click_id}',
+                    'status' => 'sale',
+                    'payout' => '{payout}',
+                    'revenue' => '{revenue}',
+                ]),
+            ],
         ]);
     }
 
@@ -125,32 +160,41 @@ class SmartLinkController extends Controller
         $partnerProgramId = $smartLink->partner_program_id;
         $validated = $this->validatePayload($request, $partnerProgramId, $smartLink->id);
 
+        if (! ($validated['is_public'] ?? true) && empty($validated['webmaster_ids'] ?? [])) {
+            throw ValidationException::withMessages([
+                'webmaster_ids' => 'At least one webmaster is required for private smart links.',
+            ]);
+        }
+
         $smartLink->update([
             'name' => $validated['name'],
             'slug' => $validated['slug'] ?? Str::slug($validated['name']),
             'is_active' => (bool) ($validated['is_active'] ?? true),
+            'is_public' => (bool) ($validated['is_public'] ?? true),
             'fallback_offer_id' => $validated['fallback_offer_id'] ?? null,
             'fallback_url' => $validated['fallback_url'] ?? null,
+            'postback_token' => $validated['postback_token'] ?? $smartLink->postback_token ?? Str::lower(Str::random(40)),
             'settings' => $validated['settings'] ?? null,
         ]);
 
         $this->syncStreams($smartLink, collect($validated['streams'] ?? []), $partnerProgramId);
+        $this->syncAssignments($smartLink, collect($validated['webmaster_ids'] ?? []), $partnerProgramId);
 
-        return back()->with('success', 'Смартлинк обновлен');
+        return back()->with('success', 'SmartLink updated.');
     }
 
     public function toggle(SmartLink $smartLink): RedirectResponse
     {
         $smartLink->update(['is_active' => ! $smartLink->is_active]);
 
-        return back()->with('success', 'Статус смартлинка обновлен');
+        return back()->with('success', 'SmartLink status updated.');
     }
 
     public function destroy(SmartLink $smartLink): RedirectResponse
     {
         $smartLink->delete();
 
-        return redirect()->route('admin.smart-links.index')->with('success', 'Смартлинк удален');
+        return redirect()->route('admin.smart-links.index')->with('success', 'SmartLink deleted.');
     }
 
     private function validatePayload(Request $request, int $partnerProgramId, ?int $smartLinkId = null): array
@@ -166,12 +210,25 @@ class SmartLinkController extends Controller
                     ->ignore($smartLinkId),
             ],
             'is_active' => ['boolean'],
+            'is_public' => ['boolean'],
             'fallback_offer_id' => [
                 'nullable',
                 Rule::exists('offers', 'id')->where('partner_program_id', $partnerProgramId),
             ],
             'fallback_url' => ['nullable', 'url', 'max:2048'],
+            'postback_token' => [
+                'nullable',
+                'string',
+                'max:80',
+                Rule::unique('smart_links', 'postback_token')->ignore($smartLinkId),
+            ],
             'settings' => ['nullable', 'array'],
+            'webmaster_ids' => ['nullable', 'array'],
+            'webmaster_ids.*' => [
+                Rule::exists('users', 'id')
+                    ->where('partner_program_id', $partnerProgramId)
+                    ->where('role', User::ROLE_WEBMASTER),
+            ],
             'streams' => ['nullable', 'array'],
             'streams.*.name' => ['nullable', 'string', 'max:255'],
             'streams.*.offer_id' => [
@@ -233,7 +290,7 @@ class SmartLinkController extends Controller
 
             if (! $offerId && ! $targetUrl) {
                 throw ValidationException::withMessages([
-                    "streams.{$index}.target_url" => 'Для потока нужно указать offer_id или target_url.',
+                    "streams.{$index}.target_url" => 'Each stream requires offer_id or target_url.',
                 ]);
             }
 
@@ -255,6 +312,40 @@ class SmartLinkController extends Controller
         if ($payload !== []) {
             $smartLink->streams()->createMany($payload);
         }
+    }
+
+    private function syncAssignments(SmartLink $smartLink, Collection $webmasterIds, int $partnerProgramId): void
+    {
+        $ids = $webmasterIds
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values();
+
+        $existing = $smartLink->assignments()->get()->keyBy('webmaster_id');
+        $keep = [];
+
+        foreach ($ids as $webmasterId) {
+            $keep[] = $webmasterId;
+            $row = $existing->get($webmasterId);
+
+            if ($row) {
+                $row->update(['is_active' => true]);
+                continue;
+            }
+
+            $smartLink->assignments()->create([
+                'partner_program_id' => $partnerProgramId,
+                'webmaster_id' => $webmasterId,
+                'token' => SmartLinkAssignment::generateToken(),
+                'is_active' => true,
+            ]);
+        }
+
+        $smartLink->assignments()
+            ->when($keep !== [], fn ($q) => $q->whereNotIn('webmaster_id', $keep))
+            ->when($keep === [], fn ($q) => $q)
+            ->delete();
     }
 
     private function normalizeRules(mixed $rulesInput, mixed $presetRulesInput): array
@@ -297,7 +388,7 @@ class SmartLinkController extends Controller
             'query' => $query,
         ], static fn ($value) => $value !== []);
     }
-    
+
     private function valueOrNull(array $source, string $key): ?string
     {
         if (! array_key_exists($key, $source)) {
@@ -309,3 +400,4 @@ class SmartLinkController extends Controller
         return $value === '' ? null : $value;
     }
 }
+
