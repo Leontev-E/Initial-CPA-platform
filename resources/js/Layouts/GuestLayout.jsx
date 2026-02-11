@@ -5,7 +5,7 @@ import { Link } from '@inertiajs/react';
 export default function GuestLayout({ children }) {
     return (
         <div className="flex min-h-screen flex-col items-center bg-slate-50 pt-6 sm:justify-center sm:pt-0">
-            <LanguageToggle />
+            <LanguageToggle className="fixed left-4 top-4 z-50" />
             <div className="flex items-center gap-3">
                 <Link href={route('login')}>
                     <ApplicationLogo className="h-16 w-auto" />

@@ -1,7 +1,7 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
-import LanguageToggle from '@/Components/LanguageToggle';
 import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
+import LanguageToggle from '@/Components/LanguageToggle';
 
 export default function AuthenticatedLayout({ header, children }) {
     const { auth, impersonating, partnerProgram } = usePage().props;
@@ -156,7 +156,6 @@ export default function AuthenticatedLayout({ header, children }) {
 
     return (
         <div className="flex min-h-screen bg-slate-50">
-            <LanguageToggle />
             <aside className="hidden w-64 flex-col border-r bg-white/90 p-4 pb-16 shadow-sm lg:flex">
                 <div className="flex items-center gap-2 px-2 pb-6">
                     <ApplicationLogo className="h-10 w-10" />
@@ -215,6 +214,7 @@ export default function AuthenticatedLayout({ header, children }) {
                             </div>
                         </div>
                         <div className="flex flex-col items-end gap-2 text-xs text-gray-500">
+                            <LanguageToggle className="justify-end" />
                             <Link
                                 href={route('profile.edit')}
                                 className="rounded-full border border-indigo-200 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50"
