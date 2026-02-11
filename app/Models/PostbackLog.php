@@ -17,6 +17,8 @@ class PostbackLog extends Model
         'event',
         'url',
         'status_code',
+        'attempt_count',
+        'latency_ms',
         'response_body',
         'error_message',
     ];

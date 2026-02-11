@@ -58,8 +58,41 @@ class ClickHouseLeadEvents
         ");
     }
 
+    public function ping(): bool
+    {
+        $client = $this->client();
+        if (! $client) {
+            return false;
+        }
+
+        try {
+            $client->select('SELECT 1');
+
+            return true;
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
     public function writeLeadEvent(array $event): void
     {
+        try {
+            $this->writeLeadEvents([$event]);
+        } catch (Throwable $exception) {
+            Log::warning('ClickHouse lead event insert failed', [
+                'error' => $exception->getMessage(),
+                'lead_id' => $event['lead_id'] ?? null,
+                'event_type' => $event['event_type'] ?? null,
+            ]);
+        }
+    }
+
+    public function writeLeadEvents(array $events): void
+    {
+        if ($events === []) {
+            return;
+        }
+
         $client = $this->client();
         if (! $client) {
             return;
@@ -89,35 +122,27 @@ class ClickHouseLeadEvents
             'ip',
         ];
 
-        $values = [[
-            $event['event_time'],
-            $event['event_type'],
-            $event['lead_id'],
-            $event['partner_program_id'],
-            $event['webmaster_id'],
-            $event['offer_id'],
-            $event['status'],
-            $event['from_status'],
-            $event['geo'],
-            $event['payout'],
-            $event['subid'],
-            $event['utm_source'],
-            $event['utm_medium'],
-            $event['utm_campaign'],
-            $event['utm_term'],
-            $event['utm_content'],
-            $event['ip'],
-        ]];
+        $values = array_map(static fn (array $event): array => [
+            $event['event_time'] ?? null,
+            $event['event_type'] ?? null,
+            $event['lead_id'] ?? 0,
+            $event['partner_program_id'] ?? 0,
+            $event['webmaster_id'] ?? 0,
+            $event['offer_id'] ?? 0,
+            $event['status'] ?? '',
+            $event['from_status'] ?? null,
+            $event['geo'] ?? null,
+            $event['payout'] ?? null,
+            $event['subid'] ?? null,
+            $event['utm_source'] ?? null,
+            $event['utm_medium'] ?? null,
+            $event['utm_campaign'] ?? null,
+            $event['utm_term'] ?? null,
+            $event['utm_content'] ?? null,
+            $event['ip'] ?? null,
+        ], $events);
 
-        try {
-            $client->insert($table, $values, $columns);
-        } catch (Throwable $exception) {
-            Log::warning('ClickHouse lead event insert failed', [
-                'error' => $exception->getMessage(),
-                'lead_id' => $event['lead_id'] ?? null,
-                'event_type' => $event['event_type'] ?? null,
-            ]);
-        }
+        $client->insert($table, $values, $columns);
     }
 
     private function client(): ?Client

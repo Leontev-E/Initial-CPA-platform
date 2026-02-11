@@ -26,6 +26,7 @@ class Lead extends Model
         'shipping_address',
         'extra_data',
         'subid',
+        'idempotency_key',
         'ip',
         'user_agent',
         'landing_url',

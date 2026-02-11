@@ -2,16 +2,20 @@
 
 namespace App\Services;
 
+use App\Models\DeliveryDeadLetter;
 use App\Models\Lead;
 use App\Models\PostbackLog;
 use App\Models\PostbackSetting;
 use App\Support\PartnerProgramContext;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class PostbackDispatcher
 {
     private const ALLOWED_EVENTS = ['lead', 'in_work', 'sale', 'cancel', 'trash'];
+
+    public function __construct(private readonly OutboundHttpDelivery $delivery)
+    {
+    }
 
     public function dispatch(Lead $lead, ?string $fromStatus = null): void
     {
@@ -33,18 +37,8 @@ class PostbackDispatcher
                 ->get();
 
             foreach ($settings as $setting) {
-                $statusCode = null;
-                $responseBody = null;
-                $error = null;
                 $finalUrl = $this->expandPostbackMacros($setting->url, $lead, $event, $fromStatus);
-
-                try {
-                    $response = Http::timeout(5)->get($finalUrl);
-                    $statusCode = $response->status();
-                    $responseBody = Str::limit($response->body(), 4000);
-                } catch (\Throwable $e) {
-                    $error = $e->getMessage();
-                }
+                $result = $this->delivery->send('postback', 'get', $finalUrl);
 
                 PostbackLog::create([
                     'partner_program_id' => $lead->partner_program_id,
@@ -53,10 +47,28 @@ class PostbackDispatcher
                     'offer_id' => $lead->offer_id,
                     'event' => $event,
                     'url' => $finalUrl,
-                    'status_code' => $statusCode,
-                    'response_body' => $responseBody,
-                    'error_message' => $error,
+                    'status_code' => $result['status_code'],
+                    'attempt_count' => $result['attempt_count'],
+                    'latency_ms' => $result['latency_ms'],
+                    'response_body' => $result['response_body'] !== null ? Str::limit($result['response_body'], 4000) : null,
+                    'error_message' => $result['error_message'],
                 ]);
+
+                if (! $result['delivered'] && (bool) config('delivery.dlq.enabled', true)) {
+                    DeliveryDeadLetter::create([
+                        'partner_program_id' => $lead->partner_program_id,
+                        'lead_id' => $lead->id,
+                        'type' => 'postback',
+                        'destination' => $finalUrl,
+                        'method' => 'get',
+                        'url' => $finalUrl,
+                        'payload' => null,
+                        'attempts' => $result['attempt_count'],
+                        'last_status_code' => $result['status_code'],
+                        'last_error' => $result['error_message'],
+                        'next_retry_at' => now()->addMinutes(10),
+                    ]);
+                }
             }
         } finally {
             $context->setPartnerProgramId($previousContextId);

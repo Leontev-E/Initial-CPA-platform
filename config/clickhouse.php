@@ -15,4 +15,11 @@ return [
 
     'table_lead_events' => env('CLICKHOUSE_TABLE_LEAD_EVENTS', 'lead_events'),
     'retention_months' => (int) env('CLICKHOUSE_RETENTION_MONTHS', 24),
+
+    'buffer' => [
+        'redis_connection' => env('CLICKHOUSE_BUFFER_REDIS_CONNECTION', 'default'),
+        'redis_key' => env('CLICKHOUSE_BUFFER_REDIS_KEY', 'clickhouse:lead_events:buffer'),
+        'batch_size' => (int) env('CLICKHOUSE_BUFFER_BATCH_SIZE', 500),
+        'max_flush_items' => (int) env('CLICKHOUSE_BUFFER_MAX_FLUSH_ITEMS', 5000),
+    ],
 ];

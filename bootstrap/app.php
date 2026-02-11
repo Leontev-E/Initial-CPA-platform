@@ -41,6 +41,18 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->dailyAt((string) config('geoip.auto_update.daily_at', '03:20'))
                 ->withoutOverlapping();
         }
+
+        if ((string) config('queue.default') === 'redis') {
+            $schedule->command('horizon:snapshot')->everyFiveMinutes()->withoutOverlapping();
+        }
+
+        if ((bool) config('clickhouse.enabled', false)) {
+            $schedule->command('clickhouse:flush-lead-events')->everyMinute()->withoutOverlapping();
+        }
+
+        if ((bool) config('delivery.dlq.enabled', true)) {
+            $schedule->command('delivery:retry-dead-letters')->everyFiveMinutes()->withoutOverlapping();
+        }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

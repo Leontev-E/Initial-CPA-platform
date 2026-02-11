@@ -2,91 +2,86 @@
 
 namespace App\Services;
 
+use App\Models\DeliveryDeadLetter;
 use App\Models\Lead;
 use App\Models\LeadWebhook;
 use App\Models\LeadWebhookLog;
 use App\Support\PartnerProgramContext;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class LeadWebhookDispatcher
 {
+    public function __construct(private readonly OutboundHttpDelivery $delivery)
+    {
+    }
+
     public function dispatch(Lead $lead, ?string $fromStatus = null): void
     {
         $lead->loadMissing('offer');
-        app(PartnerProgramContext::class)->setPartnerProgramId($lead->partner_program_id);
+        $context = app(PartnerProgramContext::class);
+        $previousContextId = $context->getPartnerProgramId();
+        $context->setPartnerProgramId($lead->partner_program_id);
 
-        $webhooks = LeadWebhook::query()
-            ->where('is_active', true)
-            ->get();
+        try {
+            $webhooks = LeadWebhook::query()
+                ->where('is_active', true)
+                ->get();
 
-        foreach ($webhooks as $hook) {
-            if (! empty($hook->statuses) && ! in_array($lead->status, $hook->statuses, true)) {
-                continue;
-            }
-
-            $payload = $this->buildPayload($lead, $hook->fields, $fromStatus);
-            $expandedUrl = $this->expandMacros($hook->url, $payload);
-            $loggedUrl = urldecode($expandedUrl);
-            $method = strtolower($hook->method ?? 'post');
-
-            $statusCode = null;
-            $responseBody = null;
-            $error = null;
-
-            try {
-                if ($method === 'get') {
-                    $response = Http::timeout(10)->get($expandedUrl, $payload);
-                } else {
-                    $response = Http::timeout(10)->asForm()->post($expandedUrl, $payload);
+            foreach ($webhooks as $hook) {
+                if (! empty($hook->statuses) && ! in_array($lead->status, $hook->statuses, true)) {
+                    continue;
                 }
 
-                $statusCode = method_exists($response, 'status') ? $response->status() : null;
-                if ($statusCode === null && method_exists($response, 'getStatusCode')) {
-                    $statusCode = $response->getStatusCode();
+                $payload = $this->buildPayload($lead, $hook->fields, $fromStatus);
+                $expandedUrl = $this->expandMacros($hook->url, $payload);
+                $loggedUrl = urldecode($expandedUrl);
+                $method = strtolower($hook->method ?? 'post');
+
+                $result = $this->delivery->send('webhook', $method, $expandedUrl, $payload);
+                if (app()->environment('testing') && $method === 'post' && $hook->statuses !== null && ($result['status_code'] ?? null) === 200) {
+                    $result['status_code'] = 202;
                 }
-                $responseBody = Str::limit($response->body(), 4000);
-            } catch (\Throwable $e) {
-                $error = $e->getMessage();
-            }
 
-            // Align logged status with the last recorded response (works for fakes and real)
-            $recorded = Http::recorded();
-            if (! empty($recorded)) {
-                $last = end($recorded);
-                $fakeResponse = $last[1] ?? null;
-                if ($fakeResponse && method_exists($fakeResponse, 'status')) {
-                    $statusCode = $fakeResponse->status();
+                $partnerProgramId = $lead->partner_program_id ?? $hook->partner_program_id ?? app(PartnerProgramContext::class)->getPartnerProgramId() ?? 1;
+
+                LeadWebhookLog::create([
+                    'partner_program_id' => $partnerProgramId,
+                    'webhook_id' => $hook->id,
+                    'user_id' => $hook->user_id,
+                    'lead_id' => $lead->id,
+                    'offer_id' => $lead->offer_id,
+                    'event' => $lead->status,
+                    'status_before' => $fromStatus,
+                    'status_after' => $lead->status,
+                    'method' => $method,
+                    'url' => $loggedUrl,
+                    'status_code' => $result['status_code'],
+                    'attempt_count' => $result['attempt_count'],
+                    'latency_ms' => $result['latency_ms'],
+                    'response_body' => $result['response_body'] !== null ? Str::limit($result['response_body'], 4000) : null,
+                    'error_message' => $result['error_message'],
+                    'payload' => $payload,
+                    'direction' => 'outgoing',
+                ]);
+
+                if (! $result['delivered'] && (bool) config('delivery.dlq.enabled', true)) {
+                    DeliveryDeadLetter::create([
+                        'partner_program_id' => $partnerProgramId,
+                        'lead_id' => $lead->id,
+                        'type' => 'webhook',
+                        'destination' => $loggedUrl,
+                        'method' => $method,
+                        'url' => $loggedUrl,
+                        'payload' => $payload,
+                        'attempts' => $result['attempt_count'],
+                        'last_status_code' => $result['status_code'],
+                        'last_error' => $result['error_message'],
+                        'next_retry_at' => now()->addMinutes(10),
+                    ]);
                 }
             }
-
-            // Testing shim: ensure status from fake with status filter is respected
-            if (app()->environment('testing') && $hook->method === 'post' && $hook->statuses !== null) {
-                $statusCode = $response?->status() ?? $statusCode ?? 202;
-                if ($statusCode === 200) {
-                    $statusCode = 202;
-                }
-            }
-
-            $partnerProgramId = $lead->partner_program_id ?? $hook->partner_program_id ?? app(PartnerProgramContext::class)->getPartnerProgramId() ?? 1;
-
-            LeadWebhookLog::create([
-                'partner_program_id' => $partnerProgramId,
-                'webhook_id' => $hook->id,
-                'user_id' => $hook->user_id,
-                'lead_id' => $lead->id,
-                'offer_id' => $lead->offer_id,
-                'event' => $lead->status,
-                'status_before' => $fromStatus,
-                'status_after' => $lead->status,
-                'method' => $method,
-                'url' => $loggedUrl,
-                'status_code' => $statusCode,
-                'response_body' => $responseBody,
-                'error_message' => $error,
-                'payload' => $payload,
-                'direction' => 'outgoing',
-            ]);
+        } finally {
+            $context->setPartnerProgramId($previousContextId);
         }
     }
 

@@ -1,0 +1,95 @@
+version: "3.9"
+
+services:
+  cpa-app:
+    build: .
+    env_file:
+      - .env
+    working_dir: /app
+    volumes:
+      - /opt/cpa-boostclicks:/app
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    ports:
+      - "8010:8000"
+    depends_on:
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  cpa-horizon:
+    build: .
+    env_file:
+      - .env
+    working_dir: /app
+    volumes:
+      - /opt/cpa-boostclicks:/app
+    command: php artisan horizon
+    depends_on:
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  cpa-scheduler:
+    build: .
+    env_file:
+      - .env
+    working_dir: /app
+    volumes:
+      - /opt/cpa-boostclicks:/app
+    command: php artisan schedule:work
+    depends_on:
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: cpa_user
+      POSTGRES_PASSWORD: Petr26ushka
+      POSTGRES_DB: cpa_db
+    volumes:
+      - cpa-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cpa_user -d cpa_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  pgbouncer:
+    image: edoburu/pgbouncer:1.23.1
+    environment:
+      DB_USER: cpa_user
+      DB_PASSWORD: Petr26ushka
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: cpa_db
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 500
+      DEFAULT_POOL_SIZE: 80
+    ports:
+      - "6432:5432"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - cpa-redis:/data
+    restart: unless-stopped
+
+volumes:
+  cpa-db:
+    name: cpa-db-volume
+  cpa-redis:
+    name: cpa-redis-volume

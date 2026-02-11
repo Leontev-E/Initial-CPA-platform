@@ -19,6 +19,8 @@ class LeadWebhookLog extends Model
         'method',
         'url',
         'status_code',
+        'attempt_count',
+        'latency_ms',
         'response_body',
         'error_message',
         'direction',

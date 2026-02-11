@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Webmaster;
 use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
 use App\Models\Offer;
+use App\Models\OfferCategory;
 use App\Models\OfferWebmasterRate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -55,19 +57,42 @@ class OfferController extends Controller
             })
             ->orderBy('name');
 
-        $offers = $query->paginate($perPage)->withQueryString()->through(function (Offer $offer) use ($user) {
-            $custom = OfferWebmasterRate::where('offer_id', $offer->id)
-                ->where('webmaster_id', $user->id)
-                ->value('custom_payout');
-            $offer->effective_payout = $custom ?? $offer->default_payout;
-            return $offer;
+        $offers = $query->paginate($perPage)->withQueryString();
+        $offerIds = $offers->getCollection()->pluck('id')->all();
+        $customPayouts = OfferWebmasterRate::query()
+            ->where('webmaster_id', $user->id)
+            ->whereIn('offer_id', $offerIds)
+            ->pluck('custom_payout', 'offer_id');
+
+        $offers->setCollection(
+            $offers->getCollection()->map(function (Offer $offer) use ($customPayouts) {
+                $custom = $customPayouts->get($offer->id);
+                $offer->effective_payout = $custom ?? $offer->default_payout;
+
+                return $offer;
+            })
+        );
+
+        $categories = Cache::remember('webmaster:offers:categories', now()->addMinutes(5), function () {
+            return OfferCategory::orderBy('name')->get(['id', 'name']);
+        });
+
+        $geos = Cache::remember('webmaster:offers:allowed_geos', now()->addMinutes(5), function () {
+            return Offer::select('allowed_geos')
+                ->whereNotNull('allowed_geos')
+                ->get()
+                ->pluck('allowed_geos')
+                ->flatten()
+                ->filter()
+                ->unique()
+                ->values();
         });
 
         return Inertia::render('Webmaster/Offers/Index', [
             'offers' => $offers,
             'filters' => $request->only(['search', 'category_id', 'geos', 'per_page']),
-            'categories' => \App\Models\OfferCategory::orderBy('name')->get(['id', 'name']),
-            'geos' => \App\Models\Offer::select('allowed_geos')->whereNotNull('allowed_geos')->get()->pluck('allowed_geos')->flatten()->unique()->values(),
+            'categories' => $categories,
+            'geos' => $geos,
         ]);
     }
 

@@ -170,3 +170,17 @@ php artisan queue:work --queue=default,webhooks --sleep=3 --tries=3
 ```bash
 clickhouse-client -q "SHOW TABLES FROM analytics"
 ```
+
+## Performance and stability upgrades
+
+Implemented in this project:
+
+- Redis + Horizon for queues (instead of database queue workers)
+- Idempotent lead intake (`idempotency_key` / `Idempotency-Key` + automatic fallback from subid/tags)
+- Reliable outbound delivery with retry/backoff + circuit breaker + DLQ (`delivery_dead_letters`)
+- PgBouncer in `docker-compose.yml` for PostgreSQL connection pooling
+- Batched ClickHouse ingestion via Redis buffer (`clickhouse:flush-lead-events`)
+- Health probes: `/api/health/live`, `/api/health/ready`
+- Slow query logging (`SLOW_QUERY_THRESHOLD_MS`) and API leads rate limit (`API_LEADS_RATE_LIMIT_PER_MINUTE`)
+
+Detailed operational instructions are in `docs/ops-scaling.md`.

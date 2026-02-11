@@ -14,6 +14,8 @@ class SendLeadWebhooksJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 5;
+
     public int $timeout = 30;
 
     public function __construct(
@@ -21,6 +23,11 @@ class SendLeadWebhooksJob implements ShouldQueue
         public ?string $fromStatus = null
     ) {
         $this->queue = 'webhooks';
+    }
+
+    public function backoff(): array
+    {
+        return [10, 30, 90, 300];
     }
 
     public function handle(LeadWebhookDispatcher $dispatcher): void
