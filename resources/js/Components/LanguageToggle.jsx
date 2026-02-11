@@ -12,7 +12,7 @@ export default function LanguageToggle() {
     };
 
     return (
-        <div className="fixed right-4 top-4 flex items-center gap-2 text-xs text-gray-600">
+        <div className="fixed right-4 top-4 z-50 flex items-center gap-2 text-xs text-gray-600">
             <button
                 onClick={() => switchLocale('ru')}
                 className={`rounded-full px-2 py-1 ${current === 'ru' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-gray-700'}`}

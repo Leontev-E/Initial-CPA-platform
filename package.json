@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "i18n:build": "python scripts/i18n_build_runtime_dictionary.py"
     },
     "devDependencies": {
         "@headlessui/react": "^2.0.0",

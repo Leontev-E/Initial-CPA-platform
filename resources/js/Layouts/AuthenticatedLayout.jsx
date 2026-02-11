@@ -1,4 +1,5 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import LanguageToggle from '@/Components/LanguageToggle';
 import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -155,6 +156,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
     return (
         <div className="flex min-h-screen bg-slate-50">
+            <LanguageToggle />
             <aside className="hidden w-64 flex-col border-r bg-white/90 p-4 pb-16 shadow-sm lg:flex">
                 <div className="flex items-center gap-2 px-2 pb-6">
                     <ApplicationLogo className="h-10 w-10" />

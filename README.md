@@ -184,3 +184,26 @@ Implemented in this project:
 - Slow query logging (`SLOW_QUERY_THRESHOLD_MS`) and API leads rate limit (`API_LEADS_RATE_LIMIT_PER_MINUTE`)
 
 Detailed operational instructions are in `docs/ops-scaling.md`.
+
+## Localization (RU/EN)
+
+- Runtime UI localization is enabled for both guest and authenticated interfaces.
+- Locale is switched via `RU/EN` toggle (`POST /locale`) and stored in session.
+- Frontend runtime dictionary is at `resources/js/data/i18n-ru-en.json`.
+- Manual high-quality overrides are at `resources/js/data/i18n-overrides.json`.
+- Rebuild dictionary after adding/changing Russian UI text:
+
+```bash
+npm run i18n:build
+```
+
+- For backend validation/auth messages, English resources are in:
+  - `resources/lang/en/auth.php`
+  - `resources/lang/en/validation.php`
+  - `resources/lang/en.json`
+
+Recommended workflow for new UI features:
+1. Add UI text in Russian as usual (legacy-compatible).
+2. Run `npm run i18n:build`.
+3. Add/fix wording in `resources/js/data/i18n-overrides.json` when domain terms need precise wording.
+4. Verify both RU and EN in browser before commit.
