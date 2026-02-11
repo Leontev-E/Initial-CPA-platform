@@ -116,6 +116,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     ))}
             </nav>
             <div className="mt-auto space-y-2 border-t pt-4 text-sm text-gray-600">
+                <LanguageToggle className="mb-1 justify-start" />
                 <Link href={route('profile.edit')} className="block rounded-lg border border-indigo-100 px-3 py-2 transition hover:border-indigo-300 hover:bg-indigo-50">
                     <div className="font-semibold text-gray-800">
                         {user.name}
@@ -214,7 +215,6 @@ export default function AuthenticatedLayout({ header, children }) {
                             </div>
                         </div>
                         <div className="flex flex-col items-end gap-2 text-xs text-gray-500">
-                            <LanguageToggle className="justify-end" />
                             <Link
                                 href={route('profile.edit')}
                                 className="rounded-full border border-indigo-200 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50"
