@@ -16,7 +16,11 @@ return [
 
     'auto_update' => [
         'enabled' => env('GEOIP_AUTO_UPDATE_ENABLED', true),
-        'url' => env('GEOIP_AUTO_UPDATE_URL', 'https://download.ip2location.com/lite/IP2LOCATION-LITE-DB3.BIN.ZIP'),
+        // Optional direct URL. If empty, command builds official IP2Location URL from token+package.
+        'url' => env('GEOIP_AUTO_UPDATE_URL', ''),
+        'endpoint' => env('GEOIP_AUTO_UPDATE_ENDPOINT', 'https://www.ip2location.com/download/'),
+        'token' => env('GEOIP_AUTO_UPDATE_TOKEN', ''),
+        'package' => env('GEOIP_AUTO_UPDATE_PACKAGE', 'DB3LITEBINIPV6'),
         'daily_at' => env('GEOIP_AUTO_UPDATE_DAILY_AT', '03:20'),
         'connect_timeout' => (int) env('GEOIP_AUTO_UPDATE_CONNECT_TIMEOUT', 10),
         'timeout' => (int) env('GEOIP_AUTO_UPDATE_TIMEOUT', 180),

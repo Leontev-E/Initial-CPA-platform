@@ -22,7 +22,13 @@ Relevant env:
 GEOIP_ENABLED=true
 IP2LOCATION_DB_PATH=storage/app/ip2location/IP2LOCATION-LITE-DB3.BIN
 GEOIP_AUTO_UPDATE_ENABLED=true
-GEOIP_AUTO_UPDATE_URL=https://download.ip2location.com/lite/IP2LOCATION-LITE-DB3.BIN.ZIP
+# Option 1: use official endpoint + token (recommended)
+GEOIP_AUTO_UPDATE_URL=
+GEOIP_AUTO_UPDATE_ENDPOINT=https://www.ip2location.com/download/
+GEOIP_AUTO_UPDATE_TOKEN=<your_ip2location_token>
+GEOIP_AUTO_UPDATE_PACKAGE=DB3LITEBINIPV6
+# Option 2: provide direct URL (if you have one)
+# GEOIP_AUTO_UPDATE_URL=https://...
 GEOIP_AUTO_UPDATE_DAILY_AT=03:20
 GEOIP_AUTO_UPDATE_CONNECT_TIMEOUT=10
 GEOIP_AUTO_UPDATE_TIMEOUT=180

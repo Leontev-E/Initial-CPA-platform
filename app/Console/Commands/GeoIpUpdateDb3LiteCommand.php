@@ -26,10 +26,22 @@ class GeoIpUpdateDb3LiteCommand extends Command
             return self::SUCCESS;
         }
 
-        $url = (string) ($this->option('url') ?: config('geoip.auto_update.url'));
+        $url = $this->resolveUrl();
         $targetPath = (string) ($this->option('target') ?: config('geoip.ip2location.database_path'));
 
-        if ($url === '' || $targetPath === '') {
+        if ($url === null) {
+            if ($this->option('force')) {
+                $this->error('No download source configured. Set GEOIP_AUTO_UPDATE_TOKEN (+ package) or GEOIP_AUTO_UPDATE_URL.');
+
+                return self::FAILURE;
+            }
+
+            $this->warn('GeoIP source is not configured. Set GEOIP_AUTO_UPDATE_TOKEN or GEOIP_AUTO_UPDATE_URL.');
+
+            return self::SUCCESS;
+        }
+
+        if ($targetPath === '') {
             $this->error('Invalid configuration: URL and target path are required.');
 
             return self::FAILURE;
@@ -76,9 +88,16 @@ class GeoIpUpdateDb3LiteCommand extends Command
                 return self::FAILURE;
             }
 
-            $sourceBin = $this->extractBinFromZip($zipPath, $tmpDir.'/extract');
+            if ($this->isHtml($zipPath) || str_contains(strtolower((string) $response->header('Content-Type', '')), 'text/html')) {
+                $this->error('Unexpected HTML response from download endpoint. Check GEOIP_AUTO_UPDATE_TOKEN / package / URL.');
+                $this->cleanup($tmpDir);
+
+                return self::FAILURE;
+            }
+
+            $sourceBin = $this->resolveBinSource($zipPath, $tmpDir.'/extract');
             if (! $sourceBin) {
-                $this->error('Could not find .BIN file in downloaded archive.');
+                $this->error('Could not extract .BIN file from downloaded payload.');
                 $this->cleanup($tmpDir);
 
                 return self::FAILURE;
@@ -108,6 +127,36 @@ class GeoIpUpdateDb3LiteCommand extends Command
         }
     }
 
+    private function resolveUrl(): ?string
+    {
+        $overrideUrl = trim((string) $this->option('url'));
+        if ($overrideUrl !== '') {
+            return $overrideUrl;
+        }
+
+        $configuredUrl = trim((string) config('geoip.auto_update.url', ''));
+        if ($configuredUrl !== '') {
+            return $configuredUrl;
+        }
+
+        $token = trim((string) config('geoip.auto_update.token', ''));
+        if ($token === '') {
+            return null;
+        }
+
+        $package = trim((string) config('geoip.auto_update.package', 'DB3LITEBINIPV6'));
+        if ($package === '') {
+            return null;
+        }
+
+        $endpoint = rtrim(trim((string) config('geoip.auto_update.endpoint', 'https://www.ip2location.com/download/')), '/').'/';
+
+        return $endpoint.'?'.http_build_query([
+            'token' => $token,
+            'file' => $package,
+        ], '', '&', PHP_QUERY_RFC3986);
+    }
+
     private function readMeta(string $path): array
     {
         if (! File::exists($path)) {
@@ -117,6 +166,45 @@ class GeoIpUpdateDb3LiteCommand extends Command
         $decoded = json_decode((string) File::get($path), true);
 
         return is_array($decoded) ? $decoded : [];
+    }
+
+    private function resolveBinSource(string $downloadPath, string $extractDir): ?string
+    {
+        if (! File::exists($downloadPath) || (filesize($downloadPath) ?: 0) === 0) {
+            return null;
+        }
+
+        if ($this->isZipArchive($downloadPath)) {
+            return $this->extractBinFromZip($downloadPath, $extractDir);
+        }
+
+        return $downloadPath;
+    }
+
+    private function isZipArchive(string $path): bool
+    {
+        $handle = @fopen($path, 'rb');
+        if (! $handle) {
+            return false;
+        }
+
+        $signature = fread($handle, 4);
+        fclose($handle);
+
+        return in_array($signature, ["PK\x03\x04", "PK\x05\x06", "PK\x07\x08"], true);
+    }
+
+    private function isHtml(string $path): bool
+    {
+        $handle = @fopen($path, 'rb');
+        if (! $handle) {
+            return false;
+        }
+
+        $head = (string) fread($handle, 512);
+        fclose($handle);
+
+        return preg_match('/<\s*html|<!DOCTYPE\s+html/i', $head) === 1;
     }
 
     private function extractBinFromZip(string $zipPath, string $extractDir): ?string

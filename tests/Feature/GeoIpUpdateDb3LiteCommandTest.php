@@ -9,6 +9,54 @@ use ZipArchive;
 
 class GeoIpUpdateDb3LiteCommandTest extends TestCase
 {
+    public function test_it_builds_official_url_from_token_and_package(): void
+    {
+        $targetDir = storage_path('framework/testing/ip2location-token');
+        $targetPath = $targetDir.'/IP2LOCATION-LITE-DB3.BIN';
+
+        File::deleteDirectory($targetDir);
+        File::ensureDirectoryExists($targetDir);
+
+        Http::fake(function ($request) {
+            $this->assertSame(
+                'https://www.ip2location.com/download/?token=test-token&file=DB3LITEBINIPV6',
+                (string) $request->url()
+            );
+
+            return Http::response('RAW-BIN-CONTENT', 200, [
+                'Content-Type' => 'application/octet-stream',
+            ]);
+        });
+
+        config()->set('geoip.auto_update.url', '');
+        config()->set('geoip.auto_update.endpoint', 'https://www.ip2location.com/download/');
+        config()->set('geoip.auto_update.token', 'test-token');
+        config()->set('geoip.auto_update.package', 'DB3LITEBINIPV6');
+        config()->set('geoip.ip2location.database_path', $targetPath);
+        config()->set('geoip.auto_update.enabled', true);
+
+        $this->artisan('geoip:update-db3-lite')->assertExitCode(0);
+
+        $this->assertFileExists($targetPath);
+        $this->assertSame('RAW-BIN-CONTENT', file_get_contents($targetPath));
+    }
+
+    public function test_it_skips_when_source_is_not_configured(): void
+    {
+        Http::fake();
+
+        config()->set('geoip.auto_update.url', '');
+        config()->set('geoip.auto_update.token', '');
+        config()->set('geoip.auto_update.package', 'DB3LITEBINIPV6');
+        config()->set('geoip.auto_update.enabled', true);
+
+        $this->artisan('geoip:update-db3-lite')
+            ->expectsOutput('GeoIP source is not configured. Set GEOIP_AUTO_UPDATE_TOKEN or GEOIP_AUTO_UPDATE_URL.')
+            ->assertExitCode(0);
+
+        Http::assertNothingSent();
+    }
+
     public function test_it_downloads_and_extracts_db3_bin(): void
     {
         if (! class_exists(ZipArchive::class)) {
