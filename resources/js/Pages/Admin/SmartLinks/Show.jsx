@@ -14,6 +14,19 @@ function parseJsonObject(text) {
     }
 }
 
+function formatDate(value) {
+    if (!value) return '—';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return value;
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    const ss = String(d.getSeconds()).padStart(2, '0');
+    return `${dd}.${mm}.${yyyy} ${hh}:${min}:${ss}`;
+}
+
 function Pagination({ links = [] }) {
     if (!Array.isArray(links) || links.length <= 3) {
         return null;
@@ -23,8 +36,8 @@ function Pagination({ links = [] }) {
         <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
             {links.map((link, idx) => {
                 const label = link.label
-                    .replace('&laquo; Previous', 'Previous')
-                    .replace('Next &raquo;', 'Next');
+                    .replace('&laquo; Previous', 'Предыдущая')
+                    .replace('Next &raquo;', 'Следующая');
 
                 if (!link.url) {
                     return (
@@ -148,8 +161,8 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
     };
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">SmartLink: {smartLink.name}</h2>}>
-            <Head title={`SmartLink ${smartLink.name}`} />
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Смартлинк: {smartLink.name}</h2>}>
+            <Head title={`Смартлинк ${smartLink.name}`} />
 
             <div className="space-y-6">
                 {flash?.success ? (
@@ -159,17 +172,17 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
                 <section className="rounded-xl border bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-4">
                         <div>
-                            <div className="text-sm text-gray-500">Public URL</div>
+                            <div className="text-sm text-gray-500">Публичная ссылка</div>
                             <a className="text-sm font-semibold text-indigo-700" href={redirectUrl} target="_blank" rel="noreferrer">
                                 {redirectUrl}
                             </a>
                         </div>
                         <div className="flex gap-2">
                             <Link href={route('admin.smart-links.toggle', smartLink.id)} method="patch" as="button" className="rounded border border-amber-200 px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-50">
-                                Toggle
+                                Переключить
                             </Link>
                             <Link href={route('admin.smart-links.index')} className="rounded border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">
-                                Back
+                                Назад
                             </Link>
                         </div>
                     </div>
@@ -178,7 +191,7 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
                         <div className="grid gap-3 md:grid-cols-2">
                             <input
                                 className="rounded border px-3 py-2"
-                                placeholder="Name"
+                                placeholder="Название"
                                 value={form.data.name}
                                 onChange={(e) => form.setData('name', e.target.value)}
                             />
@@ -193,14 +206,14 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
                                 value={form.data.fallback_offer_id}
                                 onChange={(e) => form.setData('fallback_offer_id', e.target.value)}
                             >
-                                <option value="">Fallback offer (optional)</option>
+                                <option value="">Fallback оффер (опционально)</option>
                                 {offers.map((offer) => (
                                     <option key={offer.id} value={offer.id}>{offer.name}</option>
                                 ))}
                             </select>
                             <input
                                 className="rounded border px-3 py-2"
-                                placeholder="Fallback URL (optional)"
+                                placeholder="Fallback URL (опционально)"
                                 value={form.data.fallback_url}
                                 onChange={(e) => form.setData('fallback_url', e.target.value)}
                             />
@@ -212,14 +225,14 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
                                 checked={form.data.is_active}
                                 onChange={(e) => form.setData('is_active', e.target.checked)}
                             />
-                            Active
+                            Активен
                         </label>
 
                         <div className="space-y-3 rounded border border-indigo-100 bg-indigo-50/40 p-3">
                             <div className="flex items-center justify-between">
-                                <div className="text-sm font-semibold text-indigo-900">Streams</div>
+                                <div className="text-sm font-semibold text-indigo-900">Потоки (стримы)</div>
                                 <button type="button" onClick={addStream} className="rounded border border-indigo-300 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100">
-                                    Add stream
+                                    Добавить поток
                                 </button>
                             </div>
 
@@ -228,7 +241,7 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
                                     <div className="grid gap-2 md:grid-cols-3">
                                         <input
                                             className="rounded border px-2 py-2"
-                                            placeholder="Stream name"
+                                            placeholder="Название потока"
                                             value={stream.name}
                                             onChange={(e) => updateStream(idx, { name: e.target.value })}
                                         />
@@ -237,7 +250,7 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
                                             value={stream.offer_id}
                                             onChange={(e) => updateStream(idx, { offer_id: e.target.value })}
                                         >
-                                            <option value="">Offer (optional if target URL set)</option>
+                                            <option value="">Оффер (опционально, если указан target URL)</option>
                                             {offers.map((offer) => (
                                                 <option key={offer.id} value={offer.id}>{offer.name}</option>
                                             ))}
@@ -247,7 +260,7 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
                                             value={stream.preset_id}
                                             onChange={(e) => updateStream(idx, { preset_id: e.target.value })}
                                         >
-                                            <option value="">Preset (optional)</option>
+                                            <option value="">Пресет (опционально)</option>
                                             {presets.filter((p) => p.is_active).map((preset) => (
                                                 <option key={preset.id} value={preset.id}>{preset.name}</option>
                                             ))}
@@ -255,14 +268,14 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
                                         <input
                                             type="number"
                                             className="rounded border px-2 py-2"
-                                            placeholder="Weight"
+                                            placeholder="Вес"
                                             value={stream.weight}
                                             onChange={(e) => updateStream(idx, { weight: e.target.value })}
                                         />
                                         <input
                                             type="number"
                                             className="rounded border px-2 py-2"
-                                            placeholder="Priority"
+                                            placeholder="Приоритет"
                                             value={stream.priority}
                                             onChange={(e) => updateStream(idx, { priority: e.target.value })}
                                         />
@@ -274,13 +287,13 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
                                         />
                                         <input
                                             className="rounded border px-2 py-2"
-                                            placeholder="Geo rules (RU,KZ,UZ)"
+                                            placeholder="Правила GEO (RU,KZ,UZ)"
                                             value={stream.geos_csv}
                                             onChange={(e) => updateStream(idx, { geos_csv: e.target.value })}
                                         />
                                         <input
                                             className="rounded border px-2 py-2 md:col-span-2"
-                                            placeholder='Query rules JSON: {"utm_source":"facebook"}'
+                                            placeholder='Query-правила JSON: {"utm_source":"facebook"}'
                                             value={stream.query_json}
                                             onChange={(e) => updateStream(idx, { query_json: e.target.value })}
                                         />
@@ -311,7 +324,7 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
                                                 checked={Boolean(stream.is_active)}
                                                 onChange={(e) => updateStream(idx, { is_active: e.target.checked })}
                                             />
-                                            active
+                                            активен
                                         </label>
 
                                         <button
@@ -319,7 +332,7 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
                                             onClick={() => removeStream(idx)}
                                             className="ml-auto rounded border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
                                         >
-                                            Remove
+                                            Удалить
                                         </button>
                                     </div>
                                 </div>
@@ -339,14 +352,14 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
                             className="rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                             disabled={form.processing}
                         >
-                            Save SmartLink
+                            Сохранить SmartLink
                         </button>
                     </form>
                 </section>
 
                 <section className="rounded-xl border bg-white p-4 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        <h3 className="text-base font-semibold text-gray-900">Click tracking</h3>
+                        <h3 className="text-base font-semibold text-gray-900">Лог кликов</h3>
                         <form onSubmit={submitClickFilters} className="flex flex-wrap items-center gap-2">
                             <input
                                 className="rounded border px-3 py-2 text-sm"
@@ -365,7 +378,7 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
                                 value={clickFilterForm.data.offer_id}
                                 onChange={(e) => clickFilterForm.setData('offer_id', e.target.value)}
                             >
-                                <option value="">All offers</option>
+                                <option value="">Все офферы</option>
                                 {offers.map((offer) => (
                                     <option key={offer.id} value={offer.id}>{offer.name}</option>
                                 ))}
@@ -375,12 +388,12 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
                                 value={clickFilterForm.data.stream_id}
                                 onChange={(e) => clickFilterForm.setData('stream_id', e.target.value)}
                             >
-                                <option value="">All streams</option>
+                                <option value="">Все потоки</option>
                                 {(smartLink.streams || []).map((stream) => (
                                     <option key={stream.id} value={stream.id}>{stream.name || `Stream #${stream.id}`}</option>
                                 ))}
                             </select>
-                            <button type="submit" className="rounded border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Filter</button>
+                            <button type="submit" className="rounded border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Фильтр</button>
                         </form>
                     </div>
 
@@ -388,20 +401,20 @@ export default function Show({ smartLink, offers, presets, clicks, clickFilters 
                         <table className="min-w-full text-sm">
                             <thead>
                                 <tr className="border-b text-left text-xs uppercase tracking-wide text-gray-500">
-                                    <th className="px-3 py-2">Date</th>
+                                    <th className="px-3 py-2">Дата</th>
                                     <th className="px-3 py-2">Click ID</th>
-                                    <th className="px-3 py-2">Stream</th>
-                                    <th className="px-3 py-2">Offer</th>
+                                    <th className="px-3 py-2">Поток</th>
+                                    <th className="px-3 py-2">Оффер</th>
                                     <th className="px-3 py-2">GEO</th>
-                                    <th className="px-3 py-2">Device</th>
-                                    <th className="px-3 py-2">Matched by</th>
-                                    <th className="px-3 py-2">Target</th>
+                                    <th className="px-3 py-2">Устройство</th>
+                                    <th className="px-3 py-2">Правило</th>
+                                    <th className="px-3 py-2">Цель</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {(clicks?.data || []).map((row) => (
                                     <tr key={row.id} className="border-b">
-                                        <td className="px-3 py-2 text-xs text-gray-600">{row.created_at}</td>
+                                        <td className="px-3 py-2 text-xs text-gray-600">{formatDate(row.created_at)}</td>
                                         <td className="px-3 py-2 font-mono text-xs">{row.click_id}</td>
                                         <td className="px-3 py-2">{row.stream?.name || `#${row.smart_link_stream_id || '-'}`}</td>
                                         <td className="px-3 py-2">{row.offer?.name || '-'}</td>

@@ -26,7 +26,7 @@ class SmartLinkPresetController extends Controller
             'is_active' => (bool) ($validated['is_active'] ?? true),
         ]);
 
-        return back()->with('success', 'Preset created');
+        return back()->with('success', 'Пресет создан');
     }
 
     public function update(Request $request, SmartLinkPreset $smartLinkPreset): RedirectResponse
@@ -42,14 +42,14 @@ class SmartLinkPresetController extends Controller
             'is_active' => (bool) ($validated['is_active'] ?? true),
         ]);
 
-        return back()->with('success', 'Preset updated');
+        return back()->with('success', 'Пресет обновлен');
     }
 
     public function destroy(SmartLinkPreset $smartLinkPreset): RedirectResponse
     {
         $smartLinkPreset->delete();
 
-        return back()->with('success', 'Preset deleted');
+        return back()->with('success', 'Пресет удален');
     }
 
     private function validatePayload(Request $request, int $partnerProgramId, ?int $presetId = null): array

@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Webmaster;
 
 use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
+use App\Models\Offer;
 use App\Models\PostbackLog;
 use App\Models\PostbackSetting;
+use App\Models\SmartLink;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -56,10 +58,61 @@ class ToolController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $allowedOfferIds = Offer::query()
+            ->where('is_active', true)
+            ->where(function ($q) use ($user) {
+                $q->where(function ($public) use ($user) {
+                    $public->where('is_private', false)
+                        ->whereDoesntHave('rates', function ($r) use ($user) {
+                            $r->where('webmaster_id', $user->id)->where('is_allowed', false);
+                        });
+                })
+                    ->orWhereHas('rates', fn ($r) => $r->where('webmaster_id', $user->id)->where('is_allowed', true));
+            })
+            ->pluck('id')
+            ->all();
+
+        $smartLinks = SmartLink::query()
+            ->where('is_active', true)
+            ->with(['streams.offer:id,name,is_active'])
+            ->orderBy('name')
+            ->get()
+            ->map(function (SmartLink $smartLink) use ($allowedOfferIds) {
+                $allowedStreams = $smartLink->streams
+                    ->where('is_active', true)
+                    ->filter(function ($stream) use ($allowedOfferIds) {
+                        if ($stream->target_url) {
+                            return true;
+                        }
+
+                        if (! $stream->offer || ! $stream->offer->is_active) {
+                            return false;
+                        }
+
+                        return in_array((int) $stream->offer_id, $allowedOfferIds, true);
+                    })
+                    ->values();
+
+                if ($allowedStreams->isEmpty()) {
+                    return null;
+                }
+
+                return [
+                    'id' => $smartLink->id,
+                    'name' => $smartLink->name,
+                    'slug' => $smartLink->slug,
+                    'url' => route('smart-links.redirect', ['smartLink' => $smartLink->slug]),
+                    'streams_count' => $allowedStreams->count(),
+                ];
+            })
+            ->filter()
+            ->values();
+
         return Inertia::render('Webmaster/Tools/Index', [
             'apiKey' => $apiKey,
             'postbacks' => $postbacks,
             'logs' => $logs,
+            'smartLinks' => $smartLinks,
             'eventOptions' => $this->allowedEvents,
             'filters' => [
                 'search' => $request->query('search'),

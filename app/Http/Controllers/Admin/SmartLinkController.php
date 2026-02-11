@@ -73,7 +73,7 @@ class SmartLinkController extends Controller
 
         $this->syncStreams($smartLink, collect($validated['streams'] ?? []), $partnerProgramId);
 
-        return redirect()->route('admin.smart-links.show', $smartLink)->with('success', 'SmartLink created');
+        return redirect()->route('admin.smart-links.show', $smartLink)->with('success', 'Смартлинк создан');
     }
 
     public function show(Request $request, SmartLink $smartLink): Response
@@ -136,21 +136,21 @@ class SmartLinkController extends Controller
 
         $this->syncStreams($smartLink, collect($validated['streams'] ?? []), $partnerProgramId);
 
-        return back()->with('success', 'SmartLink updated');
+        return back()->with('success', 'Смартлинк обновлен');
     }
 
     public function toggle(SmartLink $smartLink): RedirectResponse
     {
         $smartLink->update(['is_active' => ! $smartLink->is_active]);
 
-        return back()->with('success', 'SmartLink status updated');
+        return back()->with('success', 'Статус смартлинка обновлен');
     }
 
     public function destroy(SmartLink $smartLink): RedirectResponse
     {
         $smartLink->delete();
 
-        return redirect()->route('admin.smart-links.index')->with('success', 'SmartLink deleted');
+        return redirect()->route('admin.smart-links.index')->with('success', 'Смартлинк удален');
     }
 
     private function validatePayload(Request $request, int $partnerProgramId, ?int $smartLinkId = null): array
@@ -233,7 +233,7 @@ class SmartLinkController extends Controller
 
             if (! $offerId && ! $targetUrl) {
                 throw ValidationException::withMessages([
-                    "streams.{$index}.target_url" => 'Each stream must include offer_id or target_url.',
+                    "streams.{$index}.target_url" => 'Для потока нужно указать offer_id или target_url.',
                 ]);
             }
 

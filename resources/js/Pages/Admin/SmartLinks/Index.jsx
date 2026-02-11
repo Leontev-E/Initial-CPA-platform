@@ -10,8 +10,8 @@ function Pagination({ links = [] }) {
         <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
             {links.map((link, idx) => {
                 const label = link.label
-                    .replace('&laquo; Previous', 'Previous')
-                    .replace('Next &raquo;', 'Next');
+                    .replace('&laquo; Previous', 'Предыдущая')
+                    .replace('Next &raquo;', 'Следующая');
 
                 if (!link.url) {
                     return (
@@ -203,12 +203,12 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
     const presetUsage = (preset) => {
         const geos = Array.isArray(preset.rules?.geos) ? preset.rules.geos.join(', ') : '';
         const devices = Array.isArray(preset.rules?.devices) ? preset.rules.devices.join(', ') : '';
-        return [geos && `geo: ${geos}`, devices && `devices: ${devices}`].filter(Boolean).join(' | ') || 'No rules';
+        return [geos && `geo: ${geos}`, devices && `devices: ${devices}`].filter(Boolean).join(' | ') || 'Без правил';
     };
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">SmartLinks</h2>}>
-            <Head title="SmartLinks" />
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Смартлинки</h2>}>
+            <Head title="Смартлинки" />
 
             <div className="space-y-6">
                 {flash?.success ? (
@@ -217,19 +217,19 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
 
                 <div className="grid gap-6 lg:grid-cols-2">
                     <section className="rounded-xl border bg-white p-4 shadow-sm">
-                        <h3 className="text-base font-semibold text-gray-900">Create SmartLink</h3>
+                        <h3 className="text-base font-semibold text-gray-900">Создать SmartLink</h3>
                         <form onSubmit={submitCreate} className="mt-3 space-y-3">
                             <div className="grid gap-3 md:grid-cols-2">
                                 <input
                                     className="rounded border px-3 py-2"
-                                    placeholder="Name"
+                                    placeholder="Название"
                                     value={createForm.data.name}
                                     onChange={(e) => createForm.setData('name', e.target.value)}
                                     required
                                 />
                                 <input
                                     className="rounded border px-3 py-2"
-                                    placeholder="Slug (optional)"
+                                    placeholder="Slug (опционально)"
                                     value={createForm.data.slug}
                                     onChange={(e) => createForm.setData('slug', e.target.value)}
                                 />
@@ -238,14 +238,14 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
                                     value={createForm.data.fallback_offer_id}
                                     onChange={(e) => createForm.setData('fallback_offer_id', e.target.value)}
                                 >
-                                    <option value="">Fallback offer (optional)</option>
+                                    <option value="">Fallback оффер (опционально)</option>
                                     {offers.map((offer) => (
                                         <option key={offer.id} value={offer.id}>{offer.name}</option>
                                     ))}
                                 </select>
                                 <input
                                     className="rounded border px-3 py-2"
-                                    placeholder="Fallback URL (optional)"
+                                    placeholder="Fallback URL (опционально)"
                                     value={createForm.data.fallback_url}
                                     onChange={(e) => createForm.setData('fallback_url', e.target.value)}
                                 />
@@ -257,14 +257,14 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
                                     checked={createForm.data.is_active}
                                     onChange={(e) => createForm.setData('is_active', e.target.checked)}
                                 />
-                                Active
+                                Активен
                             </label>
 
                             <div className="space-y-3 rounded border border-indigo-100 bg-indigo-50/40 p-3">
                                 <div className="flex items-center justify-between">
-                                    <div className="text-sm font-semibold text-indigo-900">Streams (A/B + rules + weights)</div>
+                                    <div className="text-sm font-semibold text-indigo-900">Потоки (A/B + правила + веса)</div>
                                     <button type="button" onClick={addStream} className="rounded border border-indigo-300 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100">
-                                        Add stream
+                                        Добавить поток
                                     </button>
                                 </div>
 
@@ -273,7 +273,7 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
                                         <div className="grid gap-2 md:grid-cols-3">
                                             <input
                                                 className="rounded border px-2 py-2"
-                                                placeholder="Stream name"
+                                                placeholder="Название потока"
                                                 value={stream.name}
                                                 onChange={(e) => updateStream(idx, { name: e.target.value })}
                                             />
@@ -282,7 +282,7 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
                                                 value={stream.offer_id}
                                                 onChange={(e) => updateStream(idx, { offer_id: e.target.value })}
                                             >
-                                                <option value="">Offer (optional if target URL set)</option>
+                                                <option value="">Оффер (опционально, если указан target URL)</option>
                                                 {offers.map((offer) => (
                                                     <option key={offer.id} value={offer.id}>{offer.name}</option>
                                                 ))}
@@ -292,7 +292,7 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
                                                 value={stream.preset_id}
                                                 onChange={(e) => updateStream(idx, { preset_id: e.target.value })}
                                             >
-                                                <option value="">Preset (optional)</option>
+                                                <option value="">Пресет (опционально)</option>
                                                 {presets.filter((p) => p.is_active).map((preset) => (
                                                     <option key={preset.id} value={preset.id}>{preset.name}</option>
                                                 ))}
@@ -300,32 +300,32 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
                                             <input
                                                 type="number"
                                                 className="rounded border px-2 py-2"
-                                                placeholder="Weight"
+                                                placeholder="Вес"
                                                 value={stream.weight}
                                                 onChange={(e) => updateStream(idx, { weight: e.target.value })}
                                             />
                                             <input
                                                 type="number"
                                                 className="rounded border px-2 py-2"
-                                                placeholder="Priority"
+                                                placeholder="Приоритет"
                                                 value={stream.priority}
                                                 onChange={(e) => updateStream(idx, { priority: e.target.value })}
                                             />
                                             <input
                                                 className="rounded border px-2 py-2"
-                                                placeholder="Target URL (optional if offer set)"
+                                                placeholder="Target URL (опционально, если указан оффер)"
                                                 value={stream.target_url}
                                                 onChange={(e) => updateStream(idx, { target_url: e.target.value })}
                                             />
                                             <input
                                                 className="rounded border px-2 py-2"
-                                                placeholder="Geo rules (RU,KZ,UZ)"
+                                                placeholder="Правила GEO (RU,KZ,UZ)"
                                                 value={stream.geos_csv}
                                                 onChange={(e) => updateStream(idx, { geos_csv: e.target.value })}
                                             />
                                             <input
                                                 className="rounded border px-2 py-2 md:col-span-2"
-                                                placeholder='Query rules JSON, example: {"utm_source":"facebook"}'
+                                                placeholder='Query-правила JSON, пример: {"utm_source":"facebook"}'
                                                 value={stream.query_json}
                                                 onChange={(e) => updateStream(idx, { query_json: e.target.value })}
                                             />
@@ -356,7 +356,7 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
                                                     checked={Boolean(stream.is_active)}
                                                     onChange={(e) => updateStream(idx, { is_active: e.target.checked })}
                                                 />
-                                                active
+                                                активен
                                             </label>
 
                                             <button
@@ -364,7 +364,7 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
                                                 onClick={() => removeStream(idx)}
                                                 className="ml-auto rounded border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
                                             >
-                                                Remove
+                                                Удалить
                                             </button>
                                         </div>
                                     </div>
@@ -384,51 +384,51 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
                                 className="rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                                 disabled={createForm.processing}
                             >
-                                Create SmartLink
+                                Создать SmartLink
                             </button>
                         </form>
                     </section>
 
                     <section className="rounded-xl border bg-white p-4 shadow-sm">
-                        <h3 className="text-base font-semibold text-gray-900">Stream Presets</h3>
+                        <h3 className="text-base font-semibold text-gray-900">Пресеты потоков</h3>
                         <form onSubmit={submitPreset} className="mt-3 space-y-2">
                             <div className="grid gap-2 md:grid-cols-2">
                                 <input
                                     className="rounded border px-3 py-2"
-                                    placeholder="Preset name"
+                                    placeholder="Название пресета"
                                     value={presetForm.data.name}
                                     onChange={(e) => presetForm.setData('name', e.target.value)}
                                     required
                                 />
                                 <input
                                     className="rounded border px-3 py-2"
-                                    placeholder="Description"
+                                    placeholder="Описание"
                                     value={presetForm.data.description}
                                     onChange={(e) => presetForm.setData('description', e.target.value)}
                                 />
                                 <input
                                     type="number"
                                     className="rounded border px-3 py-2"
-                                    placeholder="Default weight"
+                                    placeholder="Вес по умолчанию"
                                     value={presetForm.data.default_weight}
                                     onChange={(e) => presetForm.setData('default_weight', e.target.value)}
                                 />
                                 <input
                                     type="number"
                                     className="rounded border px-3 py-2"
-                                    placeholder="Default priority"
+                                    placeholder="Приоритет по умолчанию"
                                     value={presetForm.data.default_priority}
                                     onChange={(e) => presetForm.setData('default_priority', e.target.value)}
                                 />
                                 <input
                                     className="rounded border px-3 py-2"
-                                    placeholder="Geo rules (RU,KZ,UZ)"
+                                    placeholder="Правила GEO (RU,KZ,UZ)"
                                     value={presetForm.data.geos_csv}
                                     onChange={(e) => presetForm.setData('geos_csv', e.target.value)}
                                 />
                                 <input
                                     className="rounded border px-3 py-2"
-                                    placeholder='Query rules JSON: {"utm_source":"fb"}'
+                                    placeholder='Query-правила JSON: {"utm_source":"fb"}'
                                     value={presetForm.data.query_json}
                                     onChange={(e) => presetForm.setData('query_json', e.target.value)}
                                 />
@@ -458,7 +458,7 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
                                         checked={presetForm.data.is_active}
                                         onChange={(e) => presetForm.setData('is_active', e.target.checked)}
                                     />
-                                    active
+                                    активен
                                 </label>
                             </div>
 
@@ -467,16 +467,16 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
                                 className="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                                 disabled={presetForm.processing}
                             >
-                                Add preset
+                                Добавить пресет
                             </button>
                         </form>
 
                         <div className="mt-4 space-y-2">
-                            {presets.length === 0 ? <div className="text-sm text-gray-500">No presets yet.</div> : null}
+                            {presets.length === 0 ? <div className="text-sm text-gray-500">Пресетов пока нет.</div> : null}
                             {presets.map((preset) => (
                                 <div key={preset.id} className="rounded border px-3 py-2 text-sm">
-                                    <div className="font-semibold text-gray-800">{preset.name} {!preset.is_active ? '(inactive)' : ''}</div>
-                                    <div className="text-xs text-gray-600">weight: {preset.default_weight}, priority: {preset.default_priority}</div>
+                                    <div className="font-semibold text-gray-800">{preset.name} {!preset.is_active ? '(неактивен)' : ''}</div>
+                                    <div className="text-xs text-gray-600">вес: {preset.default_weight}, приоритет: {preset.default_priority}</div>
                                     <div className="text-xs text-gray-500">{presetUsage(preset)}</div>
                                 </div>
                             ))}
@@ -486,11 +486,11 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
 
                 <section className="rounded-xl border bg-white p-4 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        <h3 className="text-base font-semibold text-gray-900">SmartLinks</h3>
+                        <h3 className="text-base font-semibold text-gray-900">Смартлинки</h3>
                         <form onSubmit={submitSearch} className="flex flex-wrap items-center gap-2">
                             <input
                                 className="rounded border px-3 py-2 text-sm"
-                                placeholder="Search by name/slug"
+                                placeholder="Поиск по названию/slug"
                                 value={searchForm.data.search}
                                 onChange={(e) => searchForm.setData('search', e.target.value)}
                             />
@@ -499,11 +499,11 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
                                 value={searchForm.data.status}
                                 onChange={(e) => searchForm.setData('status', e.target.value)}
                             >
-                                <option value="">All statuses</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
+                                <option value="">Все статусы</option>
+                                <option value="active">Активные</option>
+                                <option value="inactive">Неактивные</option>
                             </select>
-                            <button type="submit" className="rounded border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Filter</button>
+                            <button type="submit" className="rounded border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Фильтр</button>
                         </form>
                     </div>
 
@@ -511,12 +511,12 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
                         <table className="min-w-full text-sm">
                             <thead>
                                 <tr className="border-b text-left text-xs uppercase tracking-wide text-gray-500">
-                                    <th className="px-3 py-2">Name</th>
+                                    <th className="px-3 py-2">Название</th>
                                     <th className="px-3 py-2">Slug</th>
-                                    <th className="px-3 py-2">Streams</th>
-                                    <th className="px-3 py-2">Clicks</th>
-                                    <th className="px-3 py-2">Status</th>
-                                    <th className="px-3 py-2">Actions</th>
+                                    <th className="px-3 py-2">Потоки</th>
+                                    <th className="px-3 py-2">Клики</th>
+                                    <th className="px-3 py-2">Статус</th>
+                                    <th className="px-3 py-2">Действия</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -528,14 +528,14 @@ export default function Index({ smartLinks, offers, presets, filters = {} }) {
                                         <td className="px-3 py-2">{item.clicks_count}</td>
                                         <td className="px-3 py-2">
                                             <span className={`rounded px-2 py-1 text-xs font-semibold ${item.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                                                {item.is_active ? 'active' : 'inactive'}
+                                                {item.is_active ? 'активен' : 'неактивен'}
                                             </span>
                                         </td>
                                         <td className="px-3 py-2">
                                             <div className="flex flex-wrap gap-2">
-                                                <Link href={route('admin.smart-links.show', item.id)} className="rounded border border-indigo-200 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-50">Open</Link>
-                                                <Link href={route('admin.smart-links.toggle', item.id)} method="patch" as="button" className="rounded border border-amber-200 px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-50">Toggle</Link>
-                                                <Link href={route('admin.smart-links.destroy', item.id)} method="delete" as="button" className="rounded border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">Delete</Link>
+                                                <Link href={route('admin.smart-links.show', item.id)} className="rounded border border-indigo-200 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-50">Открыть</Link>
+                                                <Link href={route('admin.smart-links.toggle', item.id)} method="patch" as="button" className="rounded border border-amber-200 px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-50">Переключить</Link>
+                                                <Link href={route('admin.smart-links.destroy', item.id)} method="delete" as="button" className="rounded border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">Удалить</Link>
                                             </div>
                                         </td>
                                     </tr>
