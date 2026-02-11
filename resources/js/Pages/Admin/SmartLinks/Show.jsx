@@ -138,54 +138,54 @@ export default function Show({ smartLink, offers, presets, webmasters = [], clic
     };
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800">SmartLink: {smartLink.name}</h2>}>
-            <Head title={`SmartLink ${smartLink.name}`} />
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800">Смарт-ссылка: {smartLink.name}</h2>}>
+            <Head title={`Смарт-ссылка ${smartLink.name}`} />
             <div className="space-y-6">
                 {flash?.success ? <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{flash.success}</div> : null}
 
                 <section className="rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-900">
-                    <div className="font-semibold">SmartLink Routing and Postback</div>
+                    <div className="font-semibold">Маршрутизация SmartLink и postback</div>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
-                        <li>Use private mode and webmaster assignment to ensure full click attribution.</li>
-                        <li>Query rules support JSON and line mode (example: <code>utm_source=facebook</code>, <code>sub1=*</code>).</li>
-                        <li>Redirect appends <code>click_id</code>, use it in advertiser postbacks.</li>
+                        <li>Используйте приватный режим и назначение вебмастеров, чтобы сохранять полную атрибуцию кликов.</li>
+                        <li>Query-правила поддерживают JSON и построчный формат (пример: <code>utm_source=facebook</code>, <code>sub1=*</code>).</li>
+                        <li>В редирект автоматически добавляется <code>click_id</code>, используйте его в postback рекламодателя.</li>
                     </ul>
                     <div className="mt-3 grid gap-2 md:grid-cols-2">
-                        <div><div className="text-[11px] uppercase">Postback endpoint</div><div className="rounded border border-indigo-200 bg-white px-2 py-1 font-mono text-[11px]">{postback?.endpoint}</div></div>
+                        <div><div className="text-[11px] uppercase">Postback URL</div><div className="rounded border border-indigo-200 bg-white px-2 py-1 font-mono text-[11px]">{postback?.endpoint}</div></div>
                         <div><div className="text-[11px] uppercase">Token</div><div className="rounded border border-indigo-200 bg-white px-2 py-1 font-mono text-[11px]">{postback?.token}</div></div>
                     </div>
-                    <div className="mt-2 text-[11px]">Example: {postback?.sample}</div>
+                    <div className="mt-2 text-[11px]">Пример: {postback?.sample}</div>
                 </section>
 
                 <section className="rounded-xl border bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-4">
                         <div>
-                            <div className="text-sm text-gray-500">Public redirect URL</div>
+                            <div className="text-sm text-gray-500">Публичный URL редиректа</div>
                             <a className="text-sm font-semibold text-indigo-700" href={redirectUrl} target="_blank" rel="noreferrer">{redirectUrl}</a>
                         </div>
                         <div className="flex gap-2">
-                            <Link href={route('admin.smart-links.toggle', smartLink.id)} method="patch" as="button" className="rounded border border-amber-200 px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-50">Toggle</Link>
-                            <Link href={route('admin.smart-links.index')} className="rounded border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">Back</Link>
+                            <Link href={route('admin.smart-links.toggle', smartLink.id)} method="patch" as="button" className="rounded border border-amber-200 px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-50">Переключить</Link>
+                            <Link href={route('admin.smart-links.index')} className="rounded border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">Назад</Link>
                         </div>
                     </div>
 
                     <form onSubmit={submit} className="mt-4 space-y-3">
                         <div className="grid gap-3 md:grid-cols-2">
-                            <input className="rounded border px-3 py-2" placeholder="Name" value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} />
+                            <input className="rounded border px-3 py-2" placeholder="Название" value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} />
                             <input className="rounded border px-3 py-2" placeholder="Slug" value={form.data.slug} onChange={(e) => form.setData('slug', e.target.value)} />
                             <select className="rounded border px-3 py-2" value={form.data.fallback_offer_id} onChange={(e) => form.setData('fallback_offer_id', e.target.value)}>
-                                <option value="">Fallback offer</option>{offers.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                                <option value="">Фолбэк-оффер</option>{offers.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                             </select>
-                            <input className="rounded border px-3 py-2" placeholder="Fallback URL" value={form.data.fallback_url} onChange={(e) => form.setData('fallback_url', e.target.value)} />
+                            <input className="rounded border px-3 py-2" placeholder="Фолбэк URL" value={form.data.fallback_url} onChange={(e) => form.setData('fallback_url', e.target.value)} />
                         </div>
 
                         <div className="flex flex-wrap gap-4 text-sm">
-                            <label className="inline-flex items-center gap-2"><input type="checkbox" checked={form.data.is_active} onChange={(e) => form.setData('is_active', e.target.checked)} />Active</label>
-                            <label className="inline-flex items-center gap-2"><input type="checkbox" checked={Boolean(form.data.is_public)} onChange={(e) => form.setData('is_public', e.target.checked)} />Public access</label>
+                            <label className="inline-flex items-center gap-2"><input type="checkbox" checked={form.data.is_active} onChange={(e) => form.setData('is_active', e.target.checked)} />Активна</label>
+                            <label className="inline-flex items-center gap-2"><input type="checkbox" checked={Boolean(form.data.is_public)} onChange={(e) => form.setData('is_public', e.target.checked)} />Публичный доступ</label>
                         </div>
 
                         <div className="rounded border border-slate-200 bg-slate-50 p-3">
-                            <div className="text-xs font-semibold uppercase text-slate-600">Webmaster Access</div>
+                            <div className="text-xs font-semibold uppercase text-slate-600">Доступ вебмастеров</div>
                             <div className="mt-2 max-h-32 space-y-1 overflow-auto text-xs">
                                 {webmasters.map((w) => (
                                     <label key={w.id} className="flex items-center gap-2"><input type="checkbox" checked={(form.data.webmaster_ids || []).includes(w.id)} onChange={(e) => toggleWebmaster(w.id, e.target.checked)} />{w.name} ({w.email})</label>
@@ -194,50 +194,50 @@ export default function Show({ smartLink, offers, presets, webmasters = [], clic
                         </div>
 
                         <div className="space-y-3 rounded border border-indigo-100 bg-indigo-50/40 p-3">
-                            <div className="flex items-center justify-between"><div className="text-sm font-semibold text-indigo-900">Streams</div><button type="button" onClick={addStream} className="rounded border border-indigo-300 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100">Add stream</button></div>
+                            <div className="flex items-center justify-between"><div className="text-sm font-semibold text-indigo-900">Потоки</div><button type="button" onClick={addStream} className="rounded border border-indigo-300 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100">Добавить поток</button></div>
                             {form.data.streams.map((s, idx) => (
                                 <div key={idx} className="space-y-2 rounded border bg-white p-3">
                                     <div className="grid gap-2 md:grid-cols-3">
-                                        <input className="rounded border px-2 py-2" placeholder="Name" value={s.name} onChange={(e) => updateStream(idx, { name: e.target.value })} />
-                                        <select className="rounded border px-2 py-2" value={s.offer_id} onChange={(e) => updateStream(idx, { offer_id: e.target.value })}><option value="">Offer</option>{offers.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select>
-                                        <select className="rounded border px-2 py-2" value={s.preset_id} onChange={(e) => updateStream(idx, { preset_id: e.target.value })}><option value="">Preset</option>{presets.filter((p) => p.is_active).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
-                                        <input type="number" className="rounded border px-2 py-2" placeholder="Weight" value={s.weight} onChange={(e) => updateStream(idx, { weight: e.target.value })} />
-                                        <input type="number" className="rounded border px-2 py-2" placeholder="Priority" value={s.priority} onChange={(e) => updateStream(idx, { priority: e.target.value })} />
-                                        <input className="rounded border px-2 py-2" placeholder="Target URL" value={s.target_url} onChange={(e) => updateStream(idx, { target_url: e.target.value })} />
-                                        <input className="rounded border px-2 py-2" placeholder="GEO rules" value={s.geos_csv} onChange={(e) => updateStream(idx, { geos_csv: e.target.value })} />
-                                        <textarea className="rounded border px-2 py-2 md:col-span-2" placeholder={'Query rules\nutm_source=facebook'} value={s.query_input} onChange={(e) => updateStream(idx, { query_input: e.target.value })} />
+                                        <input className="rounded border px-2 py-2" placeholder="Название" value={s.name} onChange={(e) => updateStream(idx, { name: e.target.value })} />
+                                        <select className="rounded border px-2 py-2" value={s.offer_id} onChange={(e) => updateStream(idx, { offer_id: e.target.value })}><option value="">Оффер</option>{offers.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select>
+                                        <select className="rounded border px-2 py-2" value={s.preset_id} onChange={(e) => updateStream(idx, { preset_id: e.target.value })}><option value="">Пресет</option>{presets.filter((p) => p.is_active).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+                                        <input type="number" className="rounded border px-2 py-2" placeholder="Вес" value={s.weight} onChange={(e) => updateStream(idx, { weight: e.target.value })} />
+                                        <input type="number" className="rounded border px-2 py-2" placeholder="Приоритет" value={s.priority} onChange={(e) => updateStream(idx, { priority: e.target.value })} />
+                                        <input className="rounded border px-2 py-2" placeholder="Целевой URL" value={s.target_url} onChange={(e) => updateStream(idx, { target_url: e.target.value })} />
+                                        <input className="rounded border px-2 py-2" placeholder="GEO-правила" value={s.geos_csv} onChange={(e) => updateStream(idx, { geos_csv: e.target.value })} />
+                                        <textarea className="rounded border px-2 py-2 md:col-span-2" placeholder={'Query-правила\nutm_source=facebook'} value={s.query_input} onChange={(e) => updateStream(idx, { query_input: e.target.value })} />
                                     </div>
                                     <div className="flex flex-wrap items-center gap-4 text-xs">
                                         {DEVICES.map((device) => (
                                             <label key={device} className="inline-flex items-center gap-2"><input type="checkbox" checked={(s.devices || []).includes(device)} onChange={(e) => { const current = s.devices || []; updateStream(idx, { devices: e.target.checked ? [...current, device] : current.filter((d) => d !== device) }); }} />{device}</label>
                                         ))}
-                                        <label className="inline-flex items-center gap-2"><input type="checkbox" checked={Boolean(s.is_active)} onChange={(e) => updateStream(idx, { is_active: e.target.checked })} />active</label>
-                                        <button type="button" onClick={() => removeStream(idx)} className="ml-auto rounded border border-red-200 px-2 py-1 font-semibold text-red-600 hover:bg-red-50">Delete</button>
+                                        <label className="inline-flex items-center gap-2"><input type="checkbox" checked={Boolean(s.is_active)} onChange={(e) => updateStream(idx, { is_active: e.target.checked })} />активен</label>
+                                        <button type="button" onClick={() => removeStream(idx)} className="ml-auto rounded border border-red-200 px-2 py-1 font-semibold text-red-600 hover:bg-red-50">Удалить</button>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
                         {Object.keys(form.errors || {}).length > 0 ? <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{Object.entries(form.errors).map(([k, v]) => <div key={k}>{k}: {v}</div>)}</div> : null}
-                        <button type="submit" className="rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700" disabled={form.processing}>Save SmartLink</button>
+                        <button type="submit" className="rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700" disabled={form.processing}>Сохранить SmartLink</button>
                     </form>
                 </section>
 
                 <section className="rounded-xl border bg-white p-4 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        <h3 className="text-base font-semibold text-gray-900">Click Log</h3>
+                        <h3 className="text-base font-semibold text-gray-900">Лог кликов</h3>
                         <form onSubmit={submitFilters} className="flex flex-wrap items-center gap-2">
                             <input className="rounded border px-3 py-2 text-sm" placeholder="click_id" value={filters.data.click_id} onChange={(e) => filters.setData('click_id', e.target.value)} />
                             <input className="w-24 rounded border px-3 py-2 text-sm" placeholder="GEO" value={filters.data.geo} onChange={(e) => filters.setData('geo', e.target.value)} />
-                            <select className="rounded border px-3 py-2 text-sm" value={filters.data.offer_id} onChange={(e) => filters.setData('offer_id', e.target.value)}><option value="">All offers</option>{offers.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select>
-                            <select className="rounded border px-3 py-2 text-sm" value={filters.data.stream_id} onChange={(e) => filters.setData('stream_id', e.target.value)}><option value="">All streams</option>{(smartLink.streams || []).map((s) => <option key={s.id} value={s.id}>{s.name || `Stream #${s.id}`}</option>)}</select>
-                            <select className="rounded border px-3 py-2 text-sm" value={filters.data.webmaster_id} onChange={(e) => filters.setData('webmaster_id', e.target.value)}><option value="">All webmasters</option>{webmasters.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}</select>
-                            <button type="submit" className="rounded border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Filter</button>
+                            <select className="rounded border px-3 py-2 text-sm" value={filters.data.offer_id} onChange={(e) => filters.setData('offer_id', e.target.value)}><option value="">Все офферы</option>{offers.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select>
+                            <select className="rounded border px-3 py-2 text-sm" value={filters.data.stream_id} onChange={(e) => filters.setData('stream_id', e.target.value)}><option value="">Все потоки</option>{(smartLink.streams || []).map((s) => <option key={s.id} value={s.id}>{s.name || `Поток #${s.id}`}</option>)}</select>
+                            <select className="rounded border px-3 py-2 text-sm" value={filters.data.webmaster_id} onChange={(e) => filters.setData('webmaster_id', e.target.value)}><option value="">Все вебмастера</option>{webmasters.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}</select>
+                            <button type="submit" className="rounded border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Фильтр</button>
                         </form>
                     </div>
                     <div className="mt-4 overflow-x-auto">
                         <table className="min-w-full text-sm">
-                            <thead><tr className="border-b text-left text-xs uppercase tracking-wide text-gray-500"><th className="px-3 py-2">Date</th><th className="px-3 py-2">Click ID</th><th className="px-3 py-2">Stream</th><th className="px-3 py-2">Offer</th><th className="px-3 py-2">Webmaster</th><th className="px-3 py-2">GEO</th><th className="px-3 py-2">Device</th><th className="px-3 py-2">Matched by</th><th className="px-3 py-2">Conversion</th><th className="px-3 py-2">Target</th></tr></thead>
+                            <thead><tr className="border-b text-left text-xs uppercase tracking-wide text-gray-500"><th className="px-3 py-2">Дата</th><th className="px-3 py-2">Click ID</th><th className="px-3 py-2">Поток</th><th className="px-3 py-2">Оффер</th><th className="px-3 py-2">Вебмастер</th><th className="px-3 py-2">GEO</th><th className="px-3 py-2">Устройство</th><th className="px-3 py-2">Источник матчинга</th><th className="px-3 py-2">Конверсия</th><th className="px-3 py-2">Цель</th></tr></thead>
                             <tbody>
                                 {(clicks?.data || []).map((row) => (
                                     <tr key={row.id} className="border-b">
@@ -262,4 +262,3 @@ export default function Show({ smartLink, offers, presets, webmasters = [], clic
         </AuthenticatedLayout>
     );
 }
-

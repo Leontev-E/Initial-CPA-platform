@@ -68,7 +68,7 @@ class SmartLinkController extends Controller
 
         if (! ($validated['is_public'] ?? true) && empty($validated['webmaster_ids'] ?? [])) {
             throw ValidationException::withMessages([
-                'webmaster_ids' => 'At least one webmaster is required for private smart links.',
+                'webmaster_ids' => 'Для приватных SmartLink необходимо выбрать хотя бы одного вебмастера.',
             ]);
         }
 
@@ -87,7 +87,7 @@ class SmartLinkController extends Controller
         $this->syncStreams($smartLink, collect($validated['streams'] ?? []), $partnerProgramId);
         $this->syncAssignments($smartLink, collect($validated['webmaster_ids'] ?? []), $partnerProgramId);
 
-        return redirect()->route('admin.smart-links.show', $smartLink)->with('success', 'SmartLink created.');
+        return redirect()->route('admin.smart-links.show', $smartLink)->with('success', 'SmartLink создан.');
     }
 
     public function show(Request $request, SmartLink $smartLink): Response
@@ -162,7 +162,7 @@ class SmartLinkController extends Controller
 
         if (! ($validated['is_public'] ?? true) && empty($validated['webmaster_ids'] ?? [])) {
             throw ValidationException::withMessages([
-                'webmaster_ids' => 'At least one webmaster is required for private smart links.',
+                'webmaster_ids' => 'Для приватных SmartLink необходимо выбрать хотя бы одного вебмастера.',
             ]);
         }
 
@@ -180,21 +180,21 @@ class SmartLinkController extends Controller
         $this->syncStreams($smartLink, collect($validated['streams'] ?? []), $partnerProgramId);
         $this->syncAssignments($smartLink, collect($validated['webmaster_ids'] ?? []), $partnerProgramId);
 
-        return back()->with('success', 'SmartLink updated.');
+        return back()->with('success', 'SmartLink обновлен.');
     }
 
     public function toggle(SmartLink $smartLink): RedirectResponse
     {
         $smartLink->update(['is_active' => ! $smartLink->is_active]);
 
-        return back()->with('success', 'SmartLink status updated.');
+        return back()->with('success', 'Статус SmartLink обновлен.');
     }
 
     public function destroy(SmartLink $smartLink): RedirectResponse
     {
         $smartLink->delete();
 
-        return redirect()->route('admin.smart-links.index')->with('success', 'SmartLink deleted.');
+        return redirect()->route('admin.smart-links.index')->with('success', 'SmartLink удален.');
     }
 
     private function validatePayload(Request $request, int $partnerProgramId, ?int $smartLinkId = null): array
@@ -290,7 +290,7 @@ class SmartLinkController extends Controller
 
             if (! $offerId && ! $targetUrl) {
                 throw ValidationException::withMessages([
-                    "streams.{$index}.target_url" => 'Each stream requires offer_id or target_url.',
+                    "streams.{$index}.target_url" => 'Для каждого потока укажите offer_id или target_url.',
                 ]);
             }
 
@@ -400,4 +400,3 @@ class SmartLinkController extends Controller
         return $value === '' ? null : $value;
     }
 }
-
