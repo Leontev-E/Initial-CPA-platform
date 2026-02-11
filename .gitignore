@@ -16,6 +16,10 @@
 /public/build
 /public/hot
 /public/storage
+/storage/app/ip2location/*.BIN
+/storage/app/ip2location/*.bin
+/storage/app/ip2location/*.json
+/storage/app/ip2location/tmp/
 /storage/*.key
 /storage/pail
 /vendor

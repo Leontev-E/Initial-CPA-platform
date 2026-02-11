@@ -8,9 +8,11 @@
     "require": {
         "php": "^8.2",
         "inertiajs/inertia-laravel": "^2.0",
+        "ip2location/ip2location-php": "^8.0",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
+        "smi2/phpclickhouse": "^1.6",
         "tightenco/ziggy": "^2.0"
     },
     "require-dev": {

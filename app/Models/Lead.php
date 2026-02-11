@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Jobs\SyncLeadEventToClickHouseJob;
 use Illuminate\Database\Eloquent\Model;
 use App\Jobs\SendLeadWebhooksJob;
 use App\Models\Concerns\HasPartnerProgram;
@@ -62,6 +63,7 @@ class Lead extends Model
     {
         static::created(function (Lead $lead) {
             dispatch(new SendLeadWebhooksJob($lead->id, null));
+            dispatch(new SyncLeadEventToClickHouseJob($lead->id, 'created'));
         });
 
         static::updating(function (Lead $lead) {
@@ -72,6 +74,7 @@ class Lead extends Model
             if ($lead->wasChanged('status')) {
                 $fromStatus = $lead->fromStatusForWebhook ?? $lead->getOriginal('status');
                 dispatch(new SendLeadWebhooksJob($lead->id, $fromStatus));
+                dispatch(new SyncLeadEventToClickHouseJob($lead->id, 'status_changed', $fromStatus));
             }
         });
     }
