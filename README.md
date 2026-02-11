@@ -207,3 +207,52 @@ Recommended workflow for new UI features:
 2. Run `npm run i18n:build`.
 3. Add/fix wording in `resources/js/data/i18n-overrides.json` when domain terms need precise wording.
 4. Verify both RU and EN in browser before commit.
+
+## SmartLinks and click tracking
+
+Implemented:
+
+- SmartLinks with stream-based routing (rules + priorities + A/B weights)
+- Fallback logic (`fallback_url`, `fallback_offer`, fallback stream)
+- Full click log storage (`smart_link_clicks`) with `click_id`, stream, offer, GEO, device, UTM, query params, target URL
+- Stream presets (`smart_link_presets`) for reusable routing rule templates
+
+Admin UI:
+
+- `Admin -> SmartLinks` (`/admin/smart-links`)
+- Create/edit SmartLink, configure streams, set rules and weights
+- View click logs on SmartLink detail page
+
+Public redirect endpoint:
+
+- `GET /r/{slug}`
+- Example: `https://cpa.boostclicks.ru/r/my-smartlink?subid=abc&utm_source=facebook`
+- The platform appends tracking params (`click_id`, `smart_link_id`, `stream_id`, `offer_id`) to destination URL
+
+Stream rule format:
+
+```json
+{
+  "geos": ["RU", "KZ"],
+  "devices": ["mobile", "desktop"],
+  "query": {
+    "utm_source": "facebook",
+    "sub1": "campaign-a"
+  }
+}
+```
+
+Priority and A/B selection behavior:
+
+1. Filter active streams by rules.
+2. Choose only streams with highest `priority`.
+3. Pick stream by `weight`.
+4. If nothing matched, use `fallback_url` / `fallback_offer` / fallback stream.
+
+Tests added:
+
+- `tests/Feature/SmartLinkRoutingTest.php`
+  - geo rule match + click tracking
+  - fallback routing
+  - A/B weight behavior
+  - admin SmartLink creation with preset + streams

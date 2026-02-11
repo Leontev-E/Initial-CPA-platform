@@ -7,11 +7,14 @@ use App\Http\Controllers\Admin\OfferController as AdminOfferController;
 use App\Http\Controllers\Admin\PayoutController as AdminPayoutController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\LeadWebhookController as AdminLeadWebhookController;
+use App\Http\Controllers\Admin\SmartLinkController as AdminSmartLinkController;
+use App\Http\Controllers\Admin\SmartLinkPresetController as AdminSmartLinkPresetController;
 use App\Http\Controllers\Admin\WebmasterController as AdminWebmasterController;
 use App\Http\Controllers\SuperAdmin\PartnerProgramController as SuperAdminPartnerProgramController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SmartLinkRedirectController;
 use App\Http\Controllers\Webmaster\DashboardController as WebmasterDashboardController;
 use App\Http\Controllers\Webmaster\LeadController as WebmasterLeadController;
 use App\Http\Controllers\Webmaster\OfferController as WebmasterOfferController;
@@ -29,6 +32,8 @@ Route::get('/', function () {
 
     return redirect()->route('login');
 });
+
+Route::get('/r/{smartLink:slug}', SmartLinkRedirectController::class)->name('smart-links.redirect');
 
 Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
@@ -50,6 +55,13 @@ Route::middleware(['auth', 'verified', 'role:admin', 'section.access', 'partner_
     Route::patch('offers/{offer}/toggle', [AdminOfferController::class, 'toggle'])->name('offers.toggle');
     Route::post('offers/{offer}/landings', [AdminOfferController::class, 'addLanding'])->name('offers.landings.add');
     Route::delete('offers/{offer}/landings/{landing}', [AdminOfferController::class, 'removeLanding'])->name('offers.landings.remove');
+    Route::resource('smart-links', AdminSmartLinkController::class)
+        ->parameters(['smart-links' => 'smartLink'])
+        ->except(['create', 'edit']);
+    Route::patch('smart-links/{smartLink}/toggle', [AdminSmartLinkController::class, 'toggle'])->name('smart-links.toggle');
+    Route::post('smart-link-presets', [AdminSmartLinkPresetController::class, 'store'])->name('smart-link-presets.store');
+    Route::patch('smart-link-presets/{smartLinkPreset}', [AdminSmartLinkPresetController::class, 'update'])->name('smart-link-presets.update');
+    Route::delete('smart-link-presets/{smartLinkPreset}', [AdminSmartLinkPresetController::class, 'destroy'])->name('smart-link-presets.destroy');
 
     Route::get('reports', fn () => redirect()->route('admin.reports.offers'))->name('reports.index');
     Route::get('leads', [AdminLeadController::class, 'index'])->name('leads.index');

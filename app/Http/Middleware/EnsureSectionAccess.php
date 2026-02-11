@@ -30,6 +30,7 @@ class EnsureSectionAccess
         $sectionMap = [
             'admin.offer-categories' => 'categories',
             'admin.offers' => 'offers',
+            'admin.smart-links' => 'offers',
             'admin.leads' => 'leads',
             'admin.webmasters' => 'webmasters',
             'admin.payouts' => 'payouts',

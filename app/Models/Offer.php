@@ -61,6 +61,16 @@ class Offer extends Model
         return $this->hasMany(Lead::class);
     }
 
+    public function smartLinkStreams()
+    {
+        return $this->hasMany(SmartLinkStream::class);
+    }
+
+    public function smartLinkClicks()
+    {
+        return $this->hasMany(SmartLinkClick::class);
+    }
+
     public function getImageUrlAttribute(): ?string
     {
         return $this->image_path ? Storage::url($this->image_path) : null;
