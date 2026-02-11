@@ -52,6 +52,10 @@ class SmartLinkRouter
                     return true;
                 }
 
+                if ($this->streamHasWeightedOffers($stream, $allowedOfferIds)) {
+                    return true;
+                }
+
                 if (! $stream->offer?->is_active) {
                     return false;
                 }
@@ -79,8 +83,7 @@ class SmartLinkRouter
         if ($canRouteWithoutAssignment && $matchedStreams->isNotEmpty()) {
             $selectedStream = $this->pickWeighted($this->highestPrioritySubset($matchedStreams));
             if ($selectedStream) {
-                $targetUrl = $this->resolveTargetUrl($selectedStream);
-                $selectedOffer = $selectedStream->offer;
+                ['target_url' => $targetUrl, 'offer' => $selectedOffer] = $this->resolveTargetForStream($selectedStream, $allowedOfferIds);
                 $matchedBy = 'rules';
             }
         }
@@ -109,8 +112,7 @@ class SmartLinkRouter
         if ($canRouteWithoutAssignment && ! $targetUrl && $activeStreams->isNotEmpty()) {
             $selectedStream = $this->pickWeighted($this->highestPrioritySubset($activeStreams));
             if ($selectedStream) {
-                $targetUrl = $this->resolveTargetUrl($selectedStream);
-                $selectedOffer = $selectedStream->offer;
+                ['target_url' => $targetUrl, 'offer' => $selectedOffer] = $this->resolveTargetForStream($selectedStream, $allowedOfferIds);
                 $matchedBy = 'fallback_stream';
                 $isFallback = true;
             }
@@ -297,17 +299,110 @@ class SmartLinkRouter
         return $weighted->last();
     }
 
-    private function resolveTargetUrl(SmartLinkStream $stream): ?string
+    private function resolveTargetForStream(SmartLinkStream $stream, ?array $allowedOfferIds): array
     {
         if ($stream->target_url) {
-            return $stream->target_url;
+            return [
+                'target_url' => $stream->target_url,
+                'offer' => null,
+            ];
+        }
+
+        $weightedOffer = $this->pickWeightedOfferFromRules($stream, $allowedOfferIds);
+        if ($weightedOffer) {
+            return [
+                'target_url' => $this->buildTargetUrlFromOffer($weightedOffer),
+                'offer' => $weightedOffer,
+            ];
         }
 
         if ($stream->offer) {
-            return $this->buildTargetUrlFromOffer($stream->offer);
+            return [
+                'target_url' => $this->buildTargetUrlFromOffer($stream->offer),
+                'offer' => $stream->offer,
+            ];
         }
 
-        return null;
+        return [
+            'target_url' => null,
+            'offer' => null,
+        ];
+    }
+
+    private function streamHasWeightedOffers(SmartLinkStream $stream, ?array $allowedOfferIds): bool
+    {
+        return $this->pickWeightedOfferFromRules($stream, $allowedOfferIds) !== null;
+    }
+
+    private function pickWeightedOfferFromRules(SmartLinkStream $stream, ?array $allowedOfferIds): ?Offer
+    {
+        $rules = is_array($stream->rules) ? $stream->rules : [];
+        $rows = collect((array) Arr::get($rules, 'offer_weights', []))
+            ->map(function ($row) {
+                if (! is_array($row)) {
+                    return null;
+                }
+
+                $offerId = (int) ($row['offer_id'] ?? 0);
+                if ($offerId <= 0) {
+                    return null;
+                }
+
+                $weight = isset($row['weight']) && $row['weight'] !== ''
+                    ? max((int) $row['weight'], 0)
+                    : 100;
+
+                return [
+                    'offer_id' => $offerId,
+                    'weight' => $weight,
+                ];
+            })
+            ->filter()
+            ->values();
+
+        if ($rows->isEmpty()) {
+            return null;
+        }
+
+        $offers = Offer::query()
+            ->where('partner_program_id', $stream->partner_program_id)
+            ->whereIn('id', $rows->pluck('offer_id')->all())
+            ->where('is_active', true)
+            ->get()
+            ->keyBy('id');
+
+        $eligibleRows = $rows->filter(function (array $row) use ($offers, $allowedOfferIds) {
+            if (! $offers->has($row['offer_id'])) {
+                return false;
+            }
+
+            if (is_array($allowedOfferIds)) {
+                return in_array((int) $row['offer_id'], $allowedOfferIds, true);
+            }
+
+            return true;
+        })->values();
+
+        if ($eligibleRows->isEmpty()) {
+            return null;
+        }
+
+        $total = (int) $eligibleRows->sum(fn (array $row) => (int) $row['weight']);
+        if ($total <= 0) {
+            $offerId = (int) $eligibleRows->first()['offer_id'];
+            return $offers->get($offerId);
+        }
+
+        $pick = random_int(1, $total);
+        $cursor = 0;
+        foreach ($eligibleRows as $row) {
+            $cursor += (int) $row['weight'];
+            if ($pick <= $cursor) {
+                return $offers->get((int) $row['offer_id']);
+            }
+        }
+
+        return $offers->get((int) $eligibleRows->last()['offer_id']);
     }
 
     private function buildTargetUrlFromOffer(Offer $offer): ?string
@@ -388,4 +483,3 @@ class SmartLinkRouter
         return null;
     }
 }
-

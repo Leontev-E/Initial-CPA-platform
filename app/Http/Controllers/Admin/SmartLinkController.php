@@ -249,6 +249,12 @@ class SmartLinkController extends Controller
             'streams.*.rules.devices' => ['nullable', 'array'],
             'streams.*.rules.devices.*' => ['string', Rule::in(['desktop', 'mobile', 'tablet'])],
             'streams.*.rules.query' => ['nullable', 'array'],
+            'streams.*.rules.offer_weights' => ['nullable', 'array'],
+            'streams.*.rules.offer_weights.*.offer_id' => [
+                'nullable',
+                Rule::exists('offers', 'id')->where('partner_program_id', $partnerProgramId),
+            ],
+            'streams.*.rules.offer_weights.*.weight' => ['nullable', 'integer', 'min:0', 'max:100000'],
         ]);
     }
 
@@ -288,7 +294,9 @@ class SmartLinkController extends Controller
             $offerId = isset($stream['offer_id']) && $stream['offer_id'] !== '' ? (int) $stream['offer_id'] : null;
             $targetUrl = isset($stream['target_url']) && $stream['target_url'] !== '' ? (string) $stream['target_url'] : null;
 
-            if (! $offerId && ! $targetUrl) {
+            $hasOfferWeights = collect((array) ($rules['offer_weights'] ?? []))->isNotEmpty();
+
+            if (! $offerId && ! $targetUrl && ! $hasOfferWeights) {
                 throw ValidationException::withMessages([
                     "streams.{$index}.target_url" => 'Для каждого потока укажите offer_id или target_url.',
                 ]);
@@ -382,10 +390,36 @@ class SmartLinkController extends Controller
             }
         }
 
+        $offerWeights = collect((array) ($merged['offer_weights'] ?? []))
+            ->map(function ($row) {
+                if (! is_array($row)) {
+                    return null;
+                }
+
+                $offerId = (int) ($row['offer_id'] ?? 0);
+                if ($offerId <= 0) {
+                    return null;
+                }
+
+                $weight = isset($row['weight']) && $row['weight'] !== ''
+                    ? max((int) $row['weight'], 0)
+                    : 100;
+
+                return [
+                    'offer_id' => $offerId,
+                    'weight' => $weight,
+                ];
+            })
+            ->filter()
+            ->keyBy('offer_id')
+            ->values()
+            ->all();
+
         return array_filter([
             'geos' => $geos,
             'devices' => $devices,
             'query' => $query,
+            'offer_weights' => $offerWeights,
         ], static fn ($value) => $value !== []);
     }
 
