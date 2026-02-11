@@ -95,7 +95,10 @@ function applyTextNode(node) {
     }
 
     const original = TEXT_ORIGINALS.get(node) ?? '';
-    node.nodeValue = currentLocale === 'en' ? translateString(original) : original;
+    const nextValue = currentLocale === 'en' ? translateString(original) : original;
+    if ((node.nodeValue ?? '') !== nextValue) {
+        node.nodeValue = nextValue;
+    }
 }
 
 function ensureAttrBag(element) {
@@ -135,7 +138,9 @@ function applyAttribute(element, attribute) {
 
     const original = bag[attribute] ?? '';
     const nextValue = currentLocale === 'en' ? translateString(original) : original;
-    element.setAttribute(attribute, nextValue);
+    if ((element.getAttribute(attribute) ?? '') !== nextValue) {
+        element.setAttribute(attribute, nextValue);
+    }
 }
 
 function applyElement(element) {
